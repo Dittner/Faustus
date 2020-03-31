@@ -7,96 +7,72 @@
 //
 
 import Combine
+import CryptoKit
 import SwiftUI
 
-enum LoginError: String {
-    case noUserName = "Name is not filled"
-    case noUserPwd = "Password is not filled"
-    case mismatch = "Invalid Name or Password"
-}
+final class LoginViewModel: ViewModel {
+    public var user: User!
+    public var userConspectus: Conspectus!
 
-final class LoginViewModel: ObservableObject {
-    @Published var userName: String = ""
-    @Published var userPwd: String = ""
+    private var disposeBag: Set<AnyCancellable> = []
     @Published var errorMsg: String = ""
-    @Published var isLoggedIn: Bool = false
-
-    private var encryptedPwd: String = ""
-    private var isNewUserRegistration: Bool = false
-    private var cancellableSet: Set<AnyCancellable> = []
-
-    func login() {
-        if userName == "" {
-            errorMsg = LoginError.noUserName.rawValue
-        } else if userPwd == "" {
-            errorMsg = LoginError.noUserPwd.rawValue
-        } else {
-            if isNewUserRegistration {
-                storeUserProfile()
-                isLoggedIn = true
-                errorMsg = ""
-            } else if encryptedPwd == encrypt(userName, userPwd) {
-                isLoggedIn = true
-                errorMsg = ""
-            } else {
-                errorMsg = LoginError.mismatch.rawValue
-            }
-        }
-    }
 
     init() {
-        // registrationMode = true
-        $userName
-            .dropFirst()
-            .debounce(for: 0.2, scheduler: RunLoop.main)
-            .removeDuplicates()
-            .map { value in
-                value.count > 0 ? "" : LoginError.noUserName.rawValue
-            }
-            .assign(to: \.errorMsg, on: self)
-            .store(in: &cancellableSet)
-
-        $userPwd
-            .dropFirst()
-            .debounce(for: 0.2, scheduler: RunLoop.main)
-            .removeDuplicates()
-            .map { value in
-                value.count > 0 ? "" : LoginError.noUserPwd.rawValue
-            }
-            .assign(to: \.errorMsg, on: self)
-            .store(in: &cancellableSet)
-
-        readUserProfile()
+        userConspectus = model.userConspectus
+        user = userConspectus.asUser!
     }
 
-    func readUserProfile() {
-        if let dict = DocumentsStorage.getPlistFile(name: "profile.plist") {
-            isNewUserRegistration = false
-            print("read profile")
-
-            userName = dict.object(forKey: UserProfile.NameKey) as? String ?? ""
-            encryptedPwd = dict.object(forKey: UserProfile.EncryptedPwdKey) as? String ?? ""
+    func login() {
+        if userConspectus.store() == .failed {
+            errorMsg = userConspectus.validationStatus.rawValue
         } else {
-            isNewUserRegistration = true
-            print("No profile")
+            errorMsg = ""
+            user.isLoggedIn = true
+            model.state = .loading
         }
     }
 
-    func storeUserProfile() {
-        let profilePath = DocumentsStorage.projectURL.appendingPathComponent("profile.plist")
-
-        let profile: [String: String] = [UserProfile.NameKey: userName, UserProfile.EncryptedPwdKey: encrypt(userName, userPwd)]
-
-        let dict = NSDictionary(dictionary: profile)
-        let success: Bool = dict.write(toFile: profilePath.path, atomically: true)
-        if success {
-            print("profile has been stored!")
-        } else {
-            print("unable to store the user profile")
-        }
-    }
-    
-    func encrypt(_ userName:String, _ userPwd:String) -> String {
-        return (userName + userPwd).hashWith(.sha512)!
-    }
+//    func encrypt() {
+//        let profile: [String: Any] = ["name": "Alexander Dittner", "password": "some-pwd"]
+//        let bits = SHA256.hash(data: "Some password".data(using: .utf8)!)
+//        let key = SymmetricKey(data: bits)
+//        let data = try! NSKeyedArchiver.archivedData(withRootObject: profile, requiringSecureCoding: false)
+//
+//        let encryptedData = try! AES.GCM.seal(data, using: key)
+//        let cipherText = encryptedData.combined!
+//        _ = try? cipherText.write(to: DocumentsStorage.projectURL.appendingPathComponent("encrypted.txt"))
+//    }
+//
+//    func decrypt() {
+//        let bits = SHA256.hash(data: "Some password".data(using: .utf8)!)
+//        let key = SymmetricKey(data: bits)
+//
+//        let url = DocumentsStorage.projectURL.appendingPathComponent("encrypted.txt")
+//        let encryptedData = FileManager.default.contents(atPath: url.path)!
+//        let sealedBoxToOpen = try! AES.GCM.SealedBox(combined: encryptedData)
+//        let decryptedData = try! AES.GCM.open(sealedBoxToOpen, using: key)
+//
+    ////        let profile = try! NSKeyedUnarchiver.unarchiveObject(with: decryptedData) as? [String: Any]
+//    }
+//
+//    func encrypt2() {
+//        let bits = SHA256.hash(data: "Some password".data(using: .utf8)!)
+//        let key = SymmetricKey(data: bits)
+//        let message = "Sollen alle Illusionen als unnötig und gefährlich angesehen werden?".data(using: .utf8)!
+//        let encryptedByAlice = try! AES.GCM.seal(message, using: key)
+//        let cipherText = encryptedByAlice.combined!
+//        _ = try? cipherText.write(to: DocumentsStorage.projectURL.appendingPathComponent("encrypted.txt"))
+//    }
+//
+//    func decrypt2() {
+//        let bits = SHA256.hash(data: "Some password".data(using: .utf8)!)
+//        let key = SymmetricKey(data: bits)
+//
+//        let url = DocumentsStorage.projectURL.appendingPathComponent("encrypted.txt")
+//        let encryptedData = FileManager.default.contents(atPath: url.path)!
+//        let sealedBoxToOpen = try! AES.GCM.SealedBox(combined: encryptedData)
+//        let decryptedData = try! AES.GCM.open(sealedBoxToOpen, using: key)
+//        let decryptedString = String(data: decryptedData, encoding: .utf8)!
+//        print(decryptedString)
+//    }
 }

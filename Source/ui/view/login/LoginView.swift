@@ -9,56 +9,40 @@
 import SwiftUI
 
 struct LoginView: View {
-    @ObservedObject private var vm = LoginViewModel()
+    @ObservedObject var vm = LoginViewModel()
 
     var body: some View {
         VStack(alignment: .center, spacing: 12.0) {
             Spacer()
 
             Text("Faustus")
-                .font(Font.custom("ManuskriptGothisch", size: 60))
+                .font(Font.custom(.gothic, size: 80))
                 .lineLimit(1)
                 .frame(maxWidth: 250, maxHeight: 20)
                 .multilineTextAlignment(.leading)
                 .foregroundColor(Color.F.light)
                 .offset(x: /*@START_MENU_TOKEN@*/0.0/*@END_MENU_TOKEN@*/, y: -80.0)
 
-            LoginTextInput("Name", text: $vm.userName, isSecure: false, onEnter: {
-                print("Name on Entered!")
-            })
+            TextInput(title: "Name", text: $vm.user.name, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaLight, size: 14), alignment: .left, isFocused: vm.user.name == "", isSecure: false, format: nil, isEditable: true, onEnterAction: nil)
                 .frame(width: 250, height: 35, alignment: .leading)
+                .padding(.horizontal, 5)
+                .background(Color.F.black)
+                .cornerRadius(6)
 
-            LoginTextInput("Passwort", text: $vm.userPwd, isSecure: true, onEnter: {
-                print("Pwd on Entered!")
+            TextInput(title: "Schlüssel", text: $vm.user.pwd, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaLight, size: 14), alignment: .left, isFocused: vm.user.name != "", isSecure: true, format: nil, isEditable: true, onEnterAction: {
                 self.vm.login()
             })
                 .frame(width: 250, height: 35, alignment: .leading)
+                .padding(.horizontal, 5)
+                .background(Color.F.black)
+                .cornerRadius(6)
 
             Text($vm.errorMsg.wrappedValue)
                 .frame(maxWidth: 250, maxHeight: 50)
                 .foregroundColor(Color.F.invalid)
                 .opacity($vm.errorMsg.wrappedValue != "" ? 1 : 0)
 
-            Text("OK")
-                .frame(maxWidth: 250, maxHeight: 50)
-                .foregroundColor(Color.green)
-                .opacity($vm.isLoggedIn.wrappedValue ? 1 : 0)
-
             Spacer()
-        }.frame(minWidth: 600, maxWidth: .infinity, minHeight: 800, maxHeight: .infinity)
-            .background(Color.F.dark)
-    }
-
-    public struct CustomTextFieldStyle: TextFieldStyle {
-        public func _body(configuration: TextField<Self._Label>) -> some View {
-            configuration
-                .textFieldStyle(PlainTextFieldStyle())
-                .padding(5)
-                .foregroundColor(Color.F.light)
-                .frame(width: 250, height: 35, alignment: .leading)
-                .background(Color.F.black)
-                .cornerRadius(6)
-                .font(.system(size: 16))
         }
     }
 }

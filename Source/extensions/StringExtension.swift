@@ -1,96 +1,129 @@
 import CommonCrypto
+import CryptoKit
 import Foundation
-
-// Defines types of hash string outputs available
-public enum HashOutputType {
-    // standard hex string output
-    case hex
-    // base 64 encoded string output
-    case base64
-}
-
-// Defines types of hash algorithms available
-public enum HashType {
-    case sha1
-    case sha224
-    case sha256
-    case sha384
-    case sha512
-
-    var length: Int32 {
-        switch self {
-        case .sha1: return CC_SHA1_DIGEST_LENGTH
-        case .sha224: return CC_SHA224_DIGEST_LENGTH
-        case .sha256: return CC_SHA256_DIGEST_LENGTH
-        case .sha384: return CC_SHA384_DIGEST_LENGTH
-        case .sha512: return CC_SHA512_DIGEST_LENGTH
-        }
-    }
-}
-
-extension Data {
-    /// Hashing algorithm that prepends an RSA2048ASN1Header to the beginning of the data being hashed.
-    ///
-    /// - Parameters:
-    ///   - type: The type of hash algorithm to use for the hashing operation.
-    ///   - output: The type of output string desired.
-    /// - Returns: A hash string using the specified hashing algorithm, or nil.
-    public func hashWithRSA2048Asn1Header(_ type: HashType, output: HashOutputType = .hex) -> String? {
-        let rsa2048Asn1Header: [UInt8] = [
-            0x30, 0x82, 0x01, 0x22, 0x30, 0x0D, 0x06, 0x09, 0x2A, 0x86, 0x48, 0x86,
-            0xF7, 0x0D, 0x01, 0x01, 0x01, 0x05, 0x00, 0x03, 0x82, 0x01, 0x0F, 0x00,
-        ]
-
-        var headerData = Data(rsa2048Asn1Header)
-        headerData.append(self)
-
-        return hashed(type, output: output)
-    }
-
-    /// Hashing algorithm for hashing a Data instance.
-    ///
-    /// - Parameters:
-    ///   - type: The type of hash to use.
-    ///   - output: The type of hash output desired, defaults to .hex.
-    ///   - Returns: The requested hash output or nil if failure.
-    public func hashed(_ type: HashType, output: HashOutputType = .hex) -> String? {
-        // setup data variable to hold hashed value
-        var digest = Data(count: Int(type.length))
-
-        _ = digest.withUnsafeMutableBytes { digestBytes -> UInt8 in
-            self.withUnsafeBytes { messageBytes -> UInt8 in
-                if let mb = messageBytes.baseAddress, let db = digestBytes.bindMemory(to: UInt8.self).baseAddress {
-                    let length = CC_LONG(self.count)
-                    switch type {
-                    case .sha1: CC_SHA1(mb, length, db)
-                    case .sha224: CC_SHA224(mb, length, db)
-                    case .sha256: CC_SHA256(mb, length, db)
-                    case .sha384: CC_SHA384(mb, length, db)
-                    case .sha512: CC_SHA512(mb, length, db)
-                    }
-                }
-                return 0
-            }
-        }
-
-        // return the value based on the specified output type.
-        switch output {
-        case .hex: return digest.map { String(format: "%02hhx", $0) }.joined()
-        case .base64: return digest.base64EncodedString()
-        }
-    }
-}
+import SwiftUI
 
 extension String {
-    /// Hashing algorithm for hashing a string instance.
-    ///
-    /// - Parameters:
-    ///   - type: The type of hash to use.
-    ///   - output: The type of output desired, defaults to .hex.
-    /// - Returns: The requested hash output or nil if failure.
-    func hashWith(_ type: HashType, output: HashOutputType = .hex) -> String? {
-        // convert string to utf8 encoded data
-        guard let message = data(using: .utf8) else { return nil }
-        return message.hashed(type, output: output)
+    /*
+     "string_id".localized
+     */
+
+    var localized: String {
+        NSLocalizedString(self, comment: "")
+    }
+
+    func sha512() -> String? {
+        guard let msg = data(using: .utf8) else { return nil }
+        return SHA512.hash(data: msg).compactMap { String(format: "%02x", $0) }.joined()
+    }
+
+    func matches(predicate: NSPredicate) -> Bool {
+        predicate.evaluate(with: self)
+    }
+
+    func textHeightFrom(width: CGFloat, fontName: String = "System Font", fontSize: CGFloat = 18) -> CGFloat {
+        #if os(macOS)
+
+            typealias UXFont = NSFont
+            let text: NSTextField = .init(string: self)
+            text.font = NSFont(name: fontName, size: fontSize)
+
+        #else
+
+            typealias UXFont = UIFont
+            let text: UILabel = .init()
+            text.text = self
+            text.numberOfLines = 0
+
+        #endif
+
+        text.font = UXFont(name: fontName, size: fontSize)
+        text.lineBreakMode = .byWordWrapping
+        return text.sizeThatFits(CGSize(width: width, height: .infinity)).height
+    }
+
+    /*
+     let str = "Hello, world"
+     print(str[...4]) // "Hello"
+     print(str[..<5]) // "Hello"
+     print(str[7...]) // "world"
+     print(str[3...4] + str[2]) // "lol"
+     */
+
+    subscript(i: Int) -> Character {
+        return self[index(startIndex, offsetBy: i)]
+    }
+
+    subscript(bounds: CountableRange<Int>) -> Substring {
+        let start = index(startIndex, offsetBy: bounds.lowerBound)
+        let end = index(startIndex, offsetBy: bounds.upperBound)
+        if end < start { return "" }
+        return self[start ..< end]
+    }
+
+    subscript(bounds: CountableClosedRange<Int>) -> Substring {
+        let start = index(startIndex, offsetBy: bounds.lowerBound)
+        let end = index(startIndex, offsetBy: bounds.upperBound)
+        if end < start { return "" }
+        return self[start ... end]
+    }
+
+    subscript(bounds: CountablePartialRangeFrom<Int>) -> Substring {
+        let start = index(startIndex, offsetBy: bounds.lowerBound)
+        let end = index(endIndex, offsetBy: -1)
+        if end < start { return "" }
+        return self[start ... end]
+    }
+
+    subscript(bounds: PartialRangeThrough<Int>) -> Substring {
+        let end = index(startIndex, offsetBy: bounds.upperBound)
+        if end < startIndex { return "" }
+        return self[startIndex ... end]
+    }
+
+    subscript(bounds: PartialRangeUpTo<Int>) -> Substring {
+        let end = index(startIndex, offsetBy: bounds.upperBound)
+        if end < startIndex { return "" }
+        return self[startIndex ..< end]
+    }
+
+    /*
+     let a1 = "12345".containsOnlyDigits // true
+     let a2 = "a12345".containsOnlyDigits // false
+     let b1 = "abcde".containsOnlyLetters // true
+     let b2 = "abcde1".containsOnlyLetters // false
+     let c1 = "abcde12345".isAlphanumeric // true
+     let c2 = "abcde.12345".isAlphanumeric // false
+     let approved = "test@test.com".isValidEmail // true
+     */
+
+    var containsOnlyDigits: Bool {
+        let notDigits = NSCharacterSet.decimalDigits.inverted
+        return rangeOfCharacter(from: notDigits, options: String.CompareOptions.literal, range: nil) == nil
+    }
+
+    var containsOnlyLetters: Bool {
+        let notLetters = NSCharacterSet.letters.inverted
+        return rangeOfCharacter(from: notLetters, options: String.CompareOptions.literal, range: nil) == nil
+    }
+
+    var isAlphanumeric: Bool {
+        let notAlphanumeric = NSCharacterSet.decimalDigits.union(NSCharacterSet.letters).inverted
+        return rangeOfCharacter(from: notAlphanumeric, options: String.CompareOptions.literal, range: nil) == nil
+    }
+
+    var isValidEmail: Bool {
+        let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+
+        let emailTest = NSPredicate(format: "SELF MATCHES %@", emailRegEx)
+        return emailTest.evaluate(with: self)
+    }
+
+    /*
+     "[0-9]{0,4}".asPredicate to format input to type only digits
+     */
+
+    var asPredicate: NSPredicate {
+        return NSPredicate(format: "SELF MATCHES %@", self)
     }
 }

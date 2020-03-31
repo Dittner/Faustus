@@ -11,6 +11,7 @@ import SwiftUI
 
 enum LogTag: String {
     case APP
+    case User
     case UI
     case MEMORY
     case PARSING
@@ -33,8 +34,6 @@ class Logger {
     private(set) static var shared: Logger?
 
     private let keepLogsInDays: Int = 3
-    private let logsDirName: String
-    private let logsFileName: String
     private var log: String = ""
     private var logFileURL: URL?
 
@@ -51,13 +50,12 @@ class Logger {
     }
 
     init() {
+        if !DocumentsStorage.existDir(.logs) { DocumentsStorage.createDir(.logs) }
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
 
-        logsDirName = User.projectFolderName + "/" + User.logsFolderName
-        logsFileName = formatter.string(from: Date()) + ".clientLog"
-
-        logFileURL = DocumentsStorage.createFile(name: logsFileName, inFolder: logsDirName)
+        let logsFilePath = StorageDirectory.logs.rawValue + "/" + formatter.string(from: Date()) + ".clientLog"
+        logFileURL = DocumentsStorage.projectURL.appendingPathComponent(logsFilePath)
 
         var aboutLog: String = "Faustus Logs\n"
         let ver: String = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
@@ -65,26 +63,17 @@ class Logger {
         aboutLog += "v." + ver + "." + build + "\n"
 
         #if DEBUG
-        aboutLog += "debug mode\n"
-        aboutLog += "docs folder: \\" + FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].description
+            aboutLog += "debug mode\n"
+            aboutLog += "docs folder: \\" + FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].description
         #else
-        aboutLog += "release mode\n"
+            aboutLog += "release mode\n"
         #endif
-        
+
         let home = FileManager.default.homeDirectoryForCurrentUser
         print("hom = \(home.description)")
 
         info(tag: .APP, msg: aboutLog)
         removeExpiredLogs()
-    }
-
-
-
-    func createLogsFile(name: String) {
-        if let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-            logFileURL = dir.appendingPathComponent(logsDirName, isDirectory: true)
-            logFileURL = logFileURL!.appendingPathComponent(logsFileName)
-        }
     }
 
     func info(tag: LogTag, msg: String) {
@@ -117,10 +106,8 @@ class Logger {
     }
 
     private func removeExpiredLogs() {
-        guard let docsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
-        let logsDirURL = docsDir.appendingPathComponent(logsDirName, isDirectory: true)
         do {
-            let urls = try FileManager.default.contentsOfDirectory(at: logsDirURL, includingPropertiesForKeys: nil)
+            let urls = DocumentsStorage.getContentOf(dir: .logs, filesWithExtension: "clientLog")
             let curDateTime = Int(Date().timeIntervalSinceReferenceDate)
             let expireTimeInSecs = curDateTime - keepLogsInDays * 24 * 60 * 60
             var countOfExpiredFiles: Int = 0
@@ -149,8 +136,6 @@ class Logger {
             } else if countOfExpiredFiles > 0 {
                 info(tag: .IO, msg: "\(countOfExpiredFiles) logfile was removed")
             }
-        } catch {
-            err(tag: .IO, msg: "Logger.removeExpiredLogs failed by invoke FileManager.default.contentsOfDirectory. Error: \(error.localizedDescription)")
         }
     }
 }

@@ -7,33 +7,55 @@
 //
 
 import Foundation
+enum StorageDirectory: String {
+    case project = "Faustus"
+    case logs
+    case user
+    case authors
+    case books
+    case tags
+}
+
 class DocumentsStorage {
     static var documentsURL: URL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-    static var projectURL:URL = documentsURL.appendingPathComponent(User.projectFolderName)
+    static var projectURL: URL = documentsURL.appendingPathComponent(StorageDirectory.project.rawValue)
 
-    open class func createDir(name: String) {
-        let fileUrl = documentsURL.appendingPathComponent(name)
+    open class func getUrl(of dir: StorageDirectory) -> URL {
+        return projectURL.appendingPathComponent(dir.rawValue)
+    }
+
+    open class func existDir(_ dir: StorageDirectory) -> Bool {
+        let dirPath = dir.rawValue
+        var isDir: ObjCBool = true
+        return FileManager.default.fileExists(atPath: projectURL.appendingPathComponent(dirPath).path, isDirectory: &isDir)
+    }
+
+    open class func createDir(_ dir: StorageDirectory) {
+        let dirPath = dir.rawValue
         do {
-            try FileManager.default.createDirectory(atPath: fileUrl.path, withIntermediateDirectories: true, attributes: nil)
+            try FileManager.default.createDirectory(atPath: projectURL.appendingPathComponent(dirPath).path, withIntermediateDirectories: true, attributes: nil)
         } catch {
-            print("Unable to create directory with name: \(name), error: \(error.localizedDescription)")
+            logErr(tag: .IO, msg: "Unable to create directory with name: \(dirPath), error: \(error.localizedDescription)")
         }
     }
 
-    open class func createFile(name: String, inFolder: String) -> URL? {
-        DocumentsStorage.createDir(name: inFolder)
-
-        var fileUrl: URL?
-        if let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-            fileUrl = dir.appendingPathComponent(inFolder, isDirectory: true)
-            fileUrl = fileUrl!.appendingPathComponent(name)
+    open class func readFile(from url: URL) -> Data? {
+        do {
+            return try Data(contentsOf: url)
         }
-
-        return fileUrl
+        catch {
+            logErr(tag: .IO, msg: "DocumentsStorage.readFile failed: \(error.localizedDescription)")
+            return nil
+        }
     }
 
-    open class func getPlistFile(name: String) -> NSDictionary? {
-        let fileUrl = projectURL.appendingPathComponent(name)
-        return NSDictionary(contentsOfFile: fileUrl.path)
+    open class func getContentOf(dir: StorageDirectory, filesWithExtension:String) -> [URL] {
+        let dirPath = dir.rawValue
+        do {
+            return try FileManager.default.contentsOfDirectory(at: projectURL.appendingPathComponent(dirPath), includingPropertiesForKeys: nil).filter{ $0.pathExtension == filesWithExtension }
+        } catch {
+            logErr(tag: .IO, msg: "DocumentsStorage.getContentOf dir: \(dir.rawValue) failed by invoke FileManager.default.contentsOfDirectory. Error: \(error.localizedDescription)")
+            return []
+        }
     }
 }

@@ -36,11 +36,18 @@ struct HistoryView: View {
 
             Color.F.black
                 .frame(height: 50)
+
+            ScrollView(.vertical, showsIndicators: true) {
+                VStack(alignment: .leading, spacing: 1) {
+                    ForEach(vm.stack, id: \.id) { conspectus in
+                        ConspectusRow(action: { self.vm.select(conspectus: conspectus) }, conspectus: conspectus).frame(height: 50)
+                    }
+                }
+            }
         }
         .fillParent()
     }
 }
-
 
 #if DEBUG
     struct HistoryView_Previews: PreviewProvider {

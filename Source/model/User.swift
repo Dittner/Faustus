@@ -6,36 +6,73 @@
 //  Copyright © 2020 Alexander Dittner. All rights reserved.
 //
 
+import Combine
 import Foundation
+
 class User: Storable, ObservableObject {
     let id: UID
 
     @Published var name: String = ""
+    @Published var surname: String = ""
+    @Published var initials: String = ""
     @Published var pwd: String = ""
     @Published var isLoggedIn: Bool = false
     @Published var validationStatus: ValidationStatus = .ok
-    @Published var isEditing: Bool = false
+    @Published var hasChanges: Bool = false
+
+    private(set) var authorID: UID = UID()
+    var isRegistered: Bool {
+        return !encryptedPwd.isEmpty
+    }
 
     private var encryptedPwd: String = ""
 
+    private var disposeBag: Set<AnyCancellable> = []
+
     required init(id: UID) {
         self.id = id
+
+        $name
+            .debounce(for: 0.2, scheduler: RunLoop.main)
+            .removeDuplicates()
+            .map { value in
+                value.components(separatedBy: " ")
+                    .filter { $0 != "" }
+                    .map { value in
+                        String(value.first!) + "."
+                    }
+                    .reduce("") { $0 + $1 }
+            }
+            .assign(to: \.initials, on: self)
+            .store(in: &disposeBag)
+
+        for prop in [$name, $surname] {
+            prop
+                .removeDuplicates()
+                .map { _ in
+                    true
+                }
+                .assign(to: \.hasChanges, on: self)
+                .store(in: &disposeBag)
+        }
     }
 
     private func encryptPwd() -> String {
-        return (name + pwd).sha512()!
+        return ("Faustus" + pwd).sha512()!
     }
 
-    func willStore() -> Bool {
-        encryptedPwd.isEmpty
+    func hasChangesToStore() -> Bool {
+        return hasChanges
     }
-    
-    func didStore() {}
+
+    func didStore() {
+        hasChanges = false
+    }
 
     func validate() -> ValidationStatus {
-        if name == "" {
+        if name.isEmpty || surname.isEmpty {
             return .emptyName
-        } else if pwd == "" {
+        } else if pwd.isEmpty {
             return .emptyPassword
         } else if !encryptedPwd.isEmpty && encryptedPwd != encryptPwd() {
             return .invalidUserPwdOrName
@@ -45,12 +82,14 @@ class User: Storable, ObservableObject {
     }
 
     func serialize() -> [String: Any] {
-        return ["id": id, "name": name, "encryptedPwd": encryptPwd()]
+        return ["id": id, "name": name, "surname": surname, "encryptedPwd": encryptPwd()]
     }
 
     func deserialize(from dict: [String: Any]) {
         name = dict["name"] as? String ?? ""
+        surname = dict["surname"] as? String ?? ""
         encryptedPwd = dict["encryptedPwd"] as? String ?? ""
+        hasChanges = false
     }
 }
 

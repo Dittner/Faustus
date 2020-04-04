@@ -6,6 +6,7 @@
 //  Copyright © 2020 Alexander Dittner. All rights reserved.
 //
 
+import Combine
 import SwiftUI
 
 struct SearchView: View {
@@ -19,7 +20,7 @@ struct SearchView: View {
                     .foregroundColor(Color.F.black)
                     .frame(width: 50)
 
-                TextInput(title: "", text: $vm.filterText, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 21), alignment: .left, isFocused: $vm.isFilterTextFocused.wrappedValue, isSecure: false, format: nil, isEditable: true, onEnterAction: nil)
+                TextInput(title: "", text: $vm.filterText, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 21), alignment: .left, isFocused: false, isSecure: false, format: nil, isEditable: true, onEnterAction: nil)
                     .frame(height: 50, alignment: .leading)
                     .padding(.horizontal, -5)
                     .saturation(0)
@@ -43,8 +44,8 @@ struct SearchView: View {
 
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(alignment: .leading, spacing: 1) {
-                    ForEach(vm.authors, id: \.id) { conspectus in
-                        AuthorRow(action: { self.vm.select(conspectus: conspectus) }, conspectus: conspectus).frame(height: 50)
+                    ForEach(vm.result, id: \.id) { conspectus in
+                        ConspectusRow(action: { self.vm.select(conspectus: conspectus) }, conspectus: conspectus).frame(height: 50)
                     }
                 }
             }
@@ -94,58 +95,6 @@ struct FilterTabBar: View {
                 .onTapGesture {
                     self.selectedFilter = .quotes
                 }
-        }
-    }
-}
-
-struct AuthorRow: View {
-    @ObservedObject var author: Author
-    @State private var isPressed: Bool = false
-    let selectAction: () -> Void
-
-    init(action: @escaping () -> Void, conspectus: Conspectus) {
-        selectAction = action
-        author = conspectus.asAuthor!
-        print("AuthorRow init, author: \(author.name)(\(author.id))")
-    }
-
-    func notifySelection() {
-    }
-
-    var body: some View {
-        return GeometryReader { geometry in
-            ZStack(alignment: .topLeading) {
-                Button("", action: self.selectAction).buttonStyle(RowBgButtonStyle())
-                    .frame(width: geometry.size.width, height: 50)
-
-                Color.F.author
-                    .allowsHitTesting(false)
-                    .frame(width: 20, height: 2)
-                    .offset(x: geometry.size.width / 2 - 10, y: 0)
-
-                Image("smallAuthor")
-                    .renderingMode(.template)
-                    .allowsHitTesting(false)
-                    .frame(width: 50, height: 50)
-                    .offset(x: 0, y: 0)
-
-                Text("\(self.author.surname) \(self.author.initials)")
-                    .allowsHitTesting(false)
-                    .lineLimit(1)
-                    .font(Font.custom(.pragmatica, size: 16))
-                    .frame(minWidth: 100, idealWidth: 500, maxWidth: .infinity, minHeight: 30, idealHeight: 50, maxHeight: 50, alignment: .topLeading)
-                    .offset(x: 50, y: 8)
-                    .frame(width: geometry.size.width - 50, height: 50)
-
-                Text("\(self.author.years)")
-                    .allowsHitTesting(false)
-                    .lineLimit(1)
-                    .font(Font.custom(.pragmaticaExtraLight, size: 12))
-                    .frame(minWidth: 100, idealWidth: 500, maxWidth: .infinity, minHeight: 30, idealHeight: 50, maxHeight: 50, alignment: .topLeading)
-                    .offset(x: 50, y: 28)
-                    .frame(width: geometry.size.width - 50, height: 50)
-            }
-            .foregroundColor(Color.F.gray)
         }
     }
 }

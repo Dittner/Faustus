@@ -20,10 +20,10 @@ final class RootViewModel: ViewModel {
     private var disposeBag: Set<AnyCancellable> = []
 
     init() {
-        model.userConspectus.asUser!.$isLoggedIn
+        model.$state
             .removeDuplicates()
             .map { value in
-                value ? .docList : .login
+                value == .auth ? .login : .docList
             }
             .assign(to: \.screen, on: self)
             .store(in: &disposeBag)

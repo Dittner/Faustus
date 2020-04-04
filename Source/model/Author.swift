@@ -59,7 +59,7 @@ class Author: Storable, ObservableObject {
         }
     }
 
-    func willStore() -> Bool {
+    func hasChangesToStore() -> Bool {
         return hasChanges
     }
 

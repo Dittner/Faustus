@@ -18,17 +18,24 @@ final class LoginViewModel: ViewModel {
     @Published var errorMsg: String = ""
 
     init() {
+        logInfo(tag: .APP, msg: "LoginViewModel init")
         userConspectus = model.userConspectus
         user = userConspectus.asUser!
     }
 
     func login() {
-        if userConspectus.store() == .failed {
-            errorMsg = userConspectus.validationStatus.rawValue
-        } else {
+        let status = user.validate()
+        if status == .ok && userConspectus.store() != .failed {
             errorMsg = ""
-            user.isLoggedIn = true
-            model.state = .loading
+            let appDelegate = NSApplication.shared.delegate as! AppDelegate
+            appDelegate.window?.makeFirstResponder(nil)
+            print("LogedIn")
+            self.user.isLoggedIn = true
+            self.model.state = .loading
+            
+            
+        } else {
+            errorMsg = status.rawValue
         }
     }
 

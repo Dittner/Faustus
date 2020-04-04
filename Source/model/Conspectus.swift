@@ -36,6 +36,8 @@ class Conspectus: ObservableObject, Equatable {
     let id: UID
     let fileUrl: URL
     let content: Storable
+    let createdDate: String
+    private(set) var changedDate: String
     let genus: ConspectusGenus
 
     @Published var validationStatus: ValidationStatus = .ok
@@ -44,18 +46,27 @@ class Conspectus: ObservableObject, Equatable {
     init?(genus: ConspectusGenus, from url: URL) {
         guard let data = DocumentsStorage.readFile(from: url) else { return nil }
         do {
-            if let dict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any], let uid = dict["id"] as? UID {
-                id = uid
-                fileUrl = url
-                self.genus = genus
-                content = genus.create(id: uid)!
-                content.deserialize(from: dict)
+            if let dict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]  {
+                if let uid = dict["id"] as? UID {
+                    id = uid
+                    fileUrl = url
+                    self.genus = genus
+                    createdDate = dict["createdDate"] as? String ?? DateTimeUtils.localize(Date())
+                    changedDate = dict["changedDate"] as? String ?? DateTimeUtils.localize(Date())
+                    content = genus.create(id: uid)!
+                    content.deserialize(from: dict)
+                }else {
+                    logErr(tag: .PARSING, msg: "Failed to read id from conspectus for a file \(url)")
+                    return nil
+                }
+                
             } else {
+                logErr(tag: .PARSING, msg: "Failed to transform conspectus dict to [String: Any] for a file \(url)")
                 return nil
             }
 
         } catch let error as NSError {
-            logErr(tag: .PARSING, msg: "Failed to parse json data to [String: Any] for file \(url): \(error.localizedDescription)")
+            logErr(tag: .PARSING, msg: "Failed to parse json data to [String: Any] for a file \(url): \(error.localizedDescription)")
             return nil
         }
     }
@@ -63,6 +74,8 @@ class Conspectus: ObservableObject, Equatable {
     init(genus: ConspectusGenus) {
         id = UID()
         self.genus = genus
+        createdDate = DateTimeUtils.localize(Date())
+        changedDate = createdDate
         content = genus.create(id: id)!
 
         let fileDir: String = Conspectus.genus2dir(genus).rawValue
@@ -87,7 +100,12 @@ class Conspectus: ObservableObject, Equatable {
 
     private func write(dict: [String: Any]) -> Bool {
         do {
-            let data = try JSONSerialization.data(withJSONObject: dict, options: .fragmentsAllowed)
+            var updateDict = dict
+            changedDate = DateTimeUtils.localize(Date())
+            updateDict["createdDate"] = createdDate
+            updateDict["changedDate"] = changedDate
+
+            let data = try JSONSerialization.data(withJSONObject: updateDict, options: .fragmentsAllowed)
 
             try data.write(to: fileUrl)
             logInfo(tag: .IO, msg: "file with url = \(fileUrl) has been stored!")
@@ -99,7 +117,9 @@ class Conspectus: ObservableObject, Equatable {
     }
 
     func store() -> StoreResult {
-        guard content.willStore() else { return .noChangesToStore }
+        guard content.hasChangesToStore() else {
+            return .noChangesToStore
+        }
 
         validationStatus = content.validate()
         if validationStatus == .ok {

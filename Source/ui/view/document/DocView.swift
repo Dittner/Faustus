@@ -11,36 +11,75 @@ import SwiftUI
 
 struct DocView: View {
     @ObservedObject private var vm = DocViewModel()
+    private let validationInfoBoardHeight: CGFloat = 30
 
     var body: some View {
         VStack(alignment: .center, spacing: 0) {
             if vm.selectedConspectus == nil {
                 Color.F.black.frame(height: 100)
                 Color.F.white
-            } else if vm.selectedConspectus!.asAuthor != nil {
-                AuthorHeader(conspectus: vm.selectedConspectus!)
+            } else if vm.selectedConspectus!.asUser != nil {
+                UserHeader(conspectus: vm.selectedConspectus!, onClosed: vm.close)
                     .background(Color.F.black)
 
-                ValidationStatusBoard(conspectus: vm.selectedConspectus!)
-                    .frame(height: 30)
+                ValidationInfoBoard(conspectus: vm.selectedConspectus!)
                     .zIndex(1)
 
                 ScrollView(.vertical, showsIndicators: true) {
-                    VStack(alignment: .leading, spacing: 21) {
-                        Spacer()
-                            .frame(height: 20)
+                    VStack(alignment: .leading, spacing: 15) {
+                        StoreInfoBoard(conspectus: vm.selectedConspectus!)
+                        BooksPanel(conspectus: vm.selectedConspectus!, title: "AUFSÄTZE")
 
+                    }.padding(.leading, 15)
+                        .padding(.top, 3)
+                }
+                .offset(x: 0, y: -validationInfoBoardHeight)
+
+                Spacer()
+                    .frame(height: -validationInfoBoardHeight)
+
+            } else if vm.selectedConspectus!.asAuthor != nil {
+                AuthorHeader(conspectus: vm.selectedConspectus!, onClosed: vm.close)
+                    .background(Color.F.black)
+
+                ValidationInfoBoard(conspectus: vm.selectedConspectus!)
+                    .zIndex(1)
+
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: 15) {
+                        StoreInfoBoard(conspectus: vm.selectedConspectus!)
                         InfoPanel(conspectus: vm.selectedConspectus!)
                         BooksPanel(conspectus: vm.selectedConspectus!)
+                    }.padding(.leading, 15)
+                        .padding(.top, 3)
+                }
+                .offset(x: 0, y: -validationInfoBoardHeight)
+
+                Spacer()
+                    .frame(height: -validationInfoBoardHeight)
+            }
+            
+            else if vm.selectedConspectus!.asBook != nil {
+                BookHeader(conspectus: vm.selectedConspectus!, onClosed: vm.close)
+                    .background(Color.F.black)
+
+                ValidationInfoBoard(conspectus: vm.selectedConspectus!)
+                    .zIndex(1)
+
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: 15) {
+                        StoreInfoBoard(conspectus: vm.selectedConspectus!)
+                        BookInfoPanel(conspectus: vm.selectedConspectus!)
 
                         // QuoteCell(quote: vm.quote, isEditing: true)
 
-                    }.padding(.leading, 20)
+                    }.padding(.leading, 15)
+                        .padding(.top, 3)
                 }
-                .offset(x: 0, y: -30)
+                .offset(x: 0, y: -validationInfoBoardHeight)
 
                 Spacer()
-                    .frame(height: -30)
+                    .frame(height: -validationInfoBoardHeight)
             }
         }
         .background(Color.F.white)
@@ -48,20 +87,21 @@ struct DocView: View {
     }
 }
 
-struct ValidationStatusBoard: View {
+struct ValidationInfoBoard: View {
     @ObservedObject var conspectus: Conspectus
 
     init(conspectus: Conspectus) {
         self.conspectus = conspectus
-        print("ValidationStatusBoard init, author: \(conspectus.id)")
+        print("ValidationInfoBoard init, id: \(conspectus.id)")
     }
 
     var body: some View {
-        VStack(alignment: .center) {
+        VStack(alignment: .center, spacing: 0) {
             if conspectus.validationStatus == .ok {
                 Color(conspectus.genus)
                     .frame(width: 30, height: 10)
                     .offset(y: 0)
+                
                 Spacer()
             } else {
                 Text(conspectus.validationStatus.rawValue)
@@ -69,10 +109,43 @@ struct ValidationStatusBoard: View {
                     .font(Font.custom(.pragmatica, size: 21))
                     .foregroundColor(Color.F.white)
                     .padding(.leading, 0)
-                    .frame(width: 1000, height: 30)
+                    .frame(width: 600, height: 30)
                     .background(Color.F.invalid)
             }
-        }
+        }.frame(height: 30)
+    }
+}
+
+struct StoreInfoBoard: View {
+    @ObservedObject var conspectus: Conspectus
+    private let isUser: Bool
+
+    init(conspectus: Conspectus) {
+        self.conspectus = conspectus
+        isUser = conspectus.genus == .asUser
+        print("StoreInfoBoard init, id: \(conspectus.id)")
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 0) {
+            SelectableText(text: "Entfernen", color: Color.F.black05)
+                .font(Font.custom(.mono, size: 13))
+                .padding(.leading, 0)
+                .padding(.top, 0)
+                .frame(width: 200, alignment: .leading)
+                .opacity(conspectus.isEditing && !isUser ? 1 : 0)
+
+            Spacer().frame(height: 30)
+
+            Text("Erstellt: \(conspectus.createdDate)\nGeändert: \(conspectus.changedDate)")
+                .lineLimit(2)
+                .font(Font.custom(.mono, size: 13))
+                .foregroundColor(Color.F.black05)
+                .frame(width: 200, alignment: .trailing)
+                .padding(.trailing, 0)
+                .frame(width: 200)
+        }.frame(height: 30)
+            .padding(.leading, 0)
     }
 }
 
@@ -88,6 +161,7 @@ struct Section: View {
                     .font(Font.custom(.pragmaticaSemiBold, size: 21))
                     .foregroundColor(Color.F.black)
                     .padding(.leading, 0)
+                    .offset(y: 3)
 
                 Toggle("", isOn: self.$isExpanded)
                     .toggleStyle(CollapseToggleStyle())
@@ -100,71 +174,33 @@ struct Section: View {
     }
 }
 
-struct InfoPanel: View {
-    class Notifier: ObservableObject {
-        @Published var info = ""
-    }
 
-    @ObservedObject private var notifier = Notifier()
-    @ObservedObject var conspectus: Conspectus
-    @State private var isExpanded: Bool = true
-
-    private let font = NSFont(name: .pragmaticaLight, size: 21)
-    private var disposeBag: Set<AnyCancellable> = []
-
-    init(conspectus: Conspectus) {
-        self.conspectus = conspectus
-
-        if let author = conspectus.asAuthor {
-            notifier.info = author.info
-            notifier.$info
-                .sink { value in
-                    author.info = value
-                }
-                .store(in: &disposeBag)
-        }
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Section(isExpanded: $isExpanded, title: "Info")
-                .frame(height: 20)
-
-            TextArea(text: $notifier.info, textColor: NSColor.F.black, font: font, isEditable: conspectus.isEditing)
-                .layoutPriority(-1)
-                .saturation(0)
-                .colorScheme(.light)
-                .padding(.leading, 40)
-                .padding(.trailing, 20)
-                // .padding(.vertical, 5)
-                .frame(height: TextArea.textHeightFrom(text: notifier.info, width: 925, font: font, isShown: isExpanded))
-                .opacity(isExpanded ? 1 : 0)
-        }
-    }
-}
 
 struct BooksPanel: View {
     @ObservedObject var conspectus: Conspectus
     @State private var isExpanded: Bool = true
 
     private let font = NSFont(name: .pragmaticaLight, size: 21)
+    private let title: String
     private var disposeBag: Set<AnyCancellable> = []
     private var books = ["1. Also sprach Zarathustra, 1885", "2. Der Antichrist, 1888", "3. Ecce Homo, 1888"]
 
-    init(conspectus: Conspectus) {
+    init(conspectus: Conspectus, title: String = "BÜCHER") {
         self.conspectus = conspectus
+        self.title = title
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Section(isExpanded: $isExpanded, title: "Books")
+            Section(isExpanded: $isExpanded, title: title)
                 .frame(height: 20)
 
             Spacer().frame(height: 10)
 
             ForEach(books, id: \.self) { book in
-                SelectableLink(text: book)
-                    .frame(height: 30)
+                SelectableText(text: book, color: Color.F.black)
+                    .frame(height: 35)
+                    .font(Font.custom(.pragmaticaLightItalics, size: 21))
             }.padding(.leading, 40)
                 .padding(.trailing, 20)
                 .frame(maxHeight: self.isExpanded ? nil : 0)
@@ -173,97 +209,17 @@ struct BooksPanel: View {
     }
 }
 
-struct SelectableLink: View {
+struct SelectableText: View {
     @State private var hover = false
     let text: String
+    let color: Color
 
     var body: some View {
         Text(text)
-            .underline(hover, color: Color.F.black)
+            .underline(hover, color: color)
             .lineLimit(1)
-            .font(Font.custom(.pragmaticaLightItalics, size: 21))
-            .foregroundColor(Color.F.black)
-            .frame(height: 30)
-            .onHover { _ in self.hover.toggle() }
-    }
-}
-
-struct AuthorHeader: View {
-    enum AuthorHeaderInput {
-        case no
-        case name
-        case surname
-        case birthYear
-        case deathYear
-    }
-
-    @ObservedObject var author: Author
-    @ObservedObject var conspectus: Conspectus
-    @State private var focusedInput: AuthorHeaderInput = .no
-
-    init(conspectus: Conspectus) {
-        self.conspectus = conspectus
-        author = conspectus.asAuthor!
-        author = author
-        if conspectus.isEditing {
-            focusedInput = .name
-        }
-        print("AuthorHeader init, author: \(author.id), has changes: \(author.hasChanges)")
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .lastTextBaseline, spacing: 10) {
-                Button("") {
-                    print("button pressed!")
-                }.buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.white))
-
-                Spacer().frame(width: 10)
-
-                TextInput(title: "Vorname", text: $author.name, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 30), alignment: .right, isFocused: focusedInput == .name, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: { self.focusedInput = .surname })
-                    .saturation(0)
-
-                TextInput(title: "Nachname", text: $author.surname, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .left, isFocused: focusedInput == .surname, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: { self.focusedInput = .birthYear })
-                    .saturation(0)
-
-                Toggle("", isOn: $conspectus.isEditing)
-                    .toggleStyle(RoundToggleStyle(onColor: Color.F.author))
-            }
-            .offset(x: 0, y: 14)
-            .padding(.horizontal, 10)
-            .frame(height: 50)
-
-            HStack(alignment: .lastTextBaseline, spacing: 0) {
-                Image("changed")
-                    .renderingMode(.template)
-                    .allowsHitTesting(false)
-                    .foregroundColor(Color.F.white)
-                    .frame(width: 30, height: 30)
-                    .opacity(author.hasChanges ? 1 : 0)
-
-                Spacer()
-
-                TextInput(title: "geboren", text: $author.birthYear, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .right, isFocused: focusedInput == .birthYear, isSecure: false, format: "-?[0-9]{0,4}", isEditable: conspectus.isEditing, onEnterAction: { self.focusedInput = .deathYear })
-                    .saturation(0)
-                    .frame(width: 100)
-
-                Text("–")
-                    .font(Font.custom(.pragmaticaExtraLight, size: 16))
-                    .foregroundColor(Color.F.white)
-                    .frame(width: 10, alignment: .center)
-                    .opacity($author.deathYear.wrappedValue.count == 0 ? 0.25 : 1)
-
-                TextInput(title: "gestorben", text: $author.deathYear, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: focusedInput == .deathYear, isSecure: false, format: "-?[0-9]{0,4}", isEditable: conspectus.isEditing, onEnterAction: { self.focusedInput = .name })
-                    .saturation(0)
-                    .frame(width: 100)
-
-                Spacer()
-
-                Spacer().frame(width: 30, height: 30)
-            }
-            .padding(.horizontal, 10)
-            .frame(height: 50)
-        }
+            .foregroundColor(color)
+            .onHover { value in self.hover = value }
     }
 }
 
@@ -340,6 +296,7 @@ struct QuoteCell: View {
 
             TextArea(text: $quote.text, textColor: NSColor.F.black, font: QuoteCell.textFont, isEditable: self.isEditing)
                 .layoutPriority(-1)
+                .lineSpacing(5)
                 .padding(.horizontal, -4)
                 .frame(height: TextArea.textHeightFrom(text: quote.text, width: 925, font: QuoteCell.textFont, isShown: true))
 
@@ -348,7 +305,7 @@ struct QuoteCell: View {
             .padding(.leading, 40)
             .padding(.trailing, 20)
             .padding(.vertical, 5)
-            .background(Color.F.quoteBg)
+            .background(Color.F.quoteBG)
     }
 }
 

@@ -9,6 +9,7 @@
 import SwiftUI
 extension Color {
     public static let F = (black: Color(NSColor.F.black),
+                           black05: Color(NSColor.F.black05),
                            white: Color(NSColor.F.white),
                            dark: Color(NSColor.F.dark),
                            gray: Color(NSColor.F.gray),
@@ -17,19 +18,20 @@ extension Color {
                            book: Color(NSColor.F.book),
                            tag: Color(NSColor.F.tag),
                            quote: Color(NSColor.F.quote),
-                           quoteBg: Color(NSColor.F.quoteBg),
+                           quoteBG: Color(NSColor.F.quoteBG),
+                           inputBG: Color(NSColor.F.inputBG),
                            invalid: Color(NSColor.F.invalid))
 
     init(_ genus: ConspectusGenus) {
         switch genus {
+        case .asUser:
+            self.init(NSColor.F.author)
         case .asAuthor:
             self.init(NSColor.F.author)
         case .asBook:
             self.init(NSColor.F.book)
         case .asTag:
             self.init(NSColor.F.tag)
-        default:
-            self.init(NSColor.F.black)
         }
     }
 }
@@ -45,6 +47,7 @@ extension NSColor {
     }
 
     public static let F = (black: NSColor(rgb: 0, alpha: 1),
+                           black05: NSColor(rgb: 0, alpha: 0.5),
                            white: NSColor(rgb: 0xFFFFFF, alpha: 1),
                            dark: NSColor(rgb: 0x282A2C, alpha: 1),
                            gray: NSColor(rgb: 0xC6C7CE, alpha: 1),
@@ -53,6 +56,7 @@ extension NSColor {
                            book: NSColor(rgb: 0xAD3D6B, alpha: 1),
                            tag: NSColor(rgb: 0xAD903D, alpha: 1),
                            quote: NSColor(rgb: 0xAFAFAF, alpha: 1),
-                           quoteBg: NSColor(rgb: 0xF7F7F7, alpha: 1),
+                           quoteBG: NSColor(rgb: 0xF7F7F7, alpha: 1),
+                           inputBG: NSColor(rgb: 0xF7F7F7, alpha: 1),
                            invalid: NSColor(rgb: 0xDE1E5A, alpha: 1))
 }

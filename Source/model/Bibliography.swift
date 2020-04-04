@@ -12,7 +12,7 @@ import SwiftUI
 final class Bibliography: ObservableObject {
     private var dict: [UID: Conspectus] = [:]
 
-    var objectWillChange = PassthroughSubject<[Conspectus], Never>()
+    var objectWillChange = CurrentValueSubject<[Conspectus], Never>([])
 
     func has(_ id: UID) -> Bool {
         return dict[id] != nil

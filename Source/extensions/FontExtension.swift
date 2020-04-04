@@ -16,6 +16,7 @@ enum FontName: String {
     case pragmaticaExtraLight = "PragmaticaExtraLight-Reg"
     case pragmaticaSemiBold = "PragmaticaMedium"
     case pragmaticaBold = "PragmaticaBold-Reg"
+    case mono = "PTMono-Regular"
 }
 
 extension NSFont {
@@ -29,7 +30,7 @@ extension Font {
         Font.custom(name.rawValue, size: size)
     }
     
-    static func printAllFonts() {
+    static func printAllSystemFonts() {
         for family: String in NSFontManager.shared.availableFontFamilies {
             print("===\(family)===")
             for fontName: String in NSFontManager.shared.availableFonts {

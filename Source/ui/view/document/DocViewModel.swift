@@ -10,7 +10,7 @@ import Combine
 import SwiftUI
 
 final class DocViewModel: ViewModel {
-    @Published var selectedConspectus: Conspectus? = nil
+    @Published var selectedConspectus: Conspectus!
 
     @Published var info: String = "Moderne bezeichnet historisch einen Umbruch in zahlreichen Lebensbereichen gegenüber der Tradition, bedingt durch Industrielle Revolution, Aufklärung und Säkularisierung. In der Philosophiegeschichte fällt der Beginn der Moderne mit dem Skeptizismus der Vordenker der Aufklärung (Montaigne, Descartes, Spinoza) zusammen. 0123456789ÄÜÖßäüö"
 
@@ -19,8 +19,9 @@ final class DocViewModel: ViewModel {
     private var disposeBag: Set<AnyCancellable> = []
 
     init() {
+        logInfo(tag: .APP, msg: "DocViewModel init")
         model.$selectedConspectus
-
+            .removeDuplicates()
             .assign(to: \.selectedConspectus, on: self)
             .store(in: &disposeBag)
 
@@ -30,12 +31,15 @@ final class DocViewModel: ViewModel {
             .flatMap { conspectus in
                 conspectus.$isEditing
             }
-            .sink { value in
-                self.model.state = value ? .docEditing : .docView
-
+            .removeDuplicates()
+            .sink { _ in
                 let appDelegate = NSApplication.shared.delegate as! AppDelegate
                 appDelegate.window?.makeFirstResponder(nil)
 
             }.store(in: &disposeBag)
+    }
+    
+    func close() {
+        model.closeSelectedConspectus()
     }
 }

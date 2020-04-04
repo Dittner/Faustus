@@ -14,7 +14,7 @@ struct RootView: View {
 
     var body: some View {
         return ZStack {
-            if $vm.screen.wrappedValue == .login {
+            if vm.screen == .login {
                 BlurAppBG()
                     .frame(minWidth: 500, idealWidth: 500, maxWidth: 500, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)
 

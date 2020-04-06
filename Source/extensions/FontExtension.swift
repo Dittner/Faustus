@@ -22,7 +22,7 @@ enum FontName: String {
 extension NSFont {
     convenience init(name: FontName, size: CGFloat) {
         self.init(name: name.rawValue, size: size)!
-    }
+    }    
 }
 
 extension Font {

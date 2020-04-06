@@ -6,7 +6,8 @@
 //  Copyright © 2020 Alexander Dittner. All rights reserved.
 //
 
-import Foundation
+import Combine
+import SwiftUI
 
 enum ConspectusGenus: String {
     case asUser
@@ -16,14 +17,14 @@ enum ConspectusGenus: String {
 
     func create(id: UID) -> Storable? {
         switch self {
-        case .asAuthor:
-            return Author(id: id)
         case .asBook:
             return Book(id: id)
+        case .asTag:
+            return Tag(id: id)
+        case .asAuthor:
+            return Author(id: id)
         case .asUser:
             return User(id: id)
-        default:
-            return nil
         }
     }
 }
@@ -39,27 +40,32 @@ class Conspectus: ObservableObject, Equatable {
     let createdDate: String
     private(set) var changedDate: String
     let genus: ConspectusGenus
+    private(set) var isNew: Bool = false
 
     @Published var validationStatus: ValidationStatus = .ok
     @Published var isEditing: Bool = false
+    @Published var isRemoved: Bool = false
+    private var disposeBag: Set<AnyCancellable> = []
 
     init?(genus: ConspectusGenus, from url: URL) {
         guard let data = DocumentsStorage.readFile(from: url) else { return nil }
         do {
-            if let dict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]  {
+            if let dict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                 if let uid = dict["id"] as? UID {
                     id = uid
                     fileUrl = url
                     self.genus = genus
                     createdDate = dict["createdDate"] as? String ?? DateTimeUtils.localize(Date())
                     changedDate = dict["changedDate"] as? String ?? DateTimeUtils.localize(Date())
+                    isRemoved = dict["isRemoved"] as? Bool ?? false
                     content = genus.create(id: uid)!
                     content.deserialize(from: dict)
-                }else {
+                    subscribeToIsRemoved()
+                } else {
                     logErr(tag: .PARSING, msg: "Failed to read id from conspectus for a file \(url)")
                     return nil
                 }
-                
+
             } else {
                 logErr(tag: .PARSING, msg: "Failed to transform conspectus dict to [String: Any] for a file \(url)")
                 return nil
@@ -83,6 +89,15 @@ class Conspectus: ObservableObject, Equatable {
         fileUrl = DocumentsStorage.projectURL.appendingPathComponent(fileDir + "/" + id.description + ".faustus")
 
         isEditing = true
+        isNew = true
+        subscribeToIsRemoved()
+    }
+
+    func subscribeToIsRemoved() {
+        $isRemoved.dropFirst()
+            .removeDuplicates()
+            .sink { _ in self.content.didConspectusChange() }
+            .store(in: &disposeBag)
     }
 
     private static func genus2dir(_ genus: ConspectusGenus) -> StorageDirectory {
@@ -104,6 +119,7 @@ class Conspectus: ObservableObject, Equatable {
             changedDate = DateTimeUtils.localize(Date())
             updateDict["createdDate"] = createdDate
             updateDict["changedDate"] = changedDate
+            updateDict["isRemoved"] = isRemoved
 
             let data = try JSONSerialization.data(withJSONObject: updateDict, options: .fragmentsAllowed)
 
@@ -124,6 +140,7 @@ class Conspectus: ObservableObject, Equatable {
         validationStatus = content.validate()
         if validationStatus == .ok {
             if write(dict: content.serialize()) {
+                isNew = false
                 content.didStore()
                 return .stored
             } else {
@@ -131,6 +148,34 @@ class Conspectus: ObservableObject, Equatable {
             }
         } else {
             return .failed
+        }
+    }
+
+    func read(id: UID) -> Conspectus? {
+        AppModel.shared.bibliography.read(id)
+    }
+
+    func show() {
+        AppModel.shared.select(self)
+    }
+
+    func remove() {
+        isRemoved = true
+    }
+
+    func destroy() {
+    }
+
+    public var description: String {
+        switch genus {
+        case .asAuthor:
+            return "Conspectus.asAuthor <\(asAuthor!.name)>"
+        case .asTag:
+            return "Conspectus.asTag <\(asTag!.name)>"
+        case .asBook:
+            return "Conspectus.asBook <\(asBook!.title)>"
+        case .asUser:
+            return "Conspectus.asUser <\(asUser!.surname)>"
         }
     }
 }

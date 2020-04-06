@@ -73,7 +73,7 @@ struct LoginView: View {
 
             Text($vm.errorMsg.wrappedValue)
                 .frame(maxWidth: 250, maxHeight: 50)
-                .foregroundColor(Color.F.invalid)
+                .foregroundColor(Color.F.red)
                 .opacity($vm.errorMsg.wrappedValue != "" ? 1 : 0)
 
             Spacer()

@@ -10,46 +10,27 @@ import Combine
 import SwiftUI
 
 struct DocView: View {
-    @ObservedObject private var vm = DocViewModel()
+    @EnvironmentObject var vm: DocViewModel
+
     private let validationInfoBoardHeight: CGFloat = 30
 
     var body: some View {
         VStack(alignment: .center, spacing: 0) {
-            if vm.selectedConspectus == nil {
-                Color.F.black.frame(height: 100)
-                Color.F.white
-            } else if vm.selectedConspectus!.asUser != nil {
-                UserHeader(conspectus: vm.selectedConspectus!, onClosed: vm.close)
-                    .background(Color.F.black)
+            //
+            // USER
+            //
 
-                ValidationInfoBoard(conspectus: vm.selectedConspectus!)
+            if vm.selectedConspectus.asUser != nil {
+                UserHeader(conspectus: vm.selectedConspectus, onClosed: vm.close)
+
+                StatusBoard(conspectus: vm.selectedConspectus)
                     .zIndex(1)
 
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 15) {
-                        StoreInfoBoard(conspectus: vm.selectedConspectus!)
-                        BooksPanel(conspectus: vm.selectedConspectus!, title: "AUFSÄTZE")
+                        StoreStateBoard(conspectus: vm.selectedConspectus)
+                        BooksPanel(conspectus: vm.selectedConspectus, title: "AUFSÄTZE")
 
-                    }.padding(.leading, 15)
-                        .padding(.top, 3)
-                }
-                .offset(x: 0, y: -validationInfoBoardHeight)
-
-                Spacer()
-                    .frame(height: -validationInfoBoardHeight)
-
-            } else if vm.selectedConspectus!.asAuthor != nil {
-                AuthorHeader(conspectus: vm.selectedConspectus!, onClosed: vm.close)
-                    .background(Color.F.black)
-
-                ValidationInfoBoard(conspectus: vm.selectedConspectus!)
-                    .zIndex(1)
-
-                ScrollView(.vertical, showsIndicators: true) {
-                    VStack(alignment: .leading, spacing: 15) {
-                        StoreInfoBoard(conspectus: vm.selectedConspectus!)
-                        InfoPanel(conspectus: vm.selectedConspectus!)
-                        BooksPanel(conspectus: vm.selectedConspectus!)
                     }.padding(.leading, 15)
                         .padding(.top, 3)
                 }
@@ -58,20 +39,72 @@ struct DocView: View {
                 Spacer()
                     .frame(height: -validationInfoBoardHeight)
             }
-            
-            else if vm.selectedConspectus!.asBook != nil {
-                BookHeader(conspectus: vm.selectedConspectus!, onClosed: vm.close)
-                    .background(Color.F.black)
 
-                ValidationInfoBoard(conspectus: vm.selectedConspectus!)
+            //
+            // AUTHOR
+            //
+
+            else if vm.selectedConspectus.asAuthor != nil {
+                AuthorHeader(conspectus: vm.selectedConspectus, onClosed: vm.close)
+
+                StatusBoard(conspectus: vm.selectedConspectus)
                     .zIndex(1)
 
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 15) {
-                        StoreInfoBoard(conspectus: vm.selectedConspectus!)
-                        BookInfoPanel(conspectus: vm.selectedConspectus!)
+                        StoreStateBoard(conspectus: vm.selectedConspectus)
+                        InfoPanel(conspectus: vm.selectedConspectus)
+                        BooksPanel(conspectus: vm.selectedConspectus)
+                    }.padding(.leading, 15)
+                        .padding(.top, 3)
+                }
+                .offset(x: 0, y: -validationInfoBoardHeight)
+
+                Spacer()
+                    .frame(height: -validationInfoBoardHeight)
+            }
+
+            //
+            // BOOK
+            //
+
+            else if vm.selectedConspectus.asBook != nil {
+                BookHeader(conspectus: vm.selectedConspectus, onClosed: vm.close)
+
+                StatusBoard(conspectus: vm.selectedConspectus)
+                    .zIndex(1)
+
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: 15) {
+                        StoreStateBoard(conspectus: vm.selectedConspectus)
+                        BookInfoPanel(conspectus: vm.selectedConspectus)
 
                         // QuoteCell(quote: vm.quote, isEditing: true)
+
+                    }.padding(.leading, 15)
+                        .padding(.top, 3)
+                }
+                .offset(x: 0, y: -validationInfoBoardHeight)
+
+                Spacer()
+                    .frame(height: -validationInfoBoardHeight)
+            }
+
+            //
+            // TAG
+            //
+
+            else if vm.selectedConspectus.asTag != nil {
+                TagHeader(conspectus: vm.selectedConspectus, onClosed: vm.close)
+
+                StatusBoard(conspectus: vm.selectedConspectus)
+                    .zIndex(1)
+
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: 15) {
+                        StoreStateBoard(conspectus: vm.selectedConspectus)
+                        InfoPanel(conspectus: vm.selectedConspectus)
+                        ParentTag(conspectus: vm.selectedConspectus, tagTree: vm.tagTree)
 
                     }.padding(.leading, 15)
                         .padding(.top, 3)
@@ -87,7 +120,7 @@ struct DocView: View {
     }
 }
 
-struct ValidationInfoBoard: View {
+struct StatusBoard: View {
     @ObservedObject var conspectus: Conspectus
 
     init(conspectus: Conspectus) {
@@ -101,7 +134,7 @@ struct ValidationInfoBoard: View {
                 Color(conspectus.genus)
                     .frame(width: 30, height: 10)
                     .offset(y: 0)
-                
+
                 Spacer()
             } else {
                 Text(conspectus.validationStatus.rawValue)
@@ -110,14 +143,48 @@ struct ValidationInfoBoard: View {
                     .foregroundColor(Color.F.white)
                     .padding(.leading, 0)
                     .frame(width: 600, height: 30)
-                    .background(Color.F.invalid)
+                    .background(Color.F.red)
             }
         }.frame(height: 30)
     }
 }
 
-struct StoreInfoBoard: View {
+struct YesNoSheet: View {
+    enum YesNoResult: Int {
+        case yes
+        case no
+    }
+
+    let title: String
+    let action: (YesNoResult) -> Void
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 0) {
+            Button("", action: {
+                self.action(.yes)
+            }).buttonStyle(RedButtonStyle(title: "JA"))
+                .frame(width: 100, height: 50)
+
+            Text(title)
+                .lineLimit(1)
+                .font(Font.custom(.pragmaticaExtraLight, size: 28))
+                .foregroundColor(Color.F.white)
+                .frame(width: 800, height: 100)
+
+            Button("", action: {
+                self.action(.no)
+            }).buttonStyle(GreenButtonStyle(title: "NEIN"))
+                .frame(width: 100, height: 50)
+        }
+        .frame(width: 1000, height: 100)
+        .background(Color.F.dark)
+    }
+}
+
+struct StoreStateBoard: View {
+    @EnvironmentObject var vm: DocViewModel
     @ObservedObject var conspectus: Conspectus
+    @State private var showModal = false
     private let isUser: Bool
 
     init(conspectus: Conspectus) {
@@ -127,23 +194,48 @@ struct StoreInfoBoard: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 0) {
-            SelectableText(text: "Entfernen", color: Color.F.black05)
-                .font(Font.custom(.mono, size: 13))
-                .padding(.leading, 0)
-                .padding(.top, 0)
-                .frame(width: 200, alignment: .leading)
-                .opacity(conspectus.isEditing && !isUser ? 1 : 0)
+        HStack(alignment: .top, spacing: 15) {
+            if conspectus.isEditing || conspectus.isRemoved {
+                SelectableText(text: "Löschen", color: Color.F.black05)
+                    .font(Font.custom(.mono, size: 13))
+                    .padding(.leading, 0)
+                    .padding(.top, 0)
+                    .opacity(isUser ? 0 : 1)
+                    .onTapGesture {
+                        if self.conspectus.isRemoved {
+                            self.showModal = true
+                        } else {
+                            self.vm.removeSelectedConspectus()
+                        }
+                    }
+                    .sheet(isPresented: $showModal) {
+                        YesNoSheet(title: "Unwiderruflich löschen?", action: { result in
+                            if result == .yes {
+                                self.vm.removeSelectedConspectus()
+                            }
+                            self.showModal = false
+                        })
+                    }
+            }
 
-            Spacer().frame(height: 30)
+            if conspectus.isRemoved {
+                SelectableText(text: "Zurücklegen", color: Color.F.black05)
+                    .font(Font.custom(.mono, size: 13))
+                    .padding(.leading, 0)
+                    .padding(.top, 0)
+                    .onTapGesture {
+                        self.conspectus.isRemoved = false
+                    }
+            }
+
+            Spacer()
 
             Text("Erstellt: \(conspectus.createdDate)\nGeändert: \(conspectus.changedDate)")
                 .lineLimit(2)
                 .font(Font.custom(.mono, size: 13))
                 .foregroundColor(Color.F.black05)
-                .frame(width: 200, alignment: .trailing)
+                .frame(height: 30, alignment: .trailing)
                 .padding(.trailing, 0)
-                .frame(width: 200)
         }.frame(height: 30)
             .padding(.leading, 0)
     }
@@ -169,12 +261,10 @@ struct Section: View {
 
                 Separator(color: Color.F.black, width: .infinity)
                     .offset(y: 15)
-            }.frame(height: 20)
-        }
+            }
+        }.frame(height: 40)
     }
 }
-
-
 
 struct BooksPanel: View {
     @ObservedObject var conspectus: Conspectus
@@ -182,7 +272,6 @@ struct BooksPanel: View {
 
     private let font = NSFont(name: .pragmaticaLight, size: 21)
     private let title: String
-    private var disposeBag: Set<AnyCancellable> = []
     private var books = ["1. Also sprach Zarathustra, 1885", "2. Der Antichrist, 1888", "3. Ecce Homo, 1888"]
 
     init(conspectus: Conspectus, title: String = "BÜCHER") {
@@ -191,20 +280,17 @@ struct BooksPanel: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 5) {
             Section(isExpanded: $isExpanded, title: title)
-                .frame(height: 20)
 
-            Spacer().frame(height: 10)
-
-            ForEach(books, id: \.self) { book in
-                SelectableText(text: book, color: Color.F.black)
-                    .frame(height: 35)
-                    .font(Font.custom(.pragmaticaLightItalics, size: 21))
-            }.padding(.leading, 40)
-                .padding(.trailing, 20)
-                .frame(maxHeight: self.isExpanded ? nil : 0)
-                .opacity(isExpanded ? 1 : 0)
+            if isExpanded {
+                ForEach(books, id: \.self) { book in
+                    SelectableText(text: book, color: Color.F.black)
+                        .font(Font.custom(.pragmaticaLightItalics, size: 21))
+                }.padding(.leading, 40)
+                    .padding(.trailing, 20)
+                    .padding(.top, 0)
+            }
         }
     }
 }
@@ -252,7 +338,7 @@ struct EditableText: View {
                 .allowsHitTesting(isEditing)
 
             Separator(color: Color(textColor), width: .infinity)
-                .opacity(isEditing ? 1 : 0)
+                .opacity(isEditing ? 0.25 : 0)
         }
     }
 }

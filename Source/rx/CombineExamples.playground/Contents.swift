@@ -33,4 +33,8 @@ let initials = str.components(separatedBy: " ")
 
 print("substrings = \(initials)")
 
-
+var arr = ["Adam"]
+arr.append("Jonny")
+arr.append(contentsOf: ["Eva", "Silke"])
+arr += ["Smit", "Ditter"]
+print("arr = \(arr)")

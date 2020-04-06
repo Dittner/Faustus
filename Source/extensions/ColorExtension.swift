@@ -20,7 +20,8 @@ extension Color {
                            quote: Color(NSColor.F.quote),
                            quoteBG: Color(NSColor.F.quoteBG),
                            inputBG: Color(NSColor.F.inputBG),
-                           invalid: Color(NSColor.F.invalid))
+                           red: Color(NSColor.F.red),
+                           green: Color(NSColor.F.green))
 
     init(_ genus: ConspectusGenus) {
         switch genus {
@@ -33,6 +34,14 @@ extension Color {
         case .asTag:
             self.init(NSColor.F.tag)
         }
+    }
+
+    init(rgb: UInt) {
+        self.init(
+            red: Double((rgb & 0xFF0000) >> 16) / 255.0,
+            green: Double((rgb & 0x00FF00) >> 8) / 255.0,
+            blue: Double(rgb & 0x0000FF) / 255.0
+        )
     }
 }
 
@@ -58,5 +67,6 @@ extension NSColor {
                            quote: NSColor(rgb: 0xAFAFAF, alpha: 1),
                            quoteBG: NSColor(rgb: 0xF7F7F7, alpha: 1),
                            inputBG: NSColor(rgb: 0xF7F7F7, alpha: 1),
-                           invalid: NSColor(rgb: 0xDE1E5A, alpha: 1))
+                           red: NSColor(rgb: 0xba003a, alpha: 1),
+                           green: NSColor(rgb: 0x00774f, alpha: 1))
 }

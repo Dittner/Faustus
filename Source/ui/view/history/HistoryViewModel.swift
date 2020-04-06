@@ -21,15 +21,8 @@ final class HistoryViewModel: ViewModel {
             .store(in: &disposeBag)
     }
 
-    func createAuthor() {
-        model.createAuthor()
-    }
-
-    func createBook() {
-        model.createBook()
-    }
-
-    func createTag() {
+    func createConspectus(_ genus: ConspectusGenus) {
+        model.createConspectus(genus)
     }
 
     func select(conspectus: Conspectus) {

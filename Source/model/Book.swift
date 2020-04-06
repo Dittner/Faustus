@@ -54,12 +54,15 @@ class Book: ObservableObject, Storable {
     func didStore() {
         hasChanges = false
     }
+    
+    func didConspectusChange() {
+        hasChanges = true
+    }
 
     func validate() -> ValidationStatus {
         if title.isEmpty { return .emptyBookTitle }
         if writtenDate.isEmpty { return .emptyWrittenYear }
-        if writtenDate.isEmpty { return .emptyWrittenYear }
-        if author.isEmpty { return .emptyBookAuthor }
+        if author.isEmpty && authorID == nil { return .emptyBookAuthor }
         return .ok
     }
 
@@ -74,7 +77,7 @@ class Book: ObservableObject, Storable {
                                    "publisher": publisher,
                                    "place": place,
                                    "info": info,
-                                   "author": author,
+                                   "author": author
         ]
 
         if let authorID = authorID {

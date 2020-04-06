@@ -18,11 +18,15 @@ final class Bibliography: ObservableObject {
         return dict[id] != nil
     }
 
-    func add(_ c: Conspectus) {
+    func write(_ c: Conspectus) {
         if !has(c.id) {
             dict[c.id] = c
             objectWillChange.send(getValues())
         }
+    }
+
+    func read(_ id: UID) -> Conspectus? {
+        return dict[id]
     }
 
     func remove(_ c: Conspectus) {

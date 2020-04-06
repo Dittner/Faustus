@@ -9,6 +9,7 @@
 import Foundation
 protocol Storable {
     func hasChangesToStore() -> Bool
+    func didConspectusChange()
     func didStore()
     func validate() -> ValidationStatus
     func serialize() -> [String: Any]
@@ -20,7 +21,7 @@ enum ValidationStatus: String {
     case ok
     case emptyName = "Das Feld Name ist nicht gefüllt"
     case emptyPassword = "Das Feld Schlüssel ist nicht gefüllt"
-    case invalidUserPwdOrName = "Name oder Schlüssel ist ungültig"
+    case invalidUserPwd = "Schlüssel ist ungültig"
     case emptyBirthYear = "Das Feld Geboren ist nicht gefüllt"
     case lifeIsTooLong = "Die Lebensdauer ist zu lang"
     case emptyBookTitle = "Das Feld Titel ist nicht gefüllt"

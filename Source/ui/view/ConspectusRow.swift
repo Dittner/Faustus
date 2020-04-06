@@ -17,6 +17,7 @@ struct ConspectusRow: View {
         @Published var subTitle: String = ""
     }
 
+    @ObservedObject private var conspectus: Conspectus
     @ObservedObject private var notifier = Notifier()
 
     private let font = NSFont(name: .pragmaticaLight, size: 21)
@@ -27,12 +28,13 @@ struct ConspectusRow: View {
 
     init(action: @escaping () -> Void, conspectus: Conspectus) {
         selectAction = action
-        print("AuthorRow init with \(conspectus.genus)")
+        self.conspectus = conspectus
+        // print("ConspectusRow init with \(conspectus.genus)")
 
         if let author = conspectus.asAuthor {
             textColor = Color.F.gray
             genusColor = Color.F.author
-            iconName = "smallAuthor"
+            iconName = "author"
             Publishers.CombineLatest(author.$surname, author.$initials)
                 .map { surname, initials in
                     "\(surname) \(initials)"
@@ -46,7 +48,7 @@ struct ConspectusRow: View {
         } else if let user = conspectus.asUser {
             textColor = Color.F.gray
             genusColor = Color.F.white
-            iconName = "smallAuthor"
+            iconName = "user"
             Publishers.CombineLatest(user.$surname, user.$initials)
                 .map { surname, initials in
                     "\(surname) \(initials)"
@@ -56,23 +58,30 @@ struct ConspectusRow: View {
         } else if let book = conspectus.asBook {
             textColor = Color.F.gray
             genusColor = Color.F.book
-            iconName = "smallBook"
-            
+            iconName = "book"
+
             book.$title
-            .assign(to: \.title, on: notifier)
-            .store(in: &disposeBag)
-            
+                .assign(to: \.title, on: notifier)
+                .store(in: &disposeBag)
+
             Publishers.CombineLatest(book.$writtenDate, book.$author)
                 .map { writtenDate, author in
                     "\(writtenDate), \(author)"
                 }
                 .assign(to: \.subTitle, on: notifier)
                 .store(in: &disposeBag)
-        }
-        else {
+        } else if let tag = conspectus.asTag {
+            textColor = Color.F.gray
+            genusColor = Color.F.tag
+            iconName = "tag"
+
+            tag.$name
+                .assign(to: \.title, on: notifier)
+                .store(in: &disposeBag)
+        } else {
             textColor = Color.F.gray
             genusColor = Color.F.gray
-            iconName = "smallQuote"
+            iconName = "quote"
         }
     }
 
@@ -92,6 +101,8 @@ struct ConspectusRow: View {
                     .renderingMode(.template)
                     .allowsHitTesting(false)
                     .frame(width: 50, height: 50)
+                    .opacity(0.4)
+                    .scaleEffect(0.8)
                     .offset(x: 0, y: 0)
 
                 Text(self.notifier.title)
@@ -109,6 +120,15 @@ struct ConspectusRow: View {
                     .frame(minWidth: 100, idealWidth: 500, maxWidth: .infinity, minHeight: 30, idealHeight: 50, maxHeight: 50, alignment: .topLeading)
                     .offset(x: 50, y: 28)
                     .frame(width: geometry.size.width - 50, height: 50)
+
+                if self.conspectus.isRemoved {
+                    Image("remove")
+                        .renderingMode(.template)
+                        .allowsHitTesting(false)
+                        .opacity(1)
+                        .scaleEffect(0.8)
+                        .offset(x: geometry.size.width - 30, y: 15)
+                }
             }
             .foregroundColor(self.textColor)
         }

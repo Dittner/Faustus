@@ -13,7 +13,6 @@ import SwiftUI
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var window: NSWindow?
-    var textFocus = TextFocus()
     private var disposeBag: Set<AnyCancellable> = []
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
@@ -33,7 +32,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered, defer: false)
 
-        mainWindow.contentView = NSHostingView(rootView: RootView().environmentObject(textFocus))
+        mainWindow.contentView = NSHostingView(rootView: RootView()
+            .environmentObject(TextFocus())
+            .environmentObject(DocViewModel()))
         mainWindow.makeKeyAndOrderFront(nil)
         mainWindow.titlebarAppearsTransparent = true
         mainWindow.isMovableByWindowBackground = true
@@ -71,6 +72,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     @IBAction func menuSave(_ sender: Any) {
-        _ = AppModel.shared.selectedConspectus?.store()
+        _ = AppModel.shared.selectedConspectus.store()
     }
 }

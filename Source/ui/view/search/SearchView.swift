@@ -60,7 +60,7 @@ struct FilterTabBar: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 1) {
-            Image("smallAuthor")
+            Image("author")
                 .renderingMode(.template)
                 .frame(width: 50, height: 30)
                 .foregroundColor(self.selectedFilter == .authors ? Color.F.dark : Color.F.gray)
@@ -69,7 +69,7 @@ struct FilterTabBar: View {
                     self.selectedFilter = .authors
                 }
 
-            Image("smallBook")
+            Image("book")
                 .renderingMode(.template)
                 .frame(width: 50, height: 30)
                 .foregroundColor(self.selectedFilter == .books ? Color.F.dark : Color.F.gray)
@@ -78,7 +78,7 @@ struct FilterTabBar: View {
                     self.selectedFilter = .books
                 }
 
-            Image("smallTag")
+            Image("tag")
                 .renderingMode(.template)
                 .frame(width: 50, height: 30)
                 .foregroundColor(self.selectedFilter == .tags ? Color.F.dark : Color.F.gray)
@@ -87,13 +87,22 @@ struct FilterTabBar: View {
                     self.selectedFilter = .tags
                 }
 
-            Image("smallQuote")
+            Image("quote")
                 .renderingMode(.template)
                 .frame(width: 50, height: 30)
                 .foregroundColor(self.selectedFilter == .quotes ? Color.F.dark : Color.F.gray)
                 .background(self.selectedFilter == .quotes ? Color.F.gray : Color.F.dark)
                 .onTapGesture {
                     self.selectedFilter = .quotes
+                }
+
+            Image("remove")
+                .renderingMode(.template)
+                .frame(width: 50, height: 30)
+                .foregroundColor(self.selectedFilter == .removed ? Color.F.dark : Color.F.gray)
+                .background(self.selectedFilter == .removed ? Color.F.gray : Color.F.dark)
+                .onTapGesture {
+                    self.selectedFilter = .removed
                 }
         }
     }

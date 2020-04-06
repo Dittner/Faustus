@@ -18,14 +18,14 @@ struct DemoView: View {
                     // change country setting
                 }) {
                     Text("Choose Author")
-                    Image("smallAuthorIcon")
+                    Image("author")
                 }
 
                 Button(action: {
                     // enable geolocation
                 }) {
                     Text("Detect Location")
-                    Image("smallBookIcon")
+                    Image("book")
                 }
             }
     }

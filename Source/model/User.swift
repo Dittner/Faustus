@@ -68,6 +68,10 @@ class User: Storable, ObservableObject {
     func didStore() {
         hasChanges = false
     }
+    
+    func didConspectusChange() {
+        hasChanges = true
+    }
 
     func validate() -> ValidationStatus {
         if name.isEmpty || surname.isEmpty {
@@ -75,7 +79,7 @@ class User: Storable, ObservableObject {
         } else if pwd.isEmpty {
             return .emptyPassword
         } else if !encryptedPwd.isEmpty && encryptedPwd != encryptPwd() {
-            return .invalidUserPwdOrName
+            return .invalidUserPwd
         } else {
             return .ok
         }

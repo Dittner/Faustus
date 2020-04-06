@@ -119,10 +119,10 @@ struct CreateButtonStyle: ButtonStyle {
             RoundedRectangle(cornerRadius: 0)
                 .foregroundColor(configuration.isPressed ? Color.F.black : Color.F.white)
 
-            Image("smallPlus")
+            Image("plus")
                 .renderingMode(.template)
                 .foregroundColor(configuration.isPressed ? Color.F.white : Color.F.black)
-                .offset(x: -14, y: 0)
+                .offset(x: -10, y: 0)
 
             Image(iconName)
                 .renderingMode(.template)
@@ -132,6 +132,35 @@ struct CreateButtonStyle: ButtonStyle {
         }.frame(width: width, height: height)
     }
 }
+
+struct GreenButtonStyle: ButtonStyle {
+    let title:String
+    func makeBody(configuration: Self.Configuration) -> some View {
+        return ZStack(alignment: .center) {
+            RoundedRectangle(cornerRadius: 2)
+                .foregroundColor(configuration.isPressed ? Color.F.green.opacity(0.8) : Color.F.green)
+
+            Text(title)
+                .font(Font.custom(.pragmatica, size: 18))
+                .foregroundColor(Color.F.white)
+        }
+    }
+}
+
+struct RedButtonStyle: ButtonStyle {
+    let title:String
+    func makeBody(configuration: Self.Configuration) -> some View {
+        return ZStack(alignment: .center) {
+            RoundedRectangle(cornerRadius: 2)
+                .foregroundColor(configuration.isPressed ? Color.F.red.opacity(0.8) : Color.F.red)
+
+            Text(title)
+                .font(Font.custom(.pragmatica, size: 18))
+                .foregroundColor(Color.F.white)
+        }
+    }
+}
+
 
 #if DEBUG
     struct Buttons_Previews: PreviewProvider {

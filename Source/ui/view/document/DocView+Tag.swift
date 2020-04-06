@@ -1,0 +1,227 @@
+//
+//  DocView+Tag.swift
+//  Faustus
+//
+//  Created by Alexander Dittner on 05.04.2020.
+//  Copyright © 2020 Alexander Dittner. All rights reserved.
+//
+
+import Combine
+import SwiftUI
+
+struct ParentTag: View {
+    @ObservedObject var conspectus: Conspectus
+    @ObservedObject var curTag: Tag
+    let tagNodes: [TagTreeNode]
+    @State private var isExpanded: Bool = true
+    private var disposeBag: Set<AnyCancellable> = []
+
+    init(conspectus: Conspectus, tagTree: TagTree) {
+        self.conspectus = conspectus
+        curTag = conspectus.asTag!
+        tagNodes = tagTree.compactTree { $0.id != conspectus.id }
+    }
+
+    func hasParentTag() -> Bool {
+        curTag.parentTagID != nil && conspectus.read(id: curTag.parentTagID!) != nil
+    }
+
+    func getParentTag() -> Conspectus {
+        return conspectus.read(id: curTag.parentTagID!)!
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Section(isExpanded: $isExpanded, title: "SUPERTAG")
+
+            if isExpanded {
+                if conspectus.isEditing {
+                    ForEach(tagNodes, id: \.id) { node in
+                        TagTreeNodeLink(node: node, isEditing: true, isSelected: self.curTag.parentTagID == node.id, action: {
+                            action in
+                            if action == .edit {
+                                self.curTag.parentTagID = self.curTag.parentTagID == node.id ? nil : node.id
+                            }
+                        })
+                            .font(Font.custom(.pragmaticaLightItalics, size: 21))
+
+                    }.padding(.leading, 40)
+                        .padding(.trailing, 20)
+                } else if self.hasParentTag() {
+                    ConspectusLink(conspectus: self.getParentTag(), isEditing: false, isSelected: false, action: { action in
+                        if action == .navigate {
+                            self.getParentTag().show()
+                        }
+                    })
+                        .font(Font.custom(.pragmaticaLightItalics, size: 21))
+                        .padding(.leading, 40)
+                } else {
+                    Text("Kein")
+                        .font(Font.custom(.pragmatica, size: 21))
+                        .foregroundColor(Color.F.black)
+                        .padding(.leading, 40)
+                }
+            }
+        }
+    }
+}
+
+enum ConspectusLinkAction: Int {
+    case edit
+    case remove
+    case navigate
+}
+
+struct ConspectusLink: View {
+    @ObservedObject var conspectus: Conspectus
+    let name: String
+    let isEditing: Bool
+    let isSelected: Bool
+    let height: CGFloat = 30
+    let onLinkAction: ((ConspectusLinkAction) -> Void)?
+
+    init(conspectus: Conspectus, isEditing: Bool, isSelected: Bool, level: Int = 0, action: ((ConspectusLinkAction) -> Void)?) {
+        self.conspectus = conspectus
+        switch conspectus.genus {
+        case .asAuthor:
+            name = "\(conspectus.asAuthor!.surname) \(conspectus.asAuthor!.initials)"
+        case .asBook:
+            name = "\(conspectus.asBook!.title), \(conspectus.asBook!.author), \(conspectus.asBook!.writtenDate)"
+        case .asTag:
+            name = conspectus.asTag!.name
+        default:
+            name = "Unknown Conspectus genus"
+        }
+
+        self.isEditing = isEditing
+        self.isSelected = isSelected
+        onLinkAction = action
+    }
+
+    @State private var hover = false
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 0) {
+            if isEditing {
+                Text(name)
+                    .lineLimit(1)
+                    .padding(.horizontal, 5)
+                    .frame(height: height)
+                    .foregroundColor(self.isSelected ? Color.F.white : self.conspectus.isRemoved ? Color.F.red : Color.F.black)
+                    .background(self.isSelected ? Color.F.black : Color.F.white)
+                    .font(Font.custom(.pragmaticaLight, size: 21))
+                    .offset(x: -5, y: 0)
+                    .onTapGesture {
+                        self.onLinkAction?(.edit)
+                    }
+            } else {
+                Text(name)
+                    .underline(self.hover, color: Color.F.black)
+                    .lineLimit(1)
+                    .padding(.horizontal, 5)
+                    .frame(height: height)
+                    .foregroundColor(conspectus.isRemoved ? Color.F.red : Color.F.black)
+                    .background(Color.F.white)
+                    .font(Font.custom(.pragmaticaLightItalics, size: 21))
+                    .onHover { value in self.hover = value }
+                    .offset(x: -5, y: 0)
+                    .onTapGesture {
+                        self.onLinkAction?(.navigate)
+                    }
+            }
+        }
+    }
+}
+
+struct TagTreeNodeLink: View {
+    @ObservedObject var conspectus: Conspectus
+    private let node: TagTreeNode
+    let name: String
+    let isEditing: Bool
+    let isSelected: Bool
+    let levelOffset: CGFloat
+    let levelWidth: Int = 50
+    let height: CGFloat = 30
+    let onLinkAction: ((ConspectusLinkAction) -> Void)?
+
+    init(node: TagTreeNode, isEditing: Bool, isSelected: Bool, action: ((ConspectusLinkAction) -> Void)?) {
+        self.node = node
+        self.conspectus = node.conspectus
+        switch node.conspectus.genus {
+        case .asAuthor:
+            name = "\(node.conspectus.asAuthor!.surname) \(node.conspectus.asAuthor!.initials)"
+        case .asBook:
+            name = "\(node.conspectus.asBook!.title), \(node.conspectus.asBook!.author), \(node.conspectus.asBook!.writtenDate)"
+        case .asTag:
+            name = node.conspectus.asTag!.name
+        default:
+            name = "Unknown Conspectus genus"
+        }
+
+        self.isEditing = isEditing
+        self.isSelected = isSelected
+        levelOffset = CGFloat(node.level * levelWidth)
+        onLinkAction = action
+    }
+
+    @State private var hover = false
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 0) {
+            if isEditing {
+                TreeNodeLines(node: node, levelWidth: levelWidth)
+                    .stroke()
+                    .foregroundColor(Color.F.black)
+                    .opacity(0.25)
+                    .frame(width: levelOffset, height: height)
+
+                Text(name)
+                    .lineLimit(1)
+                    .padding(.horizontal, 5)
+                    .frame(height: height)
+                    .foregroundColor(self.isSelected ? Color.F.white : self.conspectus.isRemoved ? Color.F.red : Color.F.black)
+                    .background(self.isSelected ? Color.F.black : Color.F.white)
+                    .font(Font.custom(.pragmaticaLight, size: 21))
+                    .offset(x: -5, y: 0)
+                    .onTapGesture {
+                        self.onLinkAction?(.edit)
+                    }
+            } else {
+                Text(name)
+                    .underline(self.hover, color: Color.F.black)
+                    .lineLimit(1)
+                    .padding(.horizontal, 5)
+                    .frame(height: height)
+                    .foregroundColor(conspectus.isRemoved ? Color.F.red : Color.F.black)
+                    .background(Color.F.white)
+                    .font(Font.custom(.pragmaticaLightItalics, size: 21))
+                    .onHover { value in self.hover = value }
+                    .offset(x: -5, y: 0)
+                    .onTapGesture {
+                        self.onLinkAction?(.navigate)
+                    }
+            }
+        }
+    }
+}
+
+struct TreeNodeLines: Shape {
+    let node: TagTreeNode
+    let levelWidth: Int
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        if rect.width > 0 {
+            let linesAmount = Int(rect.width) / levelWidth
+
+            for i in 0 ... linesAmount {
+                path.move(to: CGPoint(x: i * levelWidth + levelWidth / 2, y: 0))
+                path.addLine(to: CGPoint(x: i * levelWidth + levelWidth / 2, y: Int(rect.height)))
+            }
+
+            path.move(to: CGPoint(x: Int(rect.width - CGFloat(levelWidth / 2)), y: Int(rect.height / 2)))
+            path.addLine(to: CGPoint(x: Int(rect.width - 2), y: Int(rect.height / 2)))
+        }
+
+        return path
+    }
+}

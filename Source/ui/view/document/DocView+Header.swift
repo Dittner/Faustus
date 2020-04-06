@@ -39,8 +39,12 @@ struct UserHeader: View {
                 TextInput(title: "Nachname", text: $user.surname, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .left, isFocused: textFocus.id == .headerAuthorSurname, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorName })
                     .saturation(0)
 
-                Toggle("", isOn: $conspectus.isEditing)
-                    .toggleStyle(RoundToggleStyle(onColor: Color(conspectus.genus)))
+                if conspectus.isRemoved {
+                    Spacer().frame(width: 50)
+                } else {
+                    Toggle("", isOn: $conspectus.isEditing)
+                        .toggleStyle(RoundToggleStyle(onColor: Color(conspectus.genus)))
+                }
             }
             .offset(x: 0, y: 14)
             .padding(.horizontal, 15)
@@ -58,7 +62,7 @@ struct UserHeader: View {
             }
             .padding(.horizontal, 15)
             .frame(height: 50)
-        }
+        }.background(Color.F.black)
     }
 }
 
@@ -78,6 +82,13 @@ struct AuthorHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            Text("Gelöscht am \(conspectus.changedDate)")
+                .lineLimit(1)
+                .font(Font.custom(.mono, size: 13))
+                .foregroundColor(Color.F.white)
+                .frame(width: 1000, height: 20)
+                .opacity(conspectus.isRemoved ? 1 : 0)
+
             HStack(alignment: .lastTextBaseline, spacing: 10) {
                 Button("") {
                     self.onClosedAction()
@@ -93,10 +104,12 @@ struct AuthorHeader: View {
 
                 Toggle("", isOn: $conspectus.isEditing)
                     .toggleStyle(RoundToggleStyle(onColor: Color(conspectus.genus)))
+                    .disabled(conspectus.isRemoved)
+                    .opacity(conspectus.isRemoved ? 0.5 : 1)
             }
-            .offset(x: 0, y: 14)
+            .offset(x: 0, y: 4)
             .padding(.horizontal, 15)
-            .frame(height: 50)
+            .frame(height: 30)
 
             HStack(alignment: .lastTextBaseline, spacing: 0) {
                 Image("changed")
@@ -128,7 +141,8 @@ struct AuthorHeader: View {
             }
             .padding(.horizontal, 15)
             .frame(height: 50)
-        }
+
+        }.background(conspectus.isRemoved ? Color.F.red : Color.F.black)
     }
 }
 
@@ -148,6 +162,13 @@ struct BookHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            Text("Gelöscht am \(conspectus.changedDate)")
+                .lineLimit(1)
+                .font(Font.custom(.mono, size: 13))
+                .foregroundColor(Color.F.white)
+                .frame(width: 1000, height: 20)
+                .opacity(conspectus.isRemoved ? 1 : 0)
+
             HStack(alignment: .lastTextBaseline, spacing: 10) {
                 Button("") {
                     self.onClosedAction()
@@ -155,15 +176,17 @@ struct BookHeader: View {
 
                 Spacer().frame(width: 10)
 
-                TextInput(title: "Titel", text: $book.title, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .center, isFocused: textFocus.id == .headerBookTitle, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerBookWritten  })
+                TextInput(title: "Titel", text: $book.title, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .center, isFocused: textFocus.id == .headerBookTitle, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerBookWritten })
                     .saturation(0)
 
                 Toggle("", isOn: $conspectus.isEditing)
                     .toggleStyle(RoundToggleStyle(onColor: Color(conspectus.genus)))
+                    .disabled(conspectus.isRemoved)
+                    .opacity(conspectus.isRemoved ? 0.5 : 1)
             }
-            .offset(x: 0, y: 14)
+            .offset(x: 0, y: 4)
             .padding(.horizontal, 15)
-            .frame(height: 50)
+            .frame(height: 30)
 
             HStack(alignment: .lastTextBaseline, spacing: 0) {
                 Image("changed")
@@ -175,7 +198,7 @@ struct BookHeader: View {
 
                 Spacer()
 
-                TextInput(title: "geschrieben", text: $book.writtenDate, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .right, isFocused: textFocus.id == .headerBookWritten, isSecure: false, format: "-?[0-9]{0,4}", isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerBookAuthor  })
+                TextInput(title: "geschrieben", text: $book.writtenDate, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .right, isFocused: textFocus.id == .headerBookWritten, isSecure: false, format: "-?[0-9]{0,4}", isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerBookAuthor })
                     .saturation(0)
                     .frame(width: 200)
 
@@ -185,7 +208,7 @@ struct BookHeader: View {
                     .frame(width: 10, alignment: .center)
                     .opacity($book.author.wrappedValue.count == 0 ? 0.25 : 1)
 
-                TextInput(title: "Author", text: $book.author, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerBookAuthor, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerBookTitle  })
+                TextInput(title: "Author", text: $book.author, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerBookAuthor, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerBookTitle })
                     .saturation(0)
                     .frame(width: 200)
 
@@ -195,6 +218,64 @@ struct BookHeader: View {
             }
             .padding(.horizontal, 15)
             .frame(height: 50)
-        }
+        }.background(conspectus.isRemoved ? Color.F.red : Color.F.black)
+    }
+}
+
+struct TagHeader: View {
+    @EnvironmentObject var textFocus: TextFocus
+    @ObservedObject var tag: Tag
+    @ObservedObject var conspectus: Conspectus
+    let onClosedAction: () -> Void
+
+    init(conspectus: Conspectus, onClosed: @escaping () -> Void) {
+        self.conspectus = conspectus
+        tag = conspectus.asTag!
+        onClosedAction = onClosed
+
+        print("TagHeader init, tag has changes: \(tag.hasChanges)")
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Gelöscht am \(conspectus.changedDate)")
+                .lineLimit(1)
+                .font(Font.custom(.mono, size: 13))
+                .foregroundColor(Color.F.white)
+                .frame(width: 1000, height: 20)
+                .opacity(conspectus.isRemoved ? 1 : 0)
+
+            HStack(alignment: .lastTextBaseline, spacing: 10) {
+                Button("") {
+                    self.onClosedAction()
+                }.buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.white))
+
+                Spacer().frame(width: 10)
+
+                TextInput(title: "Name", text: $tag.name, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .center, isFocused: false, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: nil)
+                    .saturation(0)
+
+                Toggle("", isOn: $conspectus.isEditing)
+                    .toggleStyle(RoundToggleStyle(onColor: Color(conspectus.genus)))
+                    .disabled(conspectus.isRemoved)
+                    .opacity(conspectus.isRemoved ? 0.5 : 1)
+            }
+            .offset(x: 0, y: 4)
+            .padding(.horizontal, 15)
+            .frame(height: 30)
+
+            HStack(alignment: .lastTextBaseline, spacing: 0) {
+                Image("changed")
+                    .renderingMode(.template)
+                    .allowsHitTesting(false)
+                    .foregroundColor(Color.F.white)
+                    .frame(width: 30, height: 30)
+                    .opacity(tag.hasChanges ? 1 : 0)
+
+                Spacer()
+            }
+            .padding(.horizontal, 15)
+            .frame(height: 50)
+        }.background(conspectus.isRemoved ? Color.F.red : Color.F.black)
     }
 }

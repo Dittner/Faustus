@@ -14,6 +14,22 @@ enum SearchFilter {
     case books
     case tags
     case quotes
+    case removed
+
+    func toGenus() -> ConspectusGenus? {
+        switch self {
+        case .authors:
+            return .asAuthor
+        case .books:
+            return .asBook
+        case .tags:
+            return .asTag
+        case .quotes:
+            return .asBook
+        case .removed:
+            return nil
+        }
+    }
 }
 
 final class SearchViewModel: ViewModel {
@@ -26,27 +42,41 @@ final class SearchViewModel: ViewModel {
     init() {
         logInfo(tag: .APP, msg: "SearchViewModel init")
 
-        Publishers.CombineLatest($selectedFilter, $filterText)
-            //.debounce(for: 0.2, scheduler: RunLoop.main)
-            .flatMap { filter, filterText -> CurrentValueSubject<[Conspectus], Never> in
-                print("filter: \(filter), filterText = \(filterText)")
-                switch filter {
-                case .authors: return self.model.authors.objectWillChange
-                case .books: return self.model.books.objectWillChange
-                case .tags: return self.model.tags.objectWillChange
-                default: return self.model.authors.objectWillChange
+        Publishers.CombineLatest3($selectedFilter, $filterText, model.bibliography.objectWillChange)
+            // .debounce(for: 0.2, scheduler: RunLoop.main)
+            .map { filter, _, conspectusList -> (SearchFilter, [Conspectus]) in
+                if filter == .removed {
+                    return (filter, conspectusList.filter { $0.isRemoved })
+                } else {
+                    return (filter, conspectusList.filter { !$0.isRemoved && $0.genus == filter.toGenus()! })
                 }
             }
-            .map { value in
-                value.sorted {
-                    if let a1 = $0.asAuthor, let a2 = $1.asAuthor {
-                        return a1.birthYear > a2.birthYear
-                    } else if let b1 = $0.asBook, let b2 = $1.asBook {
-                        return b1.writtenDate > b2.writtenDate
-                    } else {
-                        return $0.id > $1.id
+            .map { filter, conspectusList in
+                if filter == .authors {
+                    return conspectusList.sorted {
+                        $0.asAuthor!.birthYear > $1.asAuthor!.birthYear
                     }
                 }
+
+                if filter == .books {
+                    return conspectusList.sorted {
+                        $0.asBook!.writtenDate > $1.asBook!.writtenDate
+                    }
+                }
+
+                if filter == .tags {
+                    return conspectusList.sorted {
+                        $0.asTag!.name < $1.asTag!.name
+                    }
+                }
+                
+                if filter == .removed {
+                    return conspectusList.sorted {
+                        $0.changedDate < $1.changedDate
+                    }
+                }
+
+                return conspectusList
             }
             .assign(to: \.result, on: self)
             .store(in: &disposeBag)

@@ -12,7 +12,7 @@ import SwiftUI
 class Author: Storable, ObservableObject {
     let id: UID
 
-    @Published var info: String = "Keine Information"
+    @Published var info: String = "Keine"
     @Published var name: String = ""
     @Published var surname: String = ""
     @Published var birthYear: String = ""
@@ -65,6 +65,10 @@ class Author: Storable, ObservableObject {
 
     func didStore() {
         hasChanges = false
+    }
+    
+    func didConspectusChange() {
+        hasChanges = true
     }
 
     func validate() -> ValidationStatus {

@@ -14,12 +14,20 @@ enum AppScreen: String {
     case docList
 }
 
+enum ModalViewType: String {
+    case confirmDestroy
+    case no
+}
+
 final class RootViewModel: ViewModel {
     @Published var screen: AppScreen = .login
+    @Published var isModalViewShown: Bool = false
 
+    static var shared:RootViewModel?
     private var disposeBag: Set<AnyCancellable> = []
 
     init() {
+        RootViewModel.shared = self
         model.$state
             .removeDuplicates()
             .map { value in
@@ -27,5 +35,13 @@ final class RootViewModel: ViewModel {
             }
             .assign(to: \.screen, on: self)
             .store(in: &disposeBag)
+    }
+    
+    func showModalView(type: ModalViewType) {
+        isModalViewShown = true
+    }
+    
+    func removeSelectedConspectus() {
+        model.removeSelectedConspectus()
     }
 }

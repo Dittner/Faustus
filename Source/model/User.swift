@@ -9,7 +9,7 @@
 import Combine
 import Foundation
 
-class User: Storable, ObservableObject {
+class User: ConspectusContent, ObservableObject {
     let id: UID
 
     @Published var name: String = ""
@@ -69,7 +69,7 @@ class User: Storable, ObservableObject {
         hasChanges = false
     }
     
-    func didConspectusChange() {
+    func conspectusDidChange() {
         hasChanges = true
     }
 
@@ -95,6 +95,8 @@ class User: Storable, ObservableObject {
         encryptedPwd = dict["encryptedPwd"] as? String ?? ""
         hasChanges = false
     }
+    
+    func removeLinks(with conspectus:Conspectus) {}
 }
 
 extension Conspectus {

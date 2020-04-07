@@ -74,6 +74,10 @@ final class DocViewModel: ViewModel {
         model.select(conspectus)
     }
     
+    func showModalViewToConfirmDestroy() {
+        RootViewModel.shared?.showModalView(type: .confirmDestroy)
+    }
+    
     func removeSelectedConspectus() {
         model.removeSelectedConspectus()
     }

@@ -42,20 +42,28 @@ class DocumentsStorage {
     open class func readFile(from url: URL) -> Data? {
         do {
             return try Data(contentsOf: url)
-        }
-        catch {
+        } catch {
             logErr(tag: .IO, msg: "DocumentsStorage.readFile failed: \(error.localizedDescription)")
             return nil
         }
     }
 
-    open class func getContentOf(dir: StorageDirectory, filesWithExtension:String) -> [URL] {
+    open class func getContentOf(dir: StorageDirectory, filesWithExtension: String) -> [URL] {
         let dirPath = dir.rawValue
         do {
-            return try FileManager.default.contentsOfDirectory(at: projectURL.appendingPathComponent(dirPath), includingPropertiesForKeys: nil).filter{ $0.pathExtension == filesWithExtension }
+            return try FileManager.default.contentsOfDirectory(at: projectURL.appendingPathComponent(dirPath), includingPropertiesForKeys: nil).filter { $0.pathExtension == filesWithExtension }
         } catch {
             logErr(tag: .IO, msg: "DocumentsStorage.getContentOf dir: \(dir.rawValue) failed by invoke FileManager.default.contentsOfDirectory. Error: \(error.localizedDescription)")
             return []
+        }
+    }
+
+    open class func deleteFile(from url: URL) {
+        do {
+            try FileManager.default.trashItem(at: url, resultingItemURL: nil)
+            logInfo(tag: .IO, msg: "DocumentsStorage.deleteFile from url: \(url.description) has success")
+        } catch {
+            logErr(tag: .IO, msg: "DocumentsStorage.deleteFile failed: \(error.localizedDescription), with url: \(url.description)")
         }
     }
 }

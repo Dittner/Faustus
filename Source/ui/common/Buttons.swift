@@ -61,18 +61,31 @@ struct CollapseToggleStyle: ToggleStyle {
 
 struct RoundToggleStyle: ToggleStyle {
     var onColor: Color
+    var disabled: Bool = false
     let width: CGFloat = 50
     let height: CGFloat = 30
 
     func makeBody(configuration: Self.Configuration) -> some View {
         ZStack(alignment: .center) {
-            RoundedRectangle(cornerRadius: 2)
-                .foregroundColor(configuration.isOn ? onColor : Color.F.white)
+            if disabled {
+                RoundedRectangle(cornerRadius: 2)
+                    .stroke(lineWidth: 1)
+                    .foregroundColor(configuration.isOn ? onColor : Color.F.white)
 
-            Circle()
-                .fill(Color.F.black)
-                .frame(width: 25, height: 25)
-                .offset(x: configuration.isOn ? 10 : -10, y: 0)
+                Circle()
+                    .stroke(lineWidth: 1)
+                    .fill(Color.F.white)
+                    .frame(width: 25, height: 25)
+                    .offset(x: configuration.isOn ? 10 : -10, y: 0)
+            } else {
+                RoundedRectangle(cornerRadius: 2)
+                    .foregroundColor(configuration.isOn ? onColor : Color.F.white)
+
+                Circle()
+                    .fill(Color.F.black)
+                    .frame(width: 25, height: 25)
+                    .offset(x: configuration.isOn ? 10 : -10, y: 0)
+            }
         }
         .frame(width: width, height: height)
         .onTapGesture {
@@ -134,7 +147,7 @@ struct CreateButtonStyle: ButtonStyle {
 }
 
 struct GreenButtonStyle: ButtonStyle {
-    let title:String
+    let title: String
     func makeBody(configuration: Self.Configuration) -> some View {
         return ZStack(alignment: .center) {
             RoundedRectangle(cornerRadius: 2)
@@ -148,7 +161,7 @@ struct GreenButtonStyle: ButtonStyle {
 }
 
 struct RedButtonStyle: ButtonStyle {
-    let title:String
+    let title: String
     func makeBody(configuration: Self.Configuration) -> some View {
         return ZStack(alignment: .center) {
             RoundedRectangle(cornerRadius: 2)
@@ -160,7 +173,6 @@ struct RedButtonStyle: ButtonStyle {
         }
     }
 }
-
 
 #if DEBUG
     struct Buttons_Previews: PreviewProvider {

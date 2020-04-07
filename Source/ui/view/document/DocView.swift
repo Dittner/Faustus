@@ -32,7 +32,6 @@ struct DocView: View {
                         BooksPanel(conspectus: vm.selectedConspectus, title: "AUFSÄTZE")
 
                     }.padding(.leading, 15)
-                        .padding(.top, 3)
                 }
                 .offset(x: 0, y: -validationInfoBoardHeight)
 
@@ -56,7 +55,6 @@ struct DocView: View {
                         InfoPanel(conspectus: vm.selectedConspectus)
                         BooksPanel(conspectus: vm.selectedConspectus)
                     }.padding(.leading, 15)
-                        .padding(.top, 3)
                 }
                 .offset(x: 0, y: -validationInfoBoardHeight)
 
@@ -82,7 +80,6 @@ struct DocView: View {
                         // QuoteCell(quote: vm.quote, isEditing: true)
 
                     }.padding(.leading, 15)
-                        .padding(.top, 3)
                 }
                 .offset(x: 0, y: -validationInfoBoardHeight)
 
@@ -107,7 +104,6 @@ struct DocView: View {
                         ParentTag(conspectus: vm.selectedConspectus, tagTree: vm.tagTree)
 
                     }.padding(.leading, 15)
-                        .padding(.top, 3)
                 }
                 .offset(x: 0, y: -validationInfoBoardHeight)
 
@@ -149,42 +145,9 @@ struct StatusBoard: View {
     }
 }
 
-struct YesNoSheet: View {
-    enum YesNoResult: Int {
-        case yes
-        case no
-    }
-
-    let title: String
-    let action: (YesNoResult) -> Void
-
-    var body: some View {
-        HStack(alignment: .bottom, spacing: 0) {
-            Button("", action: {
-                self.action(.yes)
-            }).buttonStyle(RedButtonStyle(title: "JA"))
-                .frame(width: 100, height: 50)
-
-            Text(title)
-                .lineLimit(1)
-                .font(Font.custom(.pragmaticaExtraLight, size: 28))
-                .foregroundColor(Color.F.white)
-                .frame(width: 800, height: 100)
-
-            Button("", action: {
-                self.action(.no)
-            }).buttonStyle(GreenButtonStyle(title: "NEIN"))
-                .frame(width: 100, height: 50)
-        }
-        .frame(width: 1000, height: 100)
-        .background(Color.F.dark)
-    }
-}
-
 struct StoreStateBoard: View {
     @EnvironmentObject var vm: DocViewModel
     @ObservedObject var conspectus: Conspectus
-    @State private var showModal = false
     private let isUser: Bool
 
     init(conspectus: Conspectus) {
@@ -203,18 +166,10 @@ struct StoreStateBoard: View {
                     .opacity(isUser ? 0 : 1)
                     .onTapGesture {
                         if self.conspectus.isRemoved {
-                            self.showModal = true
+                            self.vm.showModalViewToConfirmDestroy()
                         } else {
                             self.vm.removeSelectedConspectus()
                         }
-                    }
-                    .sheet(isPresented: $showModal) {
-                        YesNoSheet(title: "Unwiderruflich löschen?", action: { result in
-                            if result == .yes {
-                                self.vm.removeSelectedConspectus()
-                            }
-                            self.showModal = false
-                        })
                     }
             }
 
@@ -230,13 +185,13 @@ struct StoreStateBoard: View {
 
             Spacer()
 
-            Text("Erstellt: \(conspectus.createdDate)\nGeändert: \(conspectus.changedDate)")
-                .lineLimit(2)
+            Text("\(conspectus.createdDate) / \(conspectus.changedDate)")
+                .lineLimit(1)
                 .font(Font.custom(.mono, size: 13))
                 .foregroundColor(Color.F.black05)
-                .frame(height: 30, alignment: .trailing)
+                .frame(alignment: .trailing)
                 .padding(.trailing, 0)
-        }.frame(height: 30)
+        }.frame(height: 20)
             .padding(.leading, 0)
     }
 }

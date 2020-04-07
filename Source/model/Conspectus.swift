@@ -15,7 +15,7 @@ enum ConspectusGenus: String {
     case asBook
     case asTag
 
-    func create(id: UID) -> Storable? {
+    func create(id: UID) -> ConspectusContent? {
         switch self {
         case .asBook:
             return Book(id: id)
@@ -36,7 +36,7 @@ class Conspectus: ObservableObject, Equatable {
 
     let id: UID
     let fileUrl: URL
-    let content: Storable
+    let content: ConspectusContent
     let createdDate: String
     private(set) var changedDate: String
     let genus: ConspectusGenus
@@ -96,7 +96,9 @@ class Conspectus: ObservableObject, Equatable {
     func subscribeToIsRemoved() {
         $isRemoved.dropFirst()
             .removeDuplicates()
-            .sink { _ in self.content.didConspectusChange() }
+            .sink { _ in
+                self.changedDate = DateTimeUtils.localize(Date())
+                self.content.conspectusDidChange() }
             .store(in: &disposeBag)
     }
 
@@ -164,6 +166,7 @@ class Conspectus: ObservableObject, Equatable {
     }
 
     func destroy() {
+        DocumentsStorage.deleteFile(from: fileUrl)
     }
 
     public var description: String {

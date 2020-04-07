@@ -57,7 +57,7 @@ struct ParentTag: View {
                         .padding(.leading, 40)
                 } else {
                     Text("Kein")
-                        .font(Font.custom(.pragmatica, size: 21))
+                        .font(Font.custom(.pragmaticaLight, size: 21))
                         .foregroundColor(Color.F.black)
                         .padding(.leading, 40)
                 }
@@ -108,7 +108,7 @@ struct ConspectusLink: View {
                     .padding(.horizontal, 5)
                     .frame(height: height)
                     .foregroundColor(self.isSelected ? Color.F.white : self.conspectus.isRemoved ? Color.F.red : Color.F.black)
-                    .background(self.isSelected ? Color.F.black : Color.F.white)
+                    .background(self.isSelected ? self.conspectus.isRemoved ? Color.F.red : Color.F.black : Color.F.white)
                     .font(Font.custom(.pragmaticaLight, size: 21))
                     .offset(x: -5, y: 0)
                     .onTapGesture {
@@ -180,7 +180,7 @@ struct TagTreeNodeLink: View {
                     .padding(.horizontal, 5)
                     .frame(height: height)
                     .foregroundColor(self.isSelected ? Color.F.white : self.conspectus.isRemoved ? Color.F.red : Color.F.black)
-                    .background(self.isSelected ? Color.F.black : Color.F.white)
+                    .background(self.isSelected ? self.conspectus.isRemoved ? Color.F.red : Color.F.black : Color.F.white)
                     .font(Font.custom(.pragmaticaLight, size: 21))
                     .offset(x: -5, y: 0)
                     .onTapGesture {

@@ -10,7 +10,7 @@ import Combine
 import Foundation
 import SwiftUI
 
-class Tag: ObservableObject, Storable {
+class Tag: ObservableObject, ConspectusContent {
     let id: UID
     @Published var name: String = ""
     @Published var info: String = "Keine"
@@ -48,7 +48,7 @@ class Tag: ObservableObject, Storable {
         hasChanges = false
     }
     
-    func didConspectusChange() {
+    func conspectusDidChange() {
         hasChanges = true
     }
 
@@ -74,6 +74,12 @@ class Tag: ObservableObject, Storable {
         info = dict["info"] as? String ?? ""
         parentTagID = dict["parentTagID"] as? UID
         hasChanges = false
+    }
+    
+    func removeLinks(with conspectus:Conspectus) {
+        if let parentID = parentTagID, let tag = conspectus.asTag, parentID == tag.id {
+            self.parentTagID = tag.parentTagID == nil ? nil : tag.parentTagID
+        }
     }
 }
 

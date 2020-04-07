@@ -149,7 +149,16 @@ class AppModel: ObservableObject {
         }
         else if selectedConspectus.isRemoved {
             logInfo(tag: .APP, msg: "Destroy conspectus, id: \(selectedConspectus.id)")
+            for conspectus in bibliography.getValues() {
+                conspectus.content.removeLinks(with: selectedConspectus)
+                if conspectus.content.hasChangesToStore() {
+                    _ = conspectus.store()
+                }
+            }
+            bibliography.remove(selectedConspectus)
+            recentOpened.removeFirst()
             selectedConspectus.destroy()
+            selectedConspectus = recentOpened[0]
         } else {
             logInfo(tag: .APP, msg: "Remove conspectus, id: \(selectedConspectus.id)")
             selectedConspectus.remove()

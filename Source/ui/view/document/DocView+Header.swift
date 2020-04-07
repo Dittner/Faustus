@@ -103,9 +103,8 @@ struct AuthorHeader: View {
                     .saturation(0)
 
                 Toggle("", isOn: $conspectus.isEditing)
-                    .toggleStyle(RoundToggleStyle(onColor: Color(conspectus.genus)))
+                    .toggleStyle(RoundToggleStyle(onColor: Color(conspectus.genus), disabled: conspectus.isRemoved))
                     .disabled(conspectus.isRemoved)
-                    .opacity(conspectus.isRemoved ? 0.5 : 1)
             }
             .offset(x: 0, y: 4)
             .padding(.horizontal, 15)
@@ -180,9 +179,8 @@ struct BookHeader: View {
                     .saturation(0)
 
                 Toggle("", isOn: $conspectus.isEditing)
-                    .toggleStyle(RoundToggleStyle(onColor: Color(conspectus.genus)))
+                    .toggleStyle(RoundToggleStyle(onColor: Color(conspectus.genus), disabled: conspectus.isRemoved))
                     .disabled(conspectus.isRemoved)
-                    .opacity(conspectus.isRemoved ? 0.5 : 1)
             }
             .offset(x: 0, y: 4)
             .padding(.horizontal, 15)
@@ -256,9 +254,8 @@ struct TagHeader: View {
                     .saturation(0)
 
                 Toggle("", isOn: $conspectus.isEditing)
-                    .toggleStyle(RoundToggleStyle(onColor: Color(conspectus.genus)))
+                    .toggleStyle(RoundToggleStyle(onColor: Color(conspectus.genus), disabled: conspectus.isRemoved))
                     .disabled(conspectus.isRemoved)
-                    .opacity(conspectus.isRemoved ? 0.5 : 1)
             }
             .offset(x: 0, y: 4)
             .padding(.horizontal, 15)

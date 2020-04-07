@@ -9,7 +9,7 @@
 import Combine
 import SwiftUI
 
-class Author: Storable, ObservableObject {
+class Author: ConspectusContent, ObservableObject {
     let id: UID
 
     @Published var info: String = "Keine"
@@ -67,7 +67,7 @@ class Author: Storable, ObservableObject {
         hasChanges = false
     }
     
-    func didConspectusChange() {
+    func conspectusDidChange() {
         hasChanges = true
     }
 
@@ -94,6 +94,10 @@ class Author: Storable, ObservableObject {
         deathYear = dict["deathYear"] as? String ?? ""
         info = dict["info"] as? String ?? ""
         hasChanges = false
+    }
+    
+    func removeLinks(with conspectus:Conspectus) {
+        
     }
 }
 

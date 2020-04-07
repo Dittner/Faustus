@@ -7,10 +7,11 @@
 //
 
 import Foundation
-protocol Storable {
+protocol ConspectusContent {
     func hasChangesToStore() -> Bool
-    func didConspectusChange()
+    func conspectusDidChange()
     func didStore()
+    func removeLinks(with conspectus:Conspectus)
     func validate() -> ValidationStatus
     func serialize() -> [String: Any]
     func deserialize(from dict: [String: Any])

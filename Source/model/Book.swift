@@ -106,6 +106,10 @@ class Book: ObservableObject, ConspectusContent {
             self.authorID = nil
         }
     }
+    
+    func getUniqueName() -> String {
+        return "book" + title + writtenDate
+    }
 }
 
 extension Conspectus {

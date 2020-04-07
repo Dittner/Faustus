@@ -35,28 +35,62 @@ struct RootView: View {
                     HistoryView()
                         .frame(minWidth: 250, idealWidth: panelsWidth, maxWidth: .infinity, minHeight: 800, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)
                 }.frame(minWidth: 1500, idealWidth: 1500, maxWidth: .infinity, minHeight: 900, idealHeight: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+                if vm.keyLinesShown {
+                    GeometryReader { geo in
+                        Separator(color: Color.F.debugLines, height: .infinity)
+                            .offset(x: 25, y: 0)
+
+                        Separator(color: Color.F.debugLines, height: .infinity)
+                            .offset(x: 50, y: 0)
+
+                        Separator(color: Color.F.debugLines, height: .infinity)
+                            .offset(x: geo.size.width / 2 - 530, y: 0)
+
+                        Separator(color: Color.F.debugLines, height: .infinity)
+                            .offset(x: geo.size.width / 2 - 515, y: 0)
+
+                        Separator(color: Color.F.debugLines, height: .infinity)
+                            .offset(x: geo.size.width / 2 - 485, y: 0)
+
+                        Separator(color: Color.F.debugLines, height: .infinity)
+                            .offset(x: geo.size.width / 2 - 445, y: 0)
+
+                        Separator(color: Color.F.debugLines, height: .infinity)
+                            .offset(x: geo.size.width / 2, y: 0)
+
+                        Separator(color: Color.F.debugLines, height: .infinity)
+                            .offset(x: geo.size.width / 2 + 485, y: 0)
+
+                        // horizontal
+
+                        Separator(color: Color.F.debugLines, width: .infinity)
+                            .offset(x: 0, y: 20)
+
+                        Separator(color: Color.F.debugLines, width: .infinity)
+                            .offset(x: 0, y: 50)
+
+                    }.opacity(0.5)
+                }
             }
 
             if vm.isModalViewShown {
-                ZStack(alignment: .center) {
-                    GeometryReader { _ in
-                        YesNoSheet(title: "Unwiderruflich löschen?", action: { result in
-                            if result == .yes {
-                                self.vm.removeSelectedConspectus()
-                            }
-                            self.vm.isModalViewShown = false
-                        })
-                    }
-
-                }.frame(minWidth: 1500, idealWidth: 1500, maxWidth: .infinity, minHeight: 900, idealHeight: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                    .background(Color.F.black.opacity(0.25))
+                GeometryReader { _ in
+                    DeleteConfirmation(title: "Unwiderruflich löschen?", action: { result in
+                        if result == .yes {
+                            self.vm.removeSelectedConspectus()
+                        }
+                        self.vm.isModalViewShown = false
+                    })
+                }
+                .background(Color.F.black.opacity(0.25))
             }
 
         }.edgesIgnoringSafeArea(.all)
     }
 }
 
-struct YesNoSheet: View {
+struct DeleteConfirmation: View {
     enum YesNoResult: Int {
         case yes
         case no
@@ -75,13 +109,13 @@ struct YesNoSheet: View {
 
             HStack(alignment: .bottom, spacing: 100) {
                 Button("", action: {
-                    self.action(.no)
-                }).buttonStyle(GreenButtonStyle(title: "NEIN"))
+                    self.action(.yes)
+                }).buttonStyle(RedButtonStyle(title: "JA"))
                     .frame(width: 100, height: 50)
 
                 Button("", action: {
-                    self.action(.yes)
-                }).buttonStyle(RedButtonStyle(title: "JA"))
+                    self.action(.no)
+                }).buttonStyle(GreenButtonStyle(title: "NEIN"))
                     .frame(width: 100, height: 50)
             }
         }

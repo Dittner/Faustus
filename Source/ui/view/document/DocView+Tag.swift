@@ -58,7 +58,7 @@ struct ParentTag: View {
                 } else {
                     Text("Kein")
                         .font(Font.custom(.pragmaticaLight, size: 21))
-                        .foregroundColor(Color.F.black)
+                        .foregroundColor(Color.F.black05)
                         .padding(.leading, 40)
                 }
             }

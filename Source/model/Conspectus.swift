@@ -37,6 +37,7 @@ class Conspectus: ObservableObject, Equatable {
     let id: UID
     let fileUrl: URL
     let content: ConspectusContent
+    var contentUniqueName: String
     let createdDate: String
     private(set) var changedDate: String
     let genus: ConspectusGenus
@@ -60,6 +61,7 @@ class Conspectus: ObservableObject, Equatable {
                     isRemoved = dict["isRemoved"] as? Bool ?? false
                     content = genus.create(id: uid)!
                     content.deserialize(from: dict)
+                    contentUniqueName = content.getUniqueName()
                     subscribeToIsRemoved()
                 } else {
                     logErr(tag: .PARSING, msg: "Failed to read id from conspectus for a file \(url)")
@@ -83,6 +85,7 @@ class Conspectus: ObservableObject, Equatable {
         createdDate = DateTimeUtils.localize(Date())
         changedDate = createdDate
         content = genus.create(id: id)!
+        contentUniqueName = ""
 
         let fileDir: String = Conspectus.genus2dir(genus).rawValue
 
@@ -98,7 +101,8 @@ class Conspectus: ObservableObject, Equatable {
             .removeDuplicates()
             .sink { _ in
                 self.changedDate = DateTimeUtils.localize(Date())
-                self.content.conspectusDidChange() }
+                self.content.conspectusDidChange()
+            }
             .store(in: &disposeBag)
     }
 
@@ -141,8 +145,12 @@ class Conspectus: ObservableObject, Equatable {
 
         validationStatus = content.validate()
         if validationStatus == .ok {
+            validationStatus = checkAreThereDuplicates()
+        }
+        if validationStatus == .ok {
             if write(dict: content.serialize()) {
                 isNew = false
+                updateContentUniqueName()
                 content.didStore()
                 return .stored
             } else {
@@ -150,6 +158,17 @@ class Conspectus: ObservableObject, Equatable {
             }
         } else {
             return .failed
+        }
+    }
+    
+    private func checkAreThereDuplicates() -> ValidationStatus {
+        return AppModel.shared.bibliography.hasDuplicate(of: self) ? .duplicate : .ok
+    }
+
+    private func updateContentUniqueName() {
+        if !contentUniqueName.isEmpty && contentUniqueName != content.getUniqueName() {
+            AppModel.shared.bibliography.update(self, oldUniqueName: contentUniqueName)
+            contentUniqueName = content.getUniqueName()
         }
     }
 

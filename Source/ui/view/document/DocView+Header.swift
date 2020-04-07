@@ -115,7 +115,7 @@ struct AuthorHeader: View {
                     .renderingMode(.template)
                     .allowsHitTesting(false)
                     .foregroundColor(Color.F.white)
-                    .frame(width: 30, height: 30)
+                    .frame(height: 30)
                     .opacity(author.hasChanges ? 1 : 0)
 
                 Spacer()
@@ -191,7 +191,7 @@ struct BookHeader: View {
                     .renderingMode(.template)
                     .allowsHitTesting(false)
                     .foregroundColor(Color.F.white)
-                    .frame(width: 30, height: 30)
+                    .frame(height: 30)
                     .opacity(book.hasChanges ? 1 : 0)
 
                 Spacer()
@@ -266,7 +266,7 @@ struct TagHeader: View {
                     .renderingMode(.template)
                     .allowsHitTesting(false)
                     .foregroundColor(Color.F.white)
-                    .frame(width: 30, height: 30)
+                    .frame(height: 30)
                     .opacity(tag.hasChanges ? 1 : 0)
 
                 Spacer()

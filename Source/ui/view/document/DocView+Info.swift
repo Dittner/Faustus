@@ -55,7 +55,7 @@ struct InfoPanel: View {
                     .layoutPriority(-1)
                     .saturation(0)
                     .colorScheme(.light)
-                    .padding(.leading, 38)
+                    .padding(.leading, 35)
                     .padding(.trailing, 20)
                     .background(conspectus.isEditing ? Color.F.inputBG : Color.F.white)
                     .frame(height: TextArea.textHeightFrom(text: notifier.info, width: 925, font: font, isShown: isExpanded))

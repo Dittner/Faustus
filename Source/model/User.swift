@@ -68,7 +68,7 @@ class User: ConspectusContent, ObservableObject {
     func didStore() {
         hasChanges = false
     }
-    
+
     func conspectusDidChange() {
         hasChanges = true
     }
@@ -95,8 +95,12 @@ class User: ConspectusContent, ObservableObject {
         encryptedPwd = dict["encryptedPwd"] as? String ?? ""
         hasChanges = false
     }
-    
-    func removeLinks(with conspectus:Conspectus) {}
+
+    func removeLinks(with conspectus: Conspectus) {}
+
+    func getUniqueName() -> String {
+        return "user" + name + surname
+    }
 }
 
 extension Conspectus {

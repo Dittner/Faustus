@@ -212,7 +212,7 @@ struct Section: View {
 
                 Toggle("", isOn: self.$isExpanded)
                     .toggleStyle(CollapseToggleStyle())
-                    .offset(x: geometry.size.width / 2 - 12)
+                    .offset(x: geometry.size.width / 2 - 10)
 
                 Separator(color: Color.F.black, width: .infinity)
                     .offset(y: 15)

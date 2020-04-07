@@ -47,7 +47,7 @@ class Tag: ObservableObject, ConspectusContent {
     func didStore() {
         hasChanges = false
     }
-    
+
     func conspectusDidChange() {
         hasChanges = true
     }
@@ -60,7 +60,7 @@ class Tag: ObservableObject, ConspectusContent {
     func serialize() -> [String: Any] {
         var dict: [String: Any] = ["id": id,
                                    "name": name,
-                                   "info": info
+                                   "info": info,
         ]
 
         if let superTagID = parentTagID {
@@ -75,11 +75,15 @@ class Tag: ObservableObject, ConspectusContent {
         parentTagID = dict["parentTagID"] as? UID
         hasChanges = false
     }
-    
-    func removeLinks(with conspectus:Conspectus) {
+
+    func removeLinks(with conspectus: Conspectus) {
         if let parentID = parentTagID, let tag = conspectus.asTag, parentID == tag.id {
-            self.parentTagID = tag.parentTagID == nil ? nil : tag.parentTagID
+            parentTagID = tag.parentTagID == nil ? nil : tag.parentTagID
         }
+    }
+
+    func getUniqueName() -> String {
+        return "tag" + name
     }
 }
 

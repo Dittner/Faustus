@@ -22,6 +22,7 @@ enum ModalViewType: String {
 final class RootViewModel: ViewModel {
     @Published var screen: AppScreen = .login
     @Published var isModalViewShown: Bool = false
+    @Published var keyLinesShown: Bool = false
 
     static var shared:RootViewModel?
     private var disposeBag: Set<AnyCancellable> = []

@@ -21,6 +21,7 @@ extension Color {
                            quoteBG: Color(NSColor.F.quoteBG),
                            inputBG: Color(NSColor.F.inputBG),
                            red: Color(NSColor.F.red),
+                           debugLines: Color(NSColor.F.debugLines),
                            green: Color(NSColor.F.green))
 
     init(_ genus: ConspectusGenus) {
@@ -68,5 +69,6 @@ extension NSColor {
                            quoteBG: NSColor(rgb: 0xF7F7F7, alpha: 1),
                            inputBG: NSColor(rgb: 0xF7F7F7, alpha: 1),
                            red: NSColor(rgb: 0xba003a, alpha: 1),
+                           debugLines: NSColor(rgb: 0x00c3ff, alpha: 1),
                            green: NSColor(rgb: 0x00774f, alpha: 1))
 }

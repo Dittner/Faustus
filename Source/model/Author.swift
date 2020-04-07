@@ -99,6 +99,10 @@ class Author: ConspectusContent, ObservableObject {
     func removeLinks(with conspectus:Conspectus) {
         
     }
+    
+    func getUniqueName() -> String {
+        return "author" + name + surname + birthYear
+    }
 }
 
 extension Conspectus {

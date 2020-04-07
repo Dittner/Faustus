@@ -15,6 +15,7 @@ protocol ConspectusContent {
     func validate() -> ValidationStatus
     func serialize() -> [String: Any]
     func deserialize(from dict: [String: Any])
+    func getUniqueName() -> String
     init(id: UID)
 }
 
@@ -30,6 +31,7 @@ enum ValidationStatus: String {
     case emptyWrittenYear = "Das Feld Geschrieben ist nicht gefüllt"
     case emptyQuote = "Der Text eines Zitates ist nicht gefüllt"
     case emptyPage = "Die Seitennummer eines Zitates ist nicht gefüllt"
+    case duplicate = "Ein Duplikat gefunden"
 }
 
 enum StoreResult: String {

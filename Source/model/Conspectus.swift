@@ -37,11 +37,12 @@ class Conspectus: ObservableObject, Equatable {
     let id: UID
     let fileUrl: URL
     let content: ConspectusContent
-    var contentUniqueName: String
+    var contentUniqueName: String = ""
     let createdDate: String
     private(set) var changedDate: String
     let genus: ConspectusGenus
     private(set) var isNew: Bool = false
+    private(set) var source: [String: Any]?
 
     @Published var validationStatus: ValidationStatus = .ok
     @Published var isEditing: Bool = false
@@ -60,8 +61,7 @@ class Conspectus: ObservableObject, Equatable {
                     changedDate = dict["changedDate"] as? String ?? DateTimeUtils.localize(Date())
                     isRemoved = dict["isRemoved"] as? Bool ?? false
                     content = genus.create(id: uid)!
-                    content.deserialize(from: dict)
-                    contentUniqueName = content.getUniqueName()
+                    source = dict
                     subscribeToIsRemoved()
                 } else {
                     logErr(tag: .PARSING, msg: "Failed to read id from conspectus for a file \(url)")
@@ -119,6 +119,13 @@ class Conspectus: ObservableObject, Equatable {
         }
     }
 
+    func deserialize(_ bibliography: Bibliography) {
+        if let src = source {
+            content.deserialize(from: src, bibliography: bibliography)
+            contentUniqueName = content.getUniqueName()
+        }
+    }
+
     private func write(dict: [String: Any]) -> Bool {
         do {
             var updateDict = dict
@@ -160,20 +167,16 @@ class Conspectus: ObservableObject, Equatable {
             return .failed
         }
     }
-    
+
     private func checkAreThereDuplicates() -> ValidationStatus {
         return AppModel.shared.bibliography.hasDuplicate(of: self) ? .duplicate : .ok
     }
 
     private func updateContentUniqueName() {
-        if !contentUniqueName.isEmpty && contentUniqueName != content.getUniqueName() {
+        if contentUniqueName != content.getUniqueName() {
             AppModel.shared.bibliography.update(self, oldUniqueName: contentUniqueName)
             contentUniqueName = content.getUniqueName()
         }
-    }
-
-    func read(id: UID) -> Conspectus? {
-        AppModel.shared.bibliography.read(id)
     }
 
     func show() {

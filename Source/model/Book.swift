@@ -20,15 +20,15 @@ class Book: ObservableObject, ConspectusContent {
     @Published var publisher: String = ""
     @Published var place: String = ""
     @Published var info: String = "Keine Inhaltsangabe"
-    @Published var author: String = ""
-    @Published var authorID: UID?
+    @Published var authorText: String = ""
+    @Published var author: Conspectus?
     @Published var hasChanges: Bool = false
     private var disposeBag: Set<AnyCancellable> = []
 
     required init(id: UID) {
         self.id = id
 
-        for prop in [$title, $subTitle, $ISBN, $writtenDate, $publishedDate, $pageCount, $publisher, $place, $info, $author] {
+        for prop in [$title, $subTitle, $ISBN, $writtenDate, $publishedDate, $pageCount, $publisher, $place, $info, $authorText] {
             prop
                 .removeDuplicates()
                 .map { _ in
@@ -38,7 +38,7 @@ class Book: ObservableObject, ConspectusContent {
                 .store(in: &disposeBag)
         }
 
-        $authorID
+        $author
             .removeDuplicates()
             .map { _ in
                 true
@@ -54,7 +54,7 @@ class Book: ObservableObject, ConspectusContent {
     func didStore() {
         hasChanges = false
     }
-    
+
     func conspectusDidChange() {
         hasChanges = true
     }
@@ -62,7 +62,7 @@ class Book: ObservableObject, ConspectusContent {
     func validate() -> ValidationStatus {
         if title.isEmpty { return .emptyBookTitle }
         if writtenDate.isEmpty { return .emptyWrittenYear }
-        if author.isEmpty && authorID == nil { return .emptyBookAuthor }
+        if authorText.isEmpty && author == nil { return .emptyBookAuthor }
         return .ok
     }
 
@@ -77,16 +77,16 @@ class Book: ObservableObject, ConspectusContent {
                                    "publisher": publisher,
                                    "place": place,
                                    "info": info,
-                                   "author": author
+                                   "authorText": authorText,
         ]
 
-        if let authorID = authorID {
-            dict["authorID"] = authorID
+        if let author = author {
+            dict["authorID"] = author.id
         }
         return dict
     }
 
-    func deserialize(from dict: [String: Any]) {
+    func deserialize(from dict: [String: Any], bibliography: Bibliography) {
         title = dict["title"] as? String ?? ""
         subTitle = dict["subTitle"] as? String ?? ""
         ISBN = dict["ISBN"] as? String ?? ""
@@ -96,17 +96,19 @@ class Book: ObservableObject, ConspectusContent {
         publisher = dict["publisher"] as? String ?? ""
         place = dict["place"] as? String ?? ""
         info = dict["info"] as? String ?? ""
-        author = dict["author"] as? String ?? ""
-        authorID = dict["authorID"] as? UID
+        authorText = dict["authorText"] as? String ?? ""
+        if let authorID = dict["authorID"] as? UID {
+            author = bibliography.read(authorID)
+        }
         hasChanges = false
     }
-    
-    func removeLinks(with conspectus:Conspectus) {
-        if let authorID = authorID, let author = conspectus.asAuthor, authorID == author.id {
-            self.authorID = nil
+
+    func removeLinks(with conspectus: Conspectus) {
+        if let author = author, author == conspectus {
+            self.author = nil
         }
     }
-    
+
     func getUniqueName() -> String {
         return "book" + title + writtenDate
     }

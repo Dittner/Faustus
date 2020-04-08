@@ -100,8 +100,8 @@ struct IconButtonStyle: ButtonStyle {
     var iconName: String
     var iconColor: Color
     var bgColor: Color
-    let width: CGFloat = 30
-    let height: CGFloat = 30
+    var width: CGFloat = 30
+    var height: CGFloat = 30
 
     func makeBody(configuration: Self.Configuration) -> some View {
         return ZStack(alignment: .center) {
@@ -113,6 +113,17 @@ struct IconButtonStyle: ButtonStyle {
                 .foregroundColor(configuration.isPressed ? bgColor : iconColor)
         }
         .frame(width: width, height: height)
+    }
+}
+
+struct RowBgToggleStyle: ToggleStyle {
+    func makeBody(configuration: Self.Configuration) -> some View {
+        Color(configuration.isOn ? NSColor.F.black : NSColor.F.dark)
+        .onTapGesture {
+            withAnimation {
+                configuration.$isOn.wrappedValue.toggle()
+            }
+        }
     }
 }
 
@@ -132,7 +143,7 @@ struct CreateButtonStyle: ButtonStyle {
             RoundedRectangle(cornerRadius: 0)
                 .foregroundColor(configuration.isPressed ? Color.F.black : Color.F.white)
 
-            Image("plus")
+            Image("smallPlus")
                 .renderingMode(.template)
                 .foregroundColor(configuration.isPressed ? Color.F.white : Color.F.black)
                 .offset(x: -10, y: 0)

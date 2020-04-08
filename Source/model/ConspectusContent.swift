@@ -11,10 +11,10 @@ protocol ConspectusContent {
     func hasChangesToStore() -> Bool
     func conspectusDidChange()
     func didStore()
-    func removeLinks(with conspectus:Conspectus)
+    func removeLinks(with conspectus: Conspectus)
     func validate() -> ValidationStatus
     func serialize() -> [String: Any]
-    func deserialize(from dict: [String: Any])
+    func deserialize(from dict: [String: Any], bibliography: Bibliography)
     func getUniqueName() -> String
     init(id: UID)
 }

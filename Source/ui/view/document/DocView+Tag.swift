@@ -10,24 +10,18 @@ import Combine
 import SwiftUI
 
 struct ParentTag: View {
+    @ObservedObject var controller: TagTreeController
     @ObservedObject var conspectus: Conspectus
     @ObservedObject var curTag: Tag
     let tagNodes: [TagTreeNode]
     @State private var isExpanded: Bool = true
     private var disposeBag: Set<AnyCancellable> = []
 
-    init(conspectus: Conspectus, tagTree: TagTree) {
-        self.conspectus = conspectus
-        curTag = conspectus.asTag!
-        tagNodes = tagTree.compactTree { $0.id != conspectus.id }
-    }
-
-    func hasParentTag() -> Bool {
-        curTag.parentTagID != nil && conspectus.read(id: curTag.parentTagID!) != nil
-    }
-
-    func getParentTag() -> Conspectus {
-        return conspectus.read(id: curTag.parentTagID!)!
+    init(controller: TagTreeController) {
+        self.controller = controller
+        conspectus = controller.conspectus
+        curTag = controller.conspectus.asTag!
+        tagNodes = controller.tagTree.compactTree { $0.id != controller.conspectus.id }
     }
 
     var body: some View {
@@ -37,20 +31,20 @@ struct ParentTag: View {
             if isExpanded {
                 if conspectus.isEditing {
                     ForEach(tagNodes, id: \.id) { node in
-                        TagTreeNodeLink(node: node, isEditing: true, isSelected: self.curTag.parentTagID == node.id, action: {
+                        TagTreeNodeLink(node: node, isEditing: true, isSelected: self.curTag.parentTag?.id == node.id, action: {
                             action in
                             if action == .edit {
-                                self.curTag.parentTagID = self.curTag.parentTagID == node.id ? nil : node.id
+                                self.curTag.parentTag = self.curTag.parentTag?.id == node.id ? nil : node.conspectus
                             }
                         })
                             .font(Font.custom(.pragmaticaLightItalics, size: 21))
 
                     }.padding(.leading, 40)
                         .padding(.trailing, 20)
-                } else if self.hasParentTag() {
-                    ConspectusLink(conspectus: self.getParentTag(), isEditing: false, isSelected: false, action: { action in
+                } else if self.curTag.parentTag != nil {
+                    ConspectusLink(conspectus: self.curTag.parentTag!, isEditing: false, isSelected: false, action: { action in
                         if action == .navigate {
-                            self.getParentTag().show()
+                            self.curTag.parentTag?.show()
                         }
                     })
                         .font(Font.custom(.pragmaticaLightItalics, size: 21))
@@ -86,7 +80,7 @@ struct ConspectusLink: View {
         case .asAuthor:
             name = "\(conspectus.asAuthor!.surname) \(conspectus.asAuthor!.initials)"
         case .asBook:
-            name = "\(conspectus.asBook!.title), \(conspectus.asBook!.author), \(conspectus.asBook!.writtenDate)"
+            name = "\(conspectus.asBook!.title), \(conspectus.asBook!.authorText), \(conspectus.asBook!.writtenDate)"
         case .asTag:
             name = conspectus.asTag!.name
         default:
@@ -146,12 +140,12 @@ struct TagTreeNodeLink: View {
 
     init(node: TagTreeNode, isEditing: Bool, isSelected: Bool, action: ((ConspectusLinkAction) -> Void)?) {
         self.node = node
-        self.conspectus = node.conspectus
+        conspectus = node.conspectus
         switch node.conspectus.genus {
         case .asAuthor:
             name = "\(node.conspectus.asAuthor!.surname) \(node.conspectus.asAuthor!.initials)"
         case .asBook:
-            name = "\(node.conspectus.asBook!.title), \(node.conspectus.asBook!.author), \(node.conspectus.asBook!.writtenDate)"
+            name = "\(node.conspectus.asBook!.title), \(node.conspectus.asBook!.authorText), \(node.conspectus.asBook!.writtenDate)"
         case .asTag:
             name = node.conspectus.asTag!.name
         default:

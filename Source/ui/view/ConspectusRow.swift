@@ -9,16 +9,24 @@
 import Combine
 import SwiftUI
 
+enum ConspectusRowAction {
+    case tapped
+    case selected
+    case deselected
+}
+
 struct ConspectusRow: View {
-    let selectAction: () -> Void
+    let action: (ConspectusRowAction) -> Void
 
     class Notifier: ObservableObject {
         @Published var title: String = ""
         @Published var subTitle: String = ""
+        @Published var isSelected: Bool = false
     }
 
     @ObservedObject private var conspectus: Conspectus
     @ObservedObject private var notifier = Notifier()
+    private let isSelectable: Bool
 
     private let font = NSFont(name: .pragmaticaLight, size: 21)
     private let textColor: Color
@@ -26,10 +34,12 @@ struct ConspectusRow: View {
     private let iconName: String
     private var disposeBag: Set<AnyCancellable> = []
 
-    init(action: @escaping () -> Void, conspectus: Conspectus) {
-        selectAction = action
+    init(action: @escaping (ConspectusRowAction) -> Void, conspectus: Conspectus, selectable: Bool = false, selected: Bool = false) {
+        self.action = action
         self.conspectus = conspectus
-        // print("ConspectusRow init with \(conspectus.genus)")
+        isSelectable = selectable
+
+        //print("ConspectusRow init with \(conspectus.genus)")
 
         if let author = conspectus.asAuthor {
             textColor = Color.F.gray
@@ -64,9 +74,9 @@ struct ConspectusRow: View {
                 .assign(to: \.title, on: notifier)
                 .store(in: &disposeBag)
 
-            Publishers.CombineLatest(book.$writtenDate, book.$author)
-                .map { writtenDate, author in
-                    "\(writtenDate), \(author)"
+            Publishers.CombineLatest(book.$writtenDate, book.$authorText)
+                .map { writtenDate, authorText in
+                    "\(writtenDate), \(authorText)"
                 }
                 .assign(to: \.subTitle, on: notifier)
                 .store(in: &disposeBag)
@@ -83,13 +93,29 @@ struct ConspectusRow: View {
             genusColor = Color.F.gray
             iconName = "quote"
         }
+
+        if selectable {
+            notifier.isSelected = selected
+            notifier.$isSelected
+                .dropFirst()
+                .sink { value in
+                    action(value ? .selected : .deselected)
+                }
+                .store(in: &disposeBag)
+        }
     }
 
     var body: some View {
         return GeometryReader { geometry in
             ZStack(alignment: .topLeading) {
-                Button("", action: self.selectAction).buttonStyle(RowBgButtonStyle())
-                    .frame(width: geometry.size.width, height: 50)
+                if self.isSelectable {
+                    Toggle("", isOn: self.$notifier.isSelected)
+                        .toggleStyle(RowBgToggleStyle())
+                        .frame(width: geometry.size.width, height: 50)
+                } else {
+                    Button("", action: { self.action(.tapped) }).buttonStyle(RowBgButtonStyle())
+                        .frame(width: geometry.size.width, height: 50)
+                }
 
                 Rectangle()
                     .foregroundColor(self.genusColor)
@@ -125,8 +151,13 @@ struct ConspectusRow: View {
                     Image("remove")
                         .renderingMode(.template)
                         .allowsHitTesting(false)
-                        .opacity(1)
                         .scaleEffect(0.8)
+                        .offset(x: geometry.size.width - 30, y: 15)
+                } else if self.notifier.isSelected {
+                    Image("check")
+                        .renderingMode(.template)
+                        .allowsHitTesting(false)
+                        .scaleEffect(1)
                         .offset(x: geometry.size.width - 30, y: 15)
                 }
             }

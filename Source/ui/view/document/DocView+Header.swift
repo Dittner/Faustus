@@ -55,7 +55,7 @@ struct UserHeader: View {
                     .renderingMode(.template)
                     .allowsHitTesting(false)
                     .foregroundColor(Color.F.white)
-                    .frame(width: 30, height: 30)
+                    .frame(width: 30)
                     .opacity(user.hasChanges ? 1 : 0)
 
                 Spacer()
@@ -115,7 +115,7 @@ struct AuthorHeader: View {
                     .renderingMode(.template)
                     .allowsHitTesting(false)
                     .foregroundColor(Color.F.white)
-                    .frame(height: 30)
+                    .frame(width: 30)
                     .opacity(author.hasChanges ? 1 : 0)
 
                 Spacer()
@@ -136,7 +136,7 @@ struct AuthorHeader: View {
 
                 Spacer()
 
-                Spacer().frame(width: 30, height: 30)
+                Spacer().frame(width: 30)
             }
             .padding(.horizontal, 15)
             .frame(height: 50)
@@ -191,7 +191,7 @@ struct BookHeader: View {
                     .renderingMode(.template)
                     .allowsHitTesting(false)
                     .foregroundColor(Color.F.white)
-                    .frame(height: 30)
+                    .frame(width: 30)
                     .opacity(book.hasChanges ? 1 : 0)
 
                 Spacer()
@@ -204,15 +204,15 @@ struct BookHeader: View {
                     .font(Font.custom(.pragmaticaExtraLight, size: 16))
                     .foregroundColor(Color.F.white)
                     .frame(width: 10, alignment: .center)
-                    .opacity($book.author.wrappedValue.count == 0 ? 0.25 : 1)
+                    .opacity($book.authorText.wrappedValue.count == 0 ? 0.25 : 1)
 
-                TextInput(title: "Author", text: $book.author, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerBookAuthor, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerBookTitle })
+                TextInput(title: "Author", text: $book.authorText, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerBookAuthor, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerBookTitle })
                     .saturation(0)
                     .frame(width: 200)
 
                 Spacer()
 
-                Spacer().frame(width: 30, height: 30)
+                Spacer().frame(width: 30)
             }
             .padding(.horizontal, 15)
             .frame(height: 50)
@@ -266,7 +266,7 @@ struct TagHeader: View {
                     .renderingMode(.template)
                     .allowsHitTesting(false)
                     .foregroundColor(Color.F.white)
-                    .frame(height: 30)
+                    .frame(width: 30)
                     .opacity(tag.hasChanges ? 1 : 0)
 
                 Spacer()

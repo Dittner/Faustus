@@ -18,6 +18,7 @@ class User: ConspectusContent, ObservableObject {
     @Published var pwd: String = ""
     @Published var isLoggedIn: Bool = false
     @Published var validationStatus: ValidationStatus = .ok
+    @Published var books: [Conspectus] = []
     @Published var hasChanges: Bool = false
 
     private(set) var authorID: UID = UID()
@@ -55,6 +56,14 @@ class User: ConspectusContent, ObservableObject {
                 .assign(to: \.hasChanges, on: self)
                 .store(in: &disposeBag)
         }
+
+        $books
+            .removeDuplicates()
+            .map { _ in
+                true
+            }
+            .assign(to: \.hasChanges, on: self)
+            .store(in: &disposeBag)
     }
 
     private func encryptPwd() -> String {
@@ -86,13 +95,16 @@ class User: ConspectusContent, ObservableObject {
     }
 
     func serialize() -> [String: Any] {
-        return ["id": id, "name": name, "surname": surname, "encryptedPwd": encryptPwd()]
+        return ["id": id, "name": name, "surname": surname, "encryptedPwd": encryptPwd(), "books": books.map { $0.id }]
     }
 
-    func deserialize(from dict: [String: Any]) {
+    func deserialize(from dict: [String: Any], bibliography: Bibliography) {
         name = dict["name"] as? String ?? ""
         surname = dict["surname"] as? String ?? ""
         encryptedPwd = dict["encryptedPwd"] as? String ?? ""
+        if let booksID = dict["books"] as? [UID] {
+            books = booksID.map { bibliography.read($0) }.compactMap { $0 }
+        }
         hasChanges = false
     }
 

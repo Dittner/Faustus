@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct HistoryView: View {
-    @ObservedObject private var vm = HistoryViewModel()
+    @EnvironmentObject var vm: HistoryViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -40,7 +40,7 @@ struct HistoryView: View {
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(alignment: .leading, spacing: 1) {
                     ForEach(vm.stack, id: \.id) { conspectus in
-                        ConspectusRow(action: { self.vm.select(conspectus: conspectus) }, conspectus: conspectus).frame(height: 50)
+                        ConspectusRow(action: { _ in self.vm.select(conspectus: conspectus) }, conspectus: conspectus).frame(height: 50)
                     }
                 }
             }

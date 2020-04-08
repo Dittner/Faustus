@@ -38,3 +38,17 @@ arr.append("Jonny")
 arr.append(contentsOf: ["Eva", "Silke"])
 arr += ["Smit", "Ditter"]
 print("arr = \(arr)")
+
+class A {
+    var id:String = "123"
+}
+class B {
+    var a:A? = nil
+}
+var b = B()
+
+if b.a?.id == nil {
+    print("b.a?.id == nil //true")
+} else {
+    print("b.a?.id == nil //false")
+}

@@ -90,7 +90,7 @@ struct BookInfoPanel: View {
                 VStack(alignment: .leading, spacing: 5) {
                     FormInput(title: "TITEL", text: $book.title, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoTitle, onEnter: { self.textFocus.id = .bookInfoSubtitle })
                     FormInput(title: "UNTERTITEL", text: $book.subTitle, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoSubtitle, onEnter: { self.textFocus.id = .bookInfoAuthor })
-                    FormInput(title: "AUTHOR", text: $book.author, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoAuthor, onEnter: { self.textFocus.id = .bookInfoIsbn })
+                    FormInput(title: "AUTHOR", text: $book.authorText, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoAuthor, onEnter: { self.textFocus.id = .bookInfoIsbn })
                     FormInput(title: "ISBN", text: $book.ISBN, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoIsbn, onEnter: { self.textFocus.id = .bookInfoWritten })
                     FormInput(title: "GESCHRIEBEN", text: $book.writtenDate, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoWritten, onEnter: { self.textFocus.id = .bookInfoPublishDate })
                     FormInput(title: "ERSCHEINUNGSJAHR", text: $book.publishedDate, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoPublishDate, onEnter: { self.textFocus.id = .bookInfoPagesCount })

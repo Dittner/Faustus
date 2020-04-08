@@ -41,15 +41,18 @@ class AppModel: ObservableObject {
         if userFileUrls.count > 0 {
             logInfo(tag: .IO, msg: "the user profile has been read")
             userConspectus = Conspectus(genus: .asUser, from: userFileUrls[0])!
+
         } else {
             logInfo(tag: .IO, msg: "the user has not yet a profile")
             userConspectus = Conspectus(genus: .asUser)
         }
         selectedConspectus = userConspectus
+        bibliography.write(userConspectus)
 
         loadAuthors()
         loadBooks()
         loadTags()
+        deserialize()
 
         prepareRecentOpenedStack()
         // Font.printAllSystemFonts()
@@ -97,6 +100,13 @@ class AppModel: ObservableObject {
         }
     }
 
+    private func deserialize() {
+        logInfo(tag: .IO, msg: "Deserialization of all conspectus-files")
+        for c in bibliography.getValues() {
+            c.deserialize(bibliography)
+        }
+    }
+
     func prepareRecentOpenedStack() {
         $selectedConspectus
             .removeDuplicates()
@@ -136,18 +146,17 @@ class AppModel: ObservableObject {
             bibliography.write(c)
         }
     }
-    
+
     //
     // Remove
     //
-    
+
     func removeSelectedConspectus() {
         if selectedConspectus.isNew {
             bibliography.remove(selectedConspectus)
             recentOpened.removeFirst()
             selectedConspectus = recentOpened[0]
-        }
-        else if selectedConspectus.isRemoved {
+        } else if selectedConspectus.isRemoved {
             logInfo(tag: .APP, msg: "Destroy conspectus, id: \(selectedConspectus.id)")
             for conspectus in bibliography.getValues() {
                 conspectus.content.removeLinks(with: selectedConspectus)
@@ -169,10 +178,15 @@ class AppModel: ObservableObject {
 
 protocol ViewModel: ObservableObject {
     var model: AppModel { get }
+    var rootVM: RootViewModel { get }
 }
 
 extension ViewModel {
     var model: AppModel {
         return AppModel.shared
+    }
+
+    var rootVM: RootViewModel {
+        return RootViewModel.shared!
     }
 }

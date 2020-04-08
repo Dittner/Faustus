@@ -74,16 +74,14 @@ struct RootView: View {
                 }
             }
 
-            if vm.isModalViewShown {
+            if self.vm.modalView == .confirmDelete {
                 GeometryReader { _ in
-                    DeleteConfirmation(title: "Unwiderruflich löschen?", action: { result in
-                        if result == .yes {
-                            self.vm.removeSelectedConspectus()
-                        }
-                        self.vm.isModalViewShown = false
-                    })
-                }
-                .background(Color.F.black.opacity(0.25))
+                    DeleteConfirmation(controller: self.vm.deleteConfirmationController)
+                }.background(Color.F.black.opacity(0.25))
+            } else if self.vm.modalView == .chooseBooks {
+                GeometryReader { _ in
+                    BooksChooser(controller: self.vm.booksChooserController)
+                }.background(Color.F.black.opacity(0.25))
             }
 
         }.edgesIgnoringSafeArea(.all)
@@ -91,17 +89,11 @@ struct RootView: View {
 }
 
 struct DeleteConfirmation: View {
-    enum YesNoResult: Int {
-        case yes
-        case no
-    }
-
-    let title: String
-    let action: (YesNoResult) -> Void
+    @ObservedObject var controller: DeleteConfirmationController
 
     var body: some View {
         VStack(alignment: .center, spacing: 0) {
-            Text(title)
+            Text("Unwiderruflich löschen?")
                 .lineLimit(1)
                 .font(Font.custom(.pragmaticaExtraLight, size: 21))
                 .foregroundColor(Color.F.white)
@@ -109,18 +101,74 @@ struct DeleteConfirmation: View {
 
             HStack(alignment: .bottom, spacing: 100) {
                 Button("", action: {
-                    self.action(.yes)
+                    self.controller.result = .deleted
                 }).buttonStyle(RedButtonStyle(title: "JA"))
                     .frame(width: 100, height: 50)
 
                 Button("", action: {
-                    self.action(.no)
+                    self.controller.result = .canceled
                 }).buttonStyle(GreenButtonStyle(title: "NEIN"))
                     .frame(width: 100, height: 50)
             }
         }
 
         .frame(width: 300, height: 150)
+        .background(Color.F.dark)
+        .cornerRadius(5)
+        .shadow(color: Color.F.black05, radius: 5, x: 0, y: 5)
+    }
+}
+
+struct BooksChooser: View {
+    @ObservedObject var controller: BooksChooserController
+
+    func select(c: Conspectus) {
+        controller.selectedBooks.append(c)
+    }
+
+    func deselect(c: Conspectus) {
+        controller.selectedBooks.removeAll { $0.id == c.id }
+    }
+
+    var body: some View {
+        VStack(alignment: .center, spacing: 0) {
+            Text("Wählen Sie bitte erwünschte Bücher aus")
+                .lineLimit(1)
+                .font(Font.custom(.pragmaticaExtraLight, size: 18))
+                .background(Color.F.white.opacity(0.5))
+                .foregroundColor(Color.F.white)
+                .frame(width: 500, height: 50)
+
+            ScrollView(.vertical, showsIndicators: true) {
+                VStack(alignment: .leading, spacing: 1) {
+                    ForEach(controller.allBooks, id: \.id) { conspectus in
+                        ConspectusRow(action: { event in
+                            if event == .selected {
+                                self.select(c: conspectus)
+                            } else {
+                                self.deselect(c: conspectus)
+                            }
+
+                        }, conspectus: conspectus, selectable: true, selected: self.controller.selectedBooks.contains(conspectus))
+                            .frame(height: 50)
+                    }
+                }
+            }
+
+            HStack(alignment: .bottom, spacing: 200) {
+                Button("", action: {
+                    self.controller.cancel()
+                }).buttonStyle(RedButtonStyle(title: "Abbrechen"))
+                    .frame(width: 150, height: 50)
+
+                Button("", action: {
+                    self.controller.apply()
+                }).buttonStyle(GreenButtonStyle(title: "Speichern"))
+                    .frame(width: 150, height: 50)
+            }
+        }
+
+        .frame(width: 500, height: 700)
         .background(Color.F.dark)
         .cornerRadius(5)
         .shadow(color: Color.F.black05, radius: 5, x: 0, y: 5)

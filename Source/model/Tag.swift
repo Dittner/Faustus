@@ -14,7 +14,7 @@ class Tag: ObservableObject, ConspectusContent {
     let id: UID
     @Published var name: String = ""
     @Published var info: String = "Keine"
-    @Published var parentTagID: UID?
+    @Published var parentTag: Conspectus?
     @Published var hasChanges: Bool = false
     private var disposeBag: Set<AnyCancellable> = []
 
@@ -31,7 +31,7 @@ class Tag: ObservableObject, ConspectusContent {
                 .store(in: &disposeBag)
         }
 
-        $parentTagID
+        $parentTag
             .removeDuplicates()
             .map { _ in
                 true
@@ -63,22 +63,24 @@ class Tag: ObservableObject, ConspectusContent {
                                    "info": info,
         ]
 
-        if let superTagID = parentTagID {
-            dict["parentTagID"] = superTagID
+        if let superTag = parentTag {
+            dict["parentTagID"] = superTag.id
         }
         return dict
     }
 
-    func deserialize(from dict: [String: Any]) {
+    func deserialize(from dict: [String: Any], bibliography:Bibliography) {
         name = dict["name"] as? String ?? ""
         info = dict["info"] as? String ?? ""
-        parentTagID = dict["parentTagID"] as? UID
+        if let parentTagID = dict["parentTagID"] as? UID {
+            parentTag = bibliography.read(parentTagID)
+        }
         hasChanges = false
     }
 
     func removeLinks(with conspectus: Conspectus) {
-        if let parentID = parentTagID, let tag = conspectus.asTag, parentID == tag.id {
-            parentTagID = tag.parentTagID == nil ? nil : tag.parentTagID
+        if let parent = parentTag, parent.id == conspectus.id {
+            parentTag = conspectus.asTag!.parentTag == nil ? nil : conspectus.asTag!.parentTag
         }
     }
 

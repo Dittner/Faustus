@@ -19,6 +19,7 @@ class Author: ConspectusContent, ObservableObject {
     @Published var deathYear: String = ""
     @Published var initials: String = ""
     @Published var years: String = ""
+    @Published var books: [Conspectus] = []
     @Published var hasChanges: Bool = false
 
     private var disposeBag: Set<AnyCancellable> = []
@@ -57,6 +58,14 @@ class Author: ConspectusContent, ObservableObject {
                 .assign(to: \.hasChanges, on: self)
                 .store(in: &disposeBag)
         }
+
+        $books
+            .removeDuplicates()
+            .map { _ in
+                true
+            }
+            .assign(to: \.hasChanges, on: self)
+            .store(in: &disposeBag)
     }
 
     func hasChangesToStore() -> Bool {
@@ -66,7 +75,7 @@ class Author: ConspectusContent, ObservableObject {
     func didStore() {
         hasChanges = false
     }
-    
+
     func conspectusDidChange() {
         hasChanges = true
     }
@@ -84,22 +93,24 @@ class Author: ConspectusContent, ObservableObject {
     }
 
     func serialize() -> [String: Any] {
-        return ["id": id, "name": name, "surname": surname, "birthYear": birthYear, "deathYear": deathYear, "info": info]
+        return ["id": id, "name": name, "surname": surname, "birthYear": birthYear, "deathYear": deathYear, "info": info, "books": books.map { $0.id }]
     }
 
-    func deserialize(from dict: [String: Any]) {
+    func deserialize(from dict: [String: Any], bibliography: Bibliography) {
         name = dict["name"] as? String ?? ""
         surname = dict["surname"] as? String ?? ""
         birthYear = dict["birthYear"] as? String ?? ""
         deathYear = dict["deathYear"] as? String ?? ""
         info = dict["info"] as? String ?? ""
+        if let booksID = dict["books"] as? [UID] {
+            books = booksID.map { bibliography.read($0) }.compactMap { $0 }
+        }
         hasChanges = false
     }
-    
-    func removeLinks(with conspectus:Conspectus) {
-        
+
+    func removeLinks(with conspectus: Conspectus) {
     }
-    
+
     func getUniqueName() -> String {
         return "author" + name + surname + birthYear
     }

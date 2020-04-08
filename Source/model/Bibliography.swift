@@ -22,7 +22,10 @@ final class Bibliography: ObservableObject {
     func write(_ c: Conspectus) {
         if !has(c.id) {
             dict[c.id] = c
-            uniqueNames[c.content.getUniqueName()] = c.id
+            if !c.isNew {
+                uniqueNames[c.content.getUniqueName()] = c.id
+            }
+            
             objectWillChange.send(getValues())
         }
     }

@@ -29,7 +29,7 @@ struct DocView: View {
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 15) {
                         StoreStateBoard(conspectus: vm.selectedConspectus)
-                        BooksPanel(conspectus: vm.selectedConspectus, title: "AUFSÄTZE")
+                        BookList(controller: vm.bookListController, title: "AUFSÄTZE")
 
                     }.padding(.leading, 15)
                 }
@@ -53,7 +53,7 @@ struct DocView: View {
                     VStack(alignment: .leading, spacing: 15) {
                         StoreStateBoard(conspectus: vm.selectedConspectus)
                         InfoPanel(conspectus: vm.selectedConspectus)
-                        BooksPanel(conspectus: vm.selectedConspectus)
+                        BookList(controller: vm.bookListController)
                     }.padding(.leading, 15)
                 }
                 .offset(x: 0, y: -validationInfoBoardHeight)
@@ -101,7 +101,7 @@ struct DocView: View {
                     VStack(alignment: .leading, spacing: 15) {
                         StoreStateBoard(conspectus: vm.selectedConspectus)
                         InfoPanel(conspectus: vm.selectedConspectus)
-                        ParentTag(conspectus: vm.selectedConspectus, tagTree: vm.tagTree)
+                        ParentTag(controller: vm.tagTreeController)
 
                     }.padding(.leading, 15)
                 }
@@ -166,7 +166,7 @@ struct StoreStateBoard: View {
                     .opacity(isUser ? 0 : 1)
                     .onTapGesture {
                         if self.conspectus.isRemoved {
-                            self.vm.showModalViewToConfirmDestroy()
+                            self.vm.confirmDelete()
                         } else {
                             self.vm.removeSelectedConspectus()
                         }
@@ -199,10 +199,17 @@ struct StoreStateBoard: View {
 struct Section: View {
     @Binding var isExpanded: Bool
     let title: String
+    var action: (() -> Void)?
 
     var body: some View {
-        return GeometryReader { geometry in
+        GeometryReader { geometry in
             ZStack(alignment: .center) {
+                if self.action != nil {
+                    Button("", action: self.action!)
+                        .buttonStyle(IconButtonStyle(iconName: "plus", iconColor: Color.F.white, bgColor: Color.F.black, width: 20, height: 20))
+                        .offset(x: 10 - geometry.size.width / 2)
+                }
+
                 Text(self.title)
                     .lineLimit(1)
                     .font(Font.custom(.pragmaticaSemiBold, size: 21))
@@ -221,27 +228,34 @@ struct Section: View {
     }
 }
 
-struct BooksPanel: View {
-    @ObservedObject var conspectus: Conspectus
+struct BookList: View {
+    @ObservedObject var controller: BookListController
     @State private var isExpanded: Bool = true
 
     private let font = NSFont(name: .pragmaticaLight, size: 21)
     private let title: String
-    private var books = ["1. Also sprach Zarathustra, 1885", "2. Der Antichrist, 1888", "3. Ecce Homo, 1888"]
 
-    init(conspectus: Conspectus, title: String = "BÜCHER") {
-        self.conspectus = conspectus
+    init(controller: BookListController, title: String = "BÜCHER") {
+        self.controller = controller
         self.title = title
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Section(isExpanded: $isExpanded, title: title)
+            Section(isExpanded: $isExpanded, title: title, action: controller.addBook)
 
             if isExpanded {
-                ForEach(books, id: \.self) { book in
-                    SelectableText(text: book, color: Color.F.black)
-                        .font(Font.custom(.pragmaticaLightItalics, size: 21))
+                ForEach(controller.books, id: \.id) { book in
+                    ConspectusLink(conspectus: book, isEditing: self.controller.conspectus.isEditing, isSelected: false, action: { result in
+                        switch result {
+                        case .edit:
+                            print("Edited link")
+                        case .remove:
+                            self.controller.removeBook(with: book.id)
+                        case .navigate:
+                            book.show()
+                        }
+                    })
                 }.padding(.leading, 40)
                     .padding(.trailing, 20)
                     .padding(.top, 0)

@@ -10,7 +10,7 @@ import Combine
 import SwiftUI
 
 struct SearchView: View {
-    @ObservedObject private var vm = SearchViewModel()
+    @EnvironmentObject var vm: SearchViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -45,7 +45,7 @@ struct SearchView: View {
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(alignment: .leading, spacing: 1) {
                     ForEach(vm.result, id: \.id) { conspectus in
-                        ConspectusRow(action: { self.vm.select(conspectus: conspectus) }, conspectus: conspectus).frame(height: 50)
+                        ConspectusRow(action: { _ in self.vm.select(conspectus: conspectus) }, conspectus: conspectus).frame(height: 50)
                     }
                 }
             }

@@ -35,6 +35,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         mainWindow.contentView = NSHostingView(rootView: RootView()
             .environmentObject(TextFocus())
             .environmentObject(RootViewModel())
+            .environmentObject(SearchViewModel())
+            .environmentObject(HistoryViewModel())
             .environmentObject(DocViewModel()))
         mainWindow.makeKeyAndOrderFront(nil)
         mainWindow.titlebarAppearsTransparent = true

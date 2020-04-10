@@ -42,8 +42,7 @@ struct CollapseToggleStyle: ToggleStyle {
     func makeBody(configuration: Self.Configuration) -> some View {
         ZStack(alignment: .center) {
             RoundedRectangle(cornerRadius: 2)
-                .foregroundColor(Color.F.black)
-                .opacity(configuration.isOn ? 1 : 0.001)
+                .foregroundColor(configuration.isOn ? Color.F.black : Color.F.clear)
 
             Image("dropdown")
                 .renderingMode(.template)
@@ -102,10 +101,11 @@ struct IconButtonStyle: ButtonStyle {
     var bgColor: Color
     var width: CGFloat = 30
     var height: CGFloat = 30
+    var radius: CGFloat = 2
 
     func makeBody(configuration: Self.Configuration) -> some View {
         return ZStack(alignment: .center) {
-            RoundedRectangle(cornerRadius: 2)
+            RoundedRectangle(cornerRadius: radius)
                 .foregroundColor(configuration.isPressed ? iconColor : bgColor)
 
             Image(iconName)
@@ -116,22 +116,6 @@ struct IconButtonStyle: ButtonStyle {
     }
 }
 
-struct RowBgToggleStyle: ToggleStyle {
-    func makeBody(configuration: Self.Configuration) -> some View {
-        Color(configuration.isOn ? NSColor.F.black : NSColor.F.dark)
-        .onTapGesture {
-            withAnimation {
-                configuration.$isOn.wrappedValue.toggle()
-            }
-        }
-    }
-}
-
-struct RowBgButtonStyle: ButtonStyle {
-    func makeBody(configuration: Self.Configuration) -> some View {
-        Color(configuration.isPressed ? NSColor.F.black : NSColor.F.dark)
-    }
-}
 
 struct CreateButtonStyle: ButtonStyle {
     var iconName: String

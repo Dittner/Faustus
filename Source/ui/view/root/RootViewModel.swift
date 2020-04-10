@@ -14,20 +14,13 @@ enum AppScreen: String {
     case docList
 }
 
-enum ModalViewType: String {
-    case confirmDelete
-    case chooseBooks
-    case chooseAuthor
-    case no
-}
-
 final class RootViewModel: ViewModel {
     @Published var screen: AppScreen = .login
-    @Published var modalView: ModalViewType = .no
     @Published var keyLinesShown: Bool = false
+    @Published var isModalViewShow: Bool = false
 
-    @Published var deleteConfirmationController: DeleteConfirmationController = DeleteConfirmationController()
-    @Published var booksChooserController: BooksChooserController = BooksChooserController()
+    let deleteConfirmationController: DeleteConfirmationController = DeleteConfirmationController()
+    let booksChooserController: BooksChooserController = BooksChooserController()
 
     static var shared: RootViewModel?
     private var disposeBag: Set<AnyCancellable> = []
@@ -41,10 +34,17 @@ final class RootViewModel: ViewModel {
             }
             .assign(to: \.screen, on: self)
             .store(in: &disposeBag)
+
+        Publishers.CombineLatest(deleteConfirmationController.$isModalViewShow, booksChooserController.$isModalViewShow)
+            .map { _, _ in
+                true
+            }
+            .assign(to: \.isModalViewShow, on: self)
+            .store(in: &disposeBag)
     }
 
     func confirmDelete() -> AnyPublisher<DeleteResult, Never> {
-        modalView = .confirmDelete
+        deleteConfirmationController.show()
 
         let p = Future<DeleteResult, Never> { promise in
             self.deleteConfirmationController.$result
@@ -53,10 +53,8 @@ final class RootViewModel: ViewModel {
                     switch result {
                     case .deleted:
                         promise(.success(result))
-                        self.modalView = .no
                     case .canceled:
                         promise(.success(result))
-                        self.modalView = .no
                     }
                 }
                 .store(in: &self.disposeBag)
@@ -65,8 +63,7 @@ final class RootViewModel: ViewModel {
     }
 
     func chooseBooks(selectedBooks: [Conspectus]) -> AnyPublisher<[Conspectus], Never> {
-        modalView = .chooseBooks
-        booksChooserController.update(selectedBooks, bibliography: model.bibliography)
+        booksChooserController.show(selectedBooks, bibliography: model.bibliography)
 
         let p = Future<[Conspectus], Never> { promise in
             self.booksChooserController.$result
@@ -75,11 +72,9 @@ final class RootViewModel: ViewModel {
                     switch result {
                     case let .selected(result):
                         promise(.success(result))
-                        self.modalView = .no
 
                     case .canceled:
                         promise(.success(selectedBooks))
-                        self.modalView = .no
                     }
                 }
                 .store(in: &self.disposeBag)
@@ -94,13 +89,20 @@ enum DeleteResult {
 }
 
 class DeleteConfirmationController: ObservableObject {
+    @Published var isModalViewShow: Bool = false
     @Published var result: DeleteResult = .canceled
 
+    func show() {
+        isModalViewShow = true
+    }
+
     func cancel() {
+        isModalViewShow = false
         result = .canceled
     }
 
     func apply() {
+        isModalViewShow = false
         result = .deleted
     }
 }
@@ -111,25 +113,45 @@ class BooksChooserController: ObservableObject {
         case canceled
     }
 
+    @Published var isModalViewShow: Bool = false
     @Published var selectedBooks: [Conspectus] = []
     @Published var allBooks: [Conspectus] = []
+    @Published var filteredBooks: [Conspectus] = []
+    @Published var filterText: String = ""
     @Published var result: ChooserResult = .canceled
 
-    func update(_ selectedBooks: [Conspectus], bibliography: Bibliography) {
+    private var disposeBag: Set<AnyCancellable> = []
+
+    init() {
+        Publishers.CombineLatest($filterText.debounce(for: 0.5, scheduler: RunLoop.main), $allBooks)
+            .map { filterText, bookList in
+                filterText.isEmpty ? bookList : bookList.filter { $0.content.getDescription().hasSubstring(filterText) }
+            }
+            .sink { bookList in
+                self.filteredBooks = bookList
+                print("Filtered list of Book = \(bookList.count)")
+            }
+            .store(in: &disposeBag)
+    }
+
+    func show(_ selectedBooks: [Conspectus], bibliography: Bibliography) {
+        isModalViewShow = true
         self.selectedBooks = selectedBooks
 
         allBooks = bibliography.getValues()
             .filter { $0.genus == .asBook && !$0.isRemoved }
             .sorted { $0.asBook!.writtenDate > $1.asBook!.writtenDate }
 
-        print("Books toral = \(allBooks.count)")
+        print("Books total = \(allBooks.count)")
     }
 
     func cancel() {
+        isModalViewShow = false
         result = .canceled
     }
 
     func apply() {
+        isModalViewShow = false
         result = .selected(selectedBooks)
     }
 }

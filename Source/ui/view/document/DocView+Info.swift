@@ -14,6 +14,7 @@ struct InfoPanel: View {
         @Published var info = ""
     }
 
+    @EnvironmentObject var modalViewObservable: ModalViewObservable
     @ObservedObject private var notifier: Notifier
     @ObservedObject var conspectus: Conspectus
     @State private var isExpanded: Bool = true
@@ -51,7 +52,7 @@ struct InfoPanel: View {
             Section(isExpanded: $isExpanded, title: title)
 
             if self.isExpanded {
-                TextArea(text: $notifier.info, textColor: NSColor.F.black, font: font, isEditable: conspectus.isEditing)
+                TextArea(text: $notifier.info, textColor: NSColor.F.black, font: font, isEditable: conspectus.isEditing && !modalViewObservable.isShown)
                     .layoutPriority(-1)
                     .saturation(0)
                     .colorScheme(.light)

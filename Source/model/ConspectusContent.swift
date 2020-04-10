@@ -16,6 +16,7 @@ protocol ConspectusContent {
     func serialize() -> [String: Any]
     func deserialize(from dict: [String: Any], bibliography: Bibliography)
     func getUniqueName() -> String
+    func getDescription() -> String
     init(id: UID)
 }
 

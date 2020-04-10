@@ -30,6 +30,7 @@ enum FocusID: Int {
     case bookInfoPagesCount
     case bookInfoPublisher
     case bookInfoPlace
+    case modalBookChooserSearch
 }
 
 class TextFocus: ObservableObject {
@@ -88,6 +89,7 @@ struct TextInput: NSViewRepresentable {
             nsView.becomeFirstResponderWithDelay()
         }
     }
+    
 
     func makeCoordinator() -> Coordinator {
         // print("TextInput makeCoordinator, title: \(title)")
@@ -120,6 +122,7 @@ struct TextInput: NSViewRepresentable {
     }
 }
 
+
 struct TextArea: NSViewRepresentable {
     static func textHeightFrom(text: String, width: CGFloat, font: NSFont, isShown: Bool) -> CGFloat {
         guard isShown else { return 0 }
@@ -132,6 +135,7 @@ struct TextArea: NSViewRepresentable {
     }
 
     @Binding var text: String
+    @State private var isEnabled:Bool = false
     let textColor: NSColor
     let font: NSFont
     let isEditable: Bool
@@ -142,7 +146,7 @@ struct TextArea: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSTextView {
         print("TextArea init")
-        let tv = NSTextView()
+        let tv = CustomNSTextView()
         tv.delegate = context.coordinator
         tv.textColor = textColor
         tv.font = font
@@ -179,6 +183,12 @@ struct TextArea: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
+        }
+    }
+
+    class CustomNSTextView: NSTextView {
+        override func paste(_ sender: Any?) {
+            pasteAsPlainText(sender)
         }
     }
 }

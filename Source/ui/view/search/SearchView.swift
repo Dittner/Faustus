@@ -42,10 +42,12 @@ struct SearchView: View {
             .frame(height: 50)
             .background(Color.F.black)
 
-            ScrollView(.vertical, showsIndicators: true) {
-                VStack(alignment: .leading, spacing: 1) {
-                    ForEach(vm.result, id: \.id) { conspectus in
-                        ConspectusRow(action: { _ in self.vm.select(conspectus: conspectus) }, conspectus: conspectus).frame(height: 50)
+            if vm.result.count > 0 {
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        ForEach(vm.result, id: \.id) { conspectus in
+                            ConspectusRow(action: { _ in self.vm.select(conspectus: conspectus) }, conspectus: conspectus).frame(height: 50)
+                        }
                     }
                 }
             }

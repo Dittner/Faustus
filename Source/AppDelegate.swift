@@ -28,12 +28,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             .store(in: &disposeBag)
 
         let mainWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 500, height: 700),
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 600),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered, defer: false)
 
         mainWindow.contentView = NSHostingView(rootView: RootView()
             .environmentObject(TextFocus())
+            .environmentObject(ModalViewObservable())
             .environmentObject(RootViewModel())
             .environmentObject(SearchViewModel())
             .environmentObject(HistoryViewModel())

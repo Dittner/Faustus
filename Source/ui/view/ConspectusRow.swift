@@ -39,7 +39,7 @@ struct ConspectusRow: View {
         self.conspectus = conspectus
         isSelectable = selectable
 
-        //print("ConspectusRow init with \(conspectus.genus)")
+        // print("ConspectusRow init with \(conspectus.genus)")
 
         if let author = conspectus.asAuthor {
             textColor = Color.F.gray
@@ -160,8 +160,27 @@ struct ConspectusRow: View {
                         .scaleEffect(1)
                         .offset(x: geometry.size.width - 30, y: 15)
                 }
+
+                Separator(color: Color.F.dark, width: .infinity).offset(y: 49)
             }
             .foregroundColor(self.textColor)
         }
+    }
+}
+
+struct RowBgButtonStyle: ButtonStyle {
+    func makeBody(configuration: Self.Configuration) -> some View {
+        Color(configuration.isPressed ? NSColor.F.dark : NSColor.F.clear)
+    }
+}
+
+struct RowBgToggleStyle: ToggleStyle {
+    func makeBody(configuration: Self.Configuration) -> some View {
+        Color(configuration.isOn ? NSColor.F.dark : NSColor.F.clear)
+            .onTapGesture {
+                withAnimation {
+                    configuration.$isOn.wrappedValue.toggle()
+                }
+            }
     }
 }

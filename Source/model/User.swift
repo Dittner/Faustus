@@ -18,7 +18,7 @@ class User: ConspectusContent, ObservableObject {
     @Published var pwd: String = ""
     @Published var isLoggedIn: Bool = false
     @Published var validationStatus: ValidationStatus = .ok
-    @Published var books: [Conspectus] = []
+    @Published private(set) var books: [Conspectus] = []
     @Published var hasChanges: Bool = false
 
     private(set) var authorID: UID = UID()
@@ -66,6 +66,10 @@ class User: ConspectusContent, ObservableObject {
             .store(in: &disposeBag)
     }
 
+    func updateBooks(_ coll:[Conspectus]) {
+        
+    }
+    
     private func encryptPwd() -> String {
         return ("Faustus" + pwd).sha512()!
     }
@@ -112,6 +116,10 @@ class User: ConspectusContent, ObservableObject {
 
     func getUniqueName() -> String {
         return "user" + name + surname
+    }
+
+    func getDescription() -> String {
+        return "\(name) \(surname)"
     }
 }
 

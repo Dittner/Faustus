@@ -199,12 +199,13 @@ struct StoreStateBoard: View {
 struct Section: View {
     @Binding var isExpanded: Bool
     let title: String
+    var isEditing: Bool = false
     var action: (() -> Void)?
 
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .center) {
-                if self.action != nil {
+                if self.isEditing && self.action != nil {
                     Button("", action: self.action!)
                         .buttonStyle(IconButtonStyle(iconName: "plus", iconColor: Color.F.white, bgColor: Color.F.black, width: 20, height: 20))
                         .offset(x: 10 - geometry.size.width / 2)
@@ -230,6 +231,7 @@ struct Section: View {
 
 struct BookList: View {
     @ObservedObject var controller: BookListController
+    @ObservedObject var conspectus: Conspectus
     @State private var isExpanded: Bool = true
 
     private let font = NSFont(name: .pragmaticaLight, size: 21)
@@ -237,16 +239,17 @@ struct BookList: View {
 
     init(controller: BookListController, title: String = "BÜCHER") {
         self.controller = controller
+        conspectus = controller.conspectus
         self.title = title
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Section(isExpanded: $isExpanded, title: title, action: controller.addBook)
+            Section(isExpanded: $isExpanded, title: title, isEditing: self.conspectus.isEditing, action: controller.addBook)
 
             if isExpanded {
                 ForEach(controller.books, id: \.id) { book in
-                    ConspectusLink(conspectus: book, isEditing: self.controller.conspectus.isEditing, isSelected: false, action: { result in
+                    ConspectusLink(conspectus: book, isEditing: self.conspectus.isEditing, isSelected: false, action: { result in
                         switch result {
                         case .edit:
                             print("Edited link")

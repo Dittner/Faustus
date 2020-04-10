@@ -19,7 +19,7 @@ class Author: ConspectusContent, ObservableObject {
     @Published var deathYear: String = ""
     @Published var initials: String = ""
     @Published var years: String = ""
-    @Published var books: [Conspectus] = []
+    @Published private(set) var books: [Conspectus] = []
     @Published var hasChanges: Bool = false
 
     private var disposeBag: Set<AnyCancellable> = []
@@ -67,6 +67,13 @@ class Author: ConspectusContent, ObservableObject {
             .assign(to: \.hasChanges, on: self)
             .store(in: &disposeBag)
     }
+    
+    func updateBooks(_ coll:[Conspectus]) {
+        for c in coll {
+            if !books.contains(c) {
+            }
+        }
+    }
 
     func hasChangesToStore() -> Bool {
         return hasChanges
@@ -113,6 +120,10 @@ class Author: ConspectusContent, ObservableObject {
 
     func getUniqueName() -> String {
         return "author" + name + surname + birthYear
+    }
+    
+    func getDescription() -> String {
+        return "\(name) \(surname) \(birthYear)"
     }
 }
 

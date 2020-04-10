@@ -87,6 +87,10 @@ class Tag: ObservableObject, ConspectusContent {
     func getUniqueName() -> String {
         return "tag" + name
     }
+    
+    func getDescription() -> String {
+        return name
+    }
 }
 
 extension Conspectus {

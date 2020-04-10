@@ -8,6 +8,14 @@ extension String {
      "string_id".localized
      */
 
+    func hasSubstring(_ str: String) -> Bool {
+        return lowercased().contains(str.lowercased())
+    }
+
+    /*
+     "string_id".localized
+     */
+
     var localized: String {
         NSLocalizedString(self, comment: "")
     }

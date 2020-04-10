@@ -31,10 +31,10 @@ class BookListController: ViewModel {
             .sink { result in
                 print("chooseBooks has result")
                 if let author = self.conspectus.asAuthor {
-                    author.books = result
+                    author.updateBooks(result)
                     self.books = result
                 } else if let user = self.conspectus.asUser {
-                    user.books = result
+                    user.updateBooks(result)
                     self.books = result
                 }
             }
@@ -43,9 +43,9 @@ class BookListController: ViewModel {
     func removeBook(with uid: UID) {
         books.removeAll { $0.id == uid }
         if let author = self.conspectus.asAuthor {
-            author.books = books
+            author.updateBooks(books)
         } else if let user = self.conspectus.asUser {
-            user.books = books
+            user.updateBooks(books)
         }
     }
 }

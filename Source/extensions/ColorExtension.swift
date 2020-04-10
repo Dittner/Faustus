@@ -22,6 +22,8 @@ extension Color {
                            inputBG: Color(NSColor.F.inputBG),
                            red: Color(NSColor.F.red),
                            debugLines: Color(NSColor.F.debugLines),
+                           modalViewBG: Color(NSColor.F.modalViewBG),
+                           clear: Color(NSColor.F.clear),
                            green: Color(NSColor.F.green))
 
     init(_ genus: ConspectusGenus) {
@@ -58,6 +60,7 @@ extension NSColor {
 
     public static let F = (black: NSColor(rgb: 0, alpha: 1),
                            black05: NSColor(rgb: 0, alpha: 0.5),
+                           black025: NSColor(rgb: 0, alpha: 0.25),
                            white: NSColor(rgb: 0xFFFFFF, alpha: 1),
                            dark: NSColor(rgb: 0x282A2C, alpha: 1),
                            gray: NSColor(rgb: 0xC6C7CE, alpha: 1),
@@ -70,5 +73,7 @@ extension NSColor {
                            inputBG: NSColor(rgb: 0xF7F7F7, alpha: 1),
                            red: NSColor(rgb: 0xba003a, alpha: 1),
                            debugLines: NSColor(rgb: 0x00c3ff, alpha: 1),
+                           modalViewBG: NSColor(rgb: 0x202223, alpha: 1),
+                           clear: NSColor(rgb: 0x000000, alpha: 0.000001),
                            green: NSColor(rgb: 0x00774f, alpha: 1))
 }

@@ -42,14 +42,16 @@ final class SearchViewModel: ViewModel {
     init() {
         logInfo(tag: .APP, msg: "SearchViewModel init")
 
-        Publishers.CombineLatest3($selectedFilter, $filterText, model.bibliography.objectWillChange)
-            // .debounce(for: 0.2, scheduler: RunLoop.main)
-            .map { filter, _, conspectusList -> (SearchFilter, [Conspectus]) in
+        Publishers.CombineLatest3($selectedFilter, $filterText.debounce(for: 0.5, scheduler: RunLoop.main), model.bibliography.objectWillChange)
+            .map { filter, filterText, conspectusList -> (SearchFilter, String, [Conspectus]) in
                 if filter == .removed {
-                    return (filter, conspectusList.filter { $0.isRemoved })
+                    return (filter, filterText, conspectusList.filter { $0.isRemoved })
                 } else {
-                    return (filter, conspectusList.filter { !$0.isRemoved && $0.genus == filter.toGenus()! })
+                    return (filter, filterText, conspectusList.filter { !$0.isRemoved && $0.genus == filter.toGenus()! })
                 }
+            }
+            .map { filter, filterText, conspectusList -> (SearchFilter, [Conspectus]) in
+                filterText.isEmpty ? (filter, conspectusList) : (filter, conspectusList.filter { $0.content.getDescription().hasSubstring(filterText) })
             }
             .map { filter, conspectusList in
                 if filter == .authors {
@@ -69,7 +71,7 @@ final class SearchViewModel: ViewModel {
                         $0.asTag!.name < $1.asTag!.name
                     }
                 }
-                
+
                 if filter == .removed {
                     return conspectusList.sorted {
                         $0.changedDate < $1.changedDate

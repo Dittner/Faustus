@@ -39,9 +39,29 @@ class DocumentsStorage {
         }
     }
 
-    open class func readFile(from url: URL) -> Data? {
+    open class func readFile(from url: URL) -> [String: Any]? {
         do {
-            return try Data(contentsOf: url)
+            let data = try Data(contentsOf: url)
+            do {
+                if let dict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                    if dict["id"] as? UID != nil {
+                        return dict
+
+                    } else {
+                        logErr(tag: .PARSING, msg: "Failed to read id from file: \(url)")
+                        return nil
+                    }
+
+                } else {
+                    logErr(tag: .PARSING, msg: "Failed to transform json data to [String: Any] for a file: \(url)")
+                    return nil
+                }
+
+            } catch let error as NSError {
+                logErr(tag: .PARSING, msg: "Failed to parse json data to [String: Any] for a file \(url): \(error.localizedDescription)")
+                return nil
+            }
+
         } catch {
             logErr(tag: .IO, msg: "DocumentsStorage.readFile failed: \(error.localizedDescription)")
             return nil

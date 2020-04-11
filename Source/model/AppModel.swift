@@ -25,7 +25,7 @@ class AppModel: ObservableObject {
     @Published private(set) var recentOpened: [Conspectus] = []
     @ObservedObject var bibliography: Bibliography
 
-    private(set) var userConspectus: Conspectus
+    private(set) var user: User
     private var disposeBag: Set<AnyCancellable> = []
 
     init() {
@@ -38,16 +38,16 @@ class AppModel: ObservableObject {
 
         // loadUser
         let userFileUrls = DocumentsStorage.getContentOf(dir: .user, filesWithExtension: "faustus")
-        if userFileUrls.count > 0 {
+        if userFileUrls.count > 0, let userFromFile = User(from: userFileUrls[0]) {
             logInfo(tag: .IO, msg: "the user profile has been read")
-            userConspectus = Conspectus(genus: .asUser, from: userFileUrls[0])!
+            user = userFromFile
 
         } else {
             logInfo(tag: .IO, msg: "the user has not yet a profile")
-            userConspectus = Conspectus(genus: .asUser)
+            user = User(location: .user)
         }
-        selectedConspectus = userConspectus
-        bibliography.write(userConspectus)
+        selectedConspectus = user
+        bibliography.write(user)
 
         loadAuthors()
         loadBooks()
@@ -63,8 +63,8 @@ class AppModel: ObservableObject {
         logInfo(tag: .IO, msg: "Author files = \(authorFileUrls.count)")
         if authorFileUrls.count > 0 {
             for fileUrl in authorFileUrls {
-                if let c = Conspectus(genus: .asAuthor, from: fileUrl) {
-                    bibliography.write(c)
+                if let a = Author(from: fileUrl) {
+                    bibliography.write(a)
                 } else {
                     logErr(tag: .IO, msg: "Could't read a file with url: \(fileUrl.description)")
                 }
@@ -77,8 +77,8 @@ class AppModel: ObservableObject {
         logInfo(tag: .IO, msg: "Books files = \(bookFileUrls.count)")
         if bookFileUrls.count > 0 {
             for fileUrl in bookFileUrls {
-                if let c = Conspectus(genus: .asBook, from: fileUrl) {
-                    bibliography.write(c)
+                if let b = Book(from: fileUrl) {
+                    bibliography.write(b)
                 } else {
                     logErr(tag: .IO, msg: "Could't read a file with url: \(fileUrl.description)")
                 }
@@ -91,8 +91,8 @@ class AppModel: ObservableObject {
         logInfo(tag: .IO, msg: "Tags files = \(tagFileUrls.count)")
         if tagFileUrls.count > 0 {
             for fileUrl in tagFileUrls {
-                if let c = Conspectus(genus: .asTag, from: fileUrl) {
-                    bibliography.write(c)
+                if let t = Tag(from: fileUrl) {
+                    bibliography.write(t)
                 } else {
                     logErr(tag: .IO, msg: "Could't read a file with url: \(fileUrl.description)")
                 }
@@ -120,7 +120,7 @@ class AppModel: ObservableObject {
     }
 
     func selectUser() {
-        selectedConspectus = userConspectus
+        selectedConspectus = user
     }
 
     func select(_ conspectus: Conspectus) {
@@ -141,7 +141,7 @@ class AppModel: ObservableObject {
 
     func createConspectus(_ genus: ConspectusGenus) {
         if selectedConspectus.store() != .failed {
-            let c = Conspectus(genus: genus)
+            let c = genus.create()
             selectedConspectus = c
             bibliography.write(c)
         }
@@ -159,8 +159,8 @@ class AppModel: ObservableObject {
         } else if selectedConspectus.isRemoved {
             logInfo(tag: .APP, msg: "Destroy conspectus, id: \(selectedConspectus.id)")
             for conspectus in bibliography.getValues() {
-                conspectus.content.removeLinks(with: selectedConspectus)
-                if conspectus.content.hasChangesToStore() {
+                conspectus.removeLinks(with: selectedConspectus)
+                if conspectus.hasChanges {
                     _ = conspectus.store()
                 }
             }

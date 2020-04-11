@@ -10,7 +10,7 @@ import Combine
 import SwiftUI
 
 final class DocViewModel: ViewModel {
-    @Published var selectedConspectus: Conspectus = Conspectus(genus: .asUser)
+    @Published var selectedConspectus: Conspectus = AppModel.shared.user
 
     let tagTreeController = TagTreeController()
     let bookListController = BookListController()

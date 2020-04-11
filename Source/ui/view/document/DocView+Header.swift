@@ -13,12 +13,10 @@ import SwiftUI
 struct UserHeader: View {
     @EnvironmentObject var textFocus: TextFocus
     @ObservedObject var user: User
-    @ObservedObject var conspectus: Conspectus
     let onClosedAction: () -> Void
 
-    init(conspectus: Conspectus, onClosed: @escaping () -> Void) {
-        self.conspectus = conspectus
-        user = conspectus.asUser!
+    init(user: User, onClosed: @escaping () -> Void) {
+        self.user = user
         onClosedAction = onClosed
 
         print("UserHeader init, user has changes: \(user.hasChanges)")
@@ -33,18 +31,14 @@ struct UserHeader: View {
 
                 Spacer().frame(width: 10)
 
-                TextInput(title: "Vorname", text: $user.name, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 30), alignment: .right, isFocused: textFocus.id == .headerAuthorName, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorSurname })
+                TextInput(title: "Vorname", text: $user.content.name, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 30), alignment: .right, isFocused: textFocus.id == .headerAuthorName, isSecure: false, format: nil, isEditable: user.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorSurname })
                     .saturation(0)
 
-                TextInput(title: "Nachname", text: $user.surname, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .left, isFocused: textFocus.id == .headerAuthorSurname, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorName })
+                TextInput(title: "Nachname", text: $user.content.surname, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .left, isFocused: textFocus.id == .headerAuthorSurname, isSecure: false, format: nil, isEditable: user.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorName })
                     .saturation(0)
 
-                if conspectus.isRemoved {
-                    Spacer().frame(width: 50)
-                } else {
-                    Toggle("", isOn: $conspectus.isEditing)
-                        .toggleStyle(RoundToggleStyle(onColor: Color(conspectus.genus)))
-                }
+                Toggle("", isOn: $user.isEditing)
+                    .toggleStyle(RoundToggleStyle(onColor: Color(user.genus)))
             }
             .offset(x: 0, y: 14)
             .padding(.horizontal, 15)
@@ -69,12 +63,10 @@ struct UserHeader: View {
 struct AuthorHeader: View {
     @EnvironmentObject var textFocus: TextFocus
     @ObservedObject var author: Author
-    @ObservedObject var conspectus: Conspectus
     let onClosedAction: () -> Void
 
-    init(conspectus: Conspectus, onClosed: @escaping () -> Void) {
-        self.conspectus = conspectus
-        author = conspectus.asAuthor!
+    init(author: Author, onClosed: @escaping () -> Void) {
+        self.author = author
         onClosedAction = onClosed
 
         print("AuthorHeader init, author: \(author.id), has changes: \(author.hasChanges)")
@@ -82,12 +74,12 @@ struct AuthorHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Gelöscht am \(conspectus.changedDate)")
+            Text("Gelöscht am \(author.changedDate)")
                 .lineLimit(1)
                 .font(Font.custom(.mono, size: 13))
                 .foregroundColor(Color.F.white)
                 .frame(width: 1000, height: 20)
-                .opacity(conspectus.isRemoved ? 1 : 0)
+                .opacity(author.isRemoved ? 1 : 0)
 
             HStack(alignment: .lastTextBaseline, spacing: 10) {
                 Button("") {
@@ -96,15 +88,15 @@ struct AuthorHeader: View {
 
                 Spacer().frame(width: 10)
 
-                TextInput(title: "Vorname", text: $author.name, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 30), alignment: .right, isFocused: textFocus.id == .headerAuthorName, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorSurname })
+                TextInput(title: "Vorname", text: $author.content.name, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 30), alignment: .right, isFocused: textFocus.id == .headerAuthorName, isSecure: false, format: nil, isEditable: author.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorSurname })
                     .saturation(0)
 
-                TextInput(title: "Nachname", text: $author.surname, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .left, isFocused: textFocus.id == .headerAuthorSurname, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorBirthYear })
+                TextInput(title: "Nachname", text: $author.content.surname, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .left, isFocused: textFocus.id == .headerAuthorSurname, isSecure: false, format: nil, isEditable: author.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorBirthYear })
                     .saturation(0)
 
-                Toggle("", isOn: $conspectus.isEditing)
-                    .toggleStyle(RoundToggleStyle(onColor: Color(conspectus.genus), disabled: conspectus.isRemoved))
-                    .disabled(conspectus.isRemoved)
+                Toggle("", isOn: $author.isEditing)
+                    .toggleStyle(RoundToggleStyle(onColor: Color(author.genus), disabled: author.isRemoved))
+                    .disabled(author.isRemoved)
             }
             .offset(x: 0, y: 4)
             .padding(.horizontal, 15)
@@ -120,7 +112,7 @@ struct AuthorHeader: View {
 
                 Spacer()
 
-                TextInput(title: "geboren", text: $author.birthYear, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .right, isFocused: textFocus.id == .headerAuthorBirthYear, isSecure: false, format: "-?[0-9]{0,4}", isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorDeathYear })
+                TextInput(title: "geboren", text: $author.content.birthYear, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .right, isFocused: textFocus.id == .headerAuthorBirthYear, isSecure: false, format: "-?[0-9]{0,4}", isEditable: author.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorDeathYear })
                     .saturation(0)
                     .frame(width: 100)
 
@@ -128,9 +120,9 @@ struct AuthorHeader: View {
                     .font(Font.custom(.pragmaticaExtraLight, size: 16))
                     .foregroundColor(Color.F.white)
                     .frame(width: 10, alignment: .center)
-                    .opacity($author.deathYear.wrappedValue.count == 0 ? 0.25 : 1)
+                    .opacity($author.content.deathYear.wrappedValue.count == 0 ? 0.25 : 1)
 
-                TextInput(title: "gestorben", text: $author.deathYear, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerAuthorDeathYear, isSecure: false, format: "-?[0-9]{0,4}", isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorName })
+                TextInput(title: "gestorben", text: $author.content.deathYear, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerAuthorDeathYear, isSecure: false, format: "-?[0-9]{0,4}", isEditable: author.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorName })
                     .saturation(0)
                     .frame(width: 100)
 
@@ -141,19 +133,17 @@ struct AuthorHeader: View {
             .padding(.horizontal, 15)
             .frame(height: 50)
 
-        }.background(conspectus.isRemoved ? Color.F.red : Color.F.black)
+        }.background(author.isRemoved ? Color.F.red : Color.F.black)
     }
 }
 
 struct BookHeader: View {
     @EnvironmentObject var textFocus: TextFocus
     @ObservedObject var book: Book
-    @ObservedObject var conspectus: Conspectus
     let onClosedAction: () -> Void
 
-    init(conspectus: Conspectus, onClosed: @escaping () -> Void) {
-        self.conspectus = conspectus
-        book = conspectus.asBook!
+    init(book: Book, onClosed: @escaping () -> Void) {
+        self.book = book
         onClosedAction = onClosed
 
         print("BookHeader init, book: \(book.id), has changes: \(book.hasChanges)")
@@ -161,12 +151,12 @@ struct BookHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Gelöscht am \(conspectus.changedDate)")
+            Text("Gelöscht am \(book.changedDate)")
                 .lineLimit(1)
                 .font(Font.custom(.mono, size: 13))
                 .foregroundColor(Color.F.white)
                 .frame(width: 1000, height: 20)
-                .opacity(conspectus.isRemoved ? 1 : 0)
+                .opacity(book.isRemoved ? 1 : 0)
 
             HStack(alignment: .lastTextBaseline, spacing: 10) {
                 Button("") {
@@ -175,12 +165,12 @@ struct BookHeader: View {
 
                 Spacer().frame(width: 10)
 
-                TextInput(title: "Titel", text: $book.title, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .center, isFocused: textFocus.id == .headerBookTitle, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerBookWritten })
+                TextInput(title: "Titel", text: $book.content.title, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .center, isFocused: textFocus.id == .headerBookTitle, isSecure: false, format: nil, isEditable: book.isEditing, onEnterAction: { self.textFocus.id = .headerBookWritten })
                     .saturation(0)
 
-                Toggle("", isOn: $conspectus.isEditing)
-                    .toggleStyle(RoundToggleStyle(onColor: Color(conspectus.genus), disabled: conspectus.isRemoved))
-                    .disabled(conspectus.isRemoved)
+                Toggle("", isOn: $book.isEditing)
+                    .toggleStyle(RoundToggleStyle(onColor: Color(book.genus), disabled: book.isRemoved))
+                    .disabled(book.isRemoved)
             }
             .offset(x: 0, y: 4)
             .padding(.horizontal, 15)
@@ -196,7 +186,7 @@ struct BookHeader: View {
 
                 Spacer()
 
-                TextInput(title: "geschrieben", text: $book.writtenDate, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .right, isFocused: textFocus.id == .headerBookWritten, isSecure: false, format: "-?[0-9]{0,4}", isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerBookAuthor })
+                TextInput(title: "geschrieben", text: $book.content.writtenDate, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .right, isFocused: textFocus.id == .headerBookWritten, isSecure: false, format: "-?[0-9]{0,4}", isEditable: book.isEditing, onEnterAction: { self.textFocus.id = .headerBookAuthor })
                     .saturation(0)
                     .frame(width: 200)
 
@@ -204,9 +194,9 @@ struct BookHeader: View {
                     .font(Font.custom(.pragmaticaExtraLight, size: 16))
                     .foregroundColor(Color.F.white)
                     .frame(width: 10, alignment: .center)
-                    .opacity($book.authorText.wrappedValue.count == 0 ? 0.25 : 1)
+                    .opacity(book.content.authorText.isEmpty ? 0.25 : 1)
 
-                TextInput(title: "Author", text: $book.authorText, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerBookAuthor, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: { self.textFocus.id = .headerBookTitle })
+                TextInput(title: "Author", text: $book.content.authorText, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerBookAuthor, isSecure: false, format: nil, isEditable: book.isEditing, onEnterAction: { self.textFocus.id = .headerBookTitle })
                     .saturation(0)
                     .frame(width: 200)
 
@@ -216,19 +206,17 @@ struct BookHeader: View {
             }
             .padding(.horizontal, 15)
             .frame(height: 50)
-        }.background(conspectus.isRemoved ? Color.F.red : Color.F.black)
+        }.background(book.isRemoved ? Color.F.red : Color.F.black)
     }
 }
 
 struct TagHeader: View {
     @EnvironmentObject var textFocus: TextFocus
     @ObservedObject var tag: Tag
-    @ObservedObject var conspectus: Conspectus
     let onClosedAction: () -> Void
 
-    init(conspectus: Conspectus, onClosed: @escaping () -> Void) {
-        self.conspectus = conspectus
-        tag = conspectus.asTag!
+    init(tag: Tag, onClosed: @escaping () -> Void) {
+        self.tag = tag
         onClosedAction = onClosed
 
         print("TagHeader init, tag has changes: \(tag.hasChanges)")
@@ -236,12 +224,12 @@ struct TagHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Gelöscht am \(conspectus.changedDate)")
+            Text("Gelöscht am \(tag.changedDate)")
                 .lineLimit(1)
                 .font(Font.custom(.mono, size: 13))
                 .foregroundColor(Color.F.white)
                 .frame(width: 1000, height: 20)
-                .opacity(conspectus.isRemoved ? 1 : 0)
+                .opacity(tag.isRemoved ? 1 : 0)
 
             HStack(alignment: .lastTextBaseline, spacing: 10) {
                 Button("") {
@@ -250,12 +238,12 @@ struct TagHeader: View {
 
                 Spacer().frame(width: 10)
 
-                TextInput(title: "Name", text: $tag.name, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .center, isFocused: false, isSecure: false, format: nil, isEditable: conspectus.isEditing, onEnterAction: nil)
+                TextInput(title: "Name", text: $tag.content.name, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .center, isFocused: false, isSecure: false, format: nil, isEditable: tag.isEditing, onEnterAction: nil)
                     .saturation(0)
 
-                Toggle("", isOn: $conspectus.isEditing)
-                    .toggleStyle(RoundToggleStyle(onColor: Color(conspectus.genus), disabled: conspectus.isRemoved))
-                    .disabled(conspectus.isRemoved)
+                Toggle("", isOn: $tag.isEditing)
+                    .toggleStyle(RoundToggleStyle(onColor: Color(tag.genus), disabled: tag.isRemoved))
+                    .disabled(tag.isRemoved)
             }
             .offset(x: 0, y: 4)
             .padding(.horizontal, 15)
@@ -273,6 +261,6 @@ struct TagHeader: View {
             }
             .padding(.horizontal, 15)
             .frame(height: 50)
-        }.background(conspectus.isRemoved ? Color.F.red : Color.F.black)
+        }.background(tag.isRemoved ? Color.F.red : Color.F.black)
     }
 }

@@ -12,28 +12,25 @@ import SwiftUI
 
 final class LoginViewModel: ViewModel {
     public var user: User!
-    public var userConspectus: Conspectus!
 
     private var disposeBag: Set<AnyCancellable> = []
     @Published var errorMsg: String = ""
 
     init() {
         logInfo(tag: .APP, msg: "LoginViewModel init")
-        userConspectus = model.userConspectus
-        user = userConspectus.asUser!
+        user = model.user
     }
 
     func login() {
         let status = user.validate()
-        if status == .ok && userConspectus.store() != .failed {
+        if status == .ok && user.store() != .failed {
             errorMsg = ""
             let appDelegate = NSApplication.shared.delegate as! AppDelegate
             appDelegate.window?.makeFirstResponder(nil)
             print("LogedIn")
-            self.user.isLoggedIn = true
-            self.model.state = .loading
-            
-            
+            user.content.isLoggedIn = true
+            model.state = .loading
+
         } else {
             errorMsg = status.rawValue
         }

@@ -20,8 +20,8 @@ struct DocView: View {
             // USER
             //
 
-            if vm.selectedConspectus.asUser != nil {
-                UserHeader(conspectus: vm.selectedConspectus, onClosed: vm.close)
+            if vm.selectedConspectus is User {
+                UserHeader(user: vm.selectedConspectus as! User, onClosed: vm.close)
 
                 StatusBoard(conspectus: vm.selectedConspectus)
                     .zIndex(1)
@@ -43,8 +43,8 @@ struct DocView: View {
             // AUTHOR
             //
 
-            else if vm.selectedConspectus.asAuthor != nil {
-                AuthorHeader(conspectus: vm.selectedConspectus, onClosed: vm.close)
+            else if vm.selectedConspectus is Author {
+                AuthorHeader(author: vm.selectedConspectus as! Author, onClosed: vm.close)
 
                 StatusBoard(conspectus: vm.selectedConspectus)
                     .zIndex(1)
@@ -66,8 +66,8 @@ struct DocView: View {
             // BOOK
             //
 
-            else if vm.selectedConspectus.asBook != nil {
-                BookHeader(conspectus: vm.selectedConspectus, onClosed: vm.close)
+            else if vm.selectedConspectus is Book {
+                BookHeader(book: vm.selectedConspectus as! Book, onClosed: vm.close)
 
                 StatusBoard(conspectus: vm.selectedConspectus)
                     .zIndex(1)
@@ -75,7 +75,7 @@ struct DocView: View {
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 15) {
                         StoreStateBoard(conspectus: vm.selectedConspectus)
-                        BookInfoPanel(conspectus: vm.selectedConspectus)
+                        BookInfoPanel(book: vm.selectedConspectus as! Book)
 
                         // QuoteCell(quote: vm.quote, isEditing: true)
 
@@ -91,8 +91,8 @@ struct DocView: View {
             // TAG
             //
 
-            else if vm.selectedConspectus.asTag != nil {
-                TagHeader(conspectus: vm.selectedConspectus, onClosed: vm.close)
+            else if vm.selectedConspectus is Tag {
+                TagHeader(tag: vm.selectedConspectus as! Tag, onClosed: vm.close)
 
                 StatusBoard(conspectus: vm.selectedConspectus)
                     .zIndex(1)
@@ -152,7 +152,7 @@ struct StoreStateBoard: View {
 
     init(conspectus: Conspectus) {
         self.conspectus = conspectus
-        isUser = conspectus.genus == .asUser
+        isUser = conspectus is User
         print("StoreInfoBoard init, id: \(conspectus.id)")
     }
 

@@ -13,22 +13,22 @@ class TagTreeController: ViewModel {
     @Published var conspectus: Conspectus!
     @Published var tagTree: TagTree!
     @Published var needTagTreeUpdate: Bool = false
-    private var initialParentTagID: UID? = nil
+    private var initialParentTagID: UID?
     private var disposeBag: Set<AnyCancellable> = []
 
     init() {
         Publishers.CombineLatest($needTagTreeUpdate, model.bibliography.objectWillChange)
             .map { _, conspectusList in
-                conspectusList.filter { $0.genus == .asTag }
+                conspectusList.filter { $0 is Tag }.map { $0 as! Tag }
             }
-            .map { conspectusList in
-                conspectusList.sorted {
-                    $0.asTag!.name < $1.asTag!.name
+            .map { tags in
+                tags.sorted {
+                    $0.content.name < $1.content.name
                 }
             }
-            .map { conspectusList in
+            .map { tags in
                 logInfo(tag: .APP, msg: "New TagTree")
-                return TagTree(conspectusList)
+                return TagTree(tags)
             }
             .assign(to: \.tagTree, on: self)
             .store(in: &disposeBag)
@@ -38,16 +38,16 @@ class TagTreeController: ViewModel {
         if isParentTagChanged() {
             needTagTreeUpdate = true
         }
-        
+
         self.conspectus = conspectus
 
-        if let tag = conspectus.asTag {
-            initialParentTagID = tag.parentTag?.id
+        if let tag = conspectus as? Tag {
+            initialParentTagID = tag.content.parentTag?.id
         }
     }
 
     func isParentTagChanged() -> Bool {
-        if let tag = self.conspectus?.asTag, tag.parentTag?.id != self.initialParentTagID {
+        if let tag = self.conspectus as? Tag, tag.content.parentTag?.id != self.initialParentTagID {
             return true
         } else {
             return false
@@ -56,15 +56,7 @@ class TagTreeController: ViewModel {
 }
 
 class TagTreeNode {
-    private(set) var id: UID!
-    private(set) var tag: Tag!
-    var conspectus: Conspectus! {
-        didSet {
-            id = conspectus.id
-            tag = conspectus.asTag!
-        }
-    }
-
+    var tag: Tag!
     var parent: TagTreeNode?
     var children: [TagTreeNode]?
     var level = 0
@@ -76,13 +68,13 @@ class TagTree {
     private(set) var nodeList: [TagTreeNode]!
     private(set) var nodeHash: [UID: TagTreeNode] = [:]
 
-    init(_ conspectusList: [Conspectus]) {
-        for conspectus in conspectusList {
-            let node = nodeHash[conspectus.id] ?? TagTreeNode()
-            nodeHash[conspectus.id] = node
-            node.conspectus = conspectus
+    init(_ tags: [Tag]) {
+        for t in tags {
+            let node = nodeHash[t.id] ?? TagTreeNode()
+            nodeHash[t.id] = node
+            node.tag = t
 
-            if let parentTag = conspectus.asTag!.parentTag {
+            if let parentTag = t.content.parentTag {
                 let parentNode = nodeHash[parentTag.id] ?? TagTreeNode()
                 nodeHash[parentTag.id] = parentNode
 
@@ -100,7 +92,7 @@ class TagTree {
 
     func compactTree(_ filter: ((TagTreeNode) -> Bool)? = nil) -> [TagTreeNode] {
         var res: [TagTreeNode] = []
-        let rootNodes: [TagTreeNode] = nodeHash.values.sorted { $0.tag!.name < $1.tag!.name }.filter { $0.parent == nil }
+        let rootNodes: [TagTreeNode] = nodeHash.values.sorted { $0.tag.content.name < $1.tag.content.name }.filter { $0.parent == nil }
 
 //        print("rootNodes:")
 //        for n in rootNodes {

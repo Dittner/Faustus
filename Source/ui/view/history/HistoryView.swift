@@ -17,15 +17,15 @@ struct HistoryView: View {
                 Spacer()
 
                 Button("") {
-                    self.vm.createConspectus(.asAuthor)
+                    self.vm.createConspectus(.author)
                 }.buttonStyle(CreateButtonStyle(iconName: "author"))
 
                 Button("") {
-                    self.vm.createConspectus(.asBook)
+                    self.vm.createConspectus(.book)
                 }.buttonStyle(CreateButtonStyle(iconName: "book"))
 
                 Button("") {
-                    self.vm.createConspectus(.asTag)
+                    self.vm.createConspectus(.tag)
                 }.buttonStyle(CreateButtonStyle(iconName: "tag"))
 
                 Spacer()

@@ -28,18 +28,18 @@ struct InfoPanel: View {
         self.title = title
         notifier = Notifier()
 
-        if let author = conspectus.asAuthor {
-            notifier.info = author.info
+        if let author = conspectus as? Author {
+            notifier.info = author.content.info
             notifier.$info
                 .sink { value in
-                    author.info = value
+                    author.content.info = value
                 }
                 .store(in: &disposeBag)
-        } else if let tag = conspectus.asTag {
-            notifier.info = tag.info
+        } else if let tag = conspectus as? Tag {
+            notifier.info = tag.content.info
             notifier.$info
                 .sink { value in
-                    tag.info = value
+                    tag.content.info = value
                 }
                 .store(in: &disposeBag)
         }
@@ -67,7 +67,6 @@ struct InfoPanel: View {
 
 struct BookInfoPanel: View {
     @EnvironmentObject var textFocus: TextFocus
-    @ObservedObject var conspectus: Conspectus
     @ObservedObject var book: Book
     @State private var isExpanded: Bool = true
 
@@ -75,12 +74,11 @@ struct BookInfoPanel: View {
     private let title: String
     private var disposeBag: Set<AnyCancellable> = []
 
-    init(conspectus: Conspectus, title: String = "INFO") {
-        self.conspectus = conspectus
-        book = conspectus.asBook!
+    init(book: Book, title: String = "INFO") {
+        self.book = book
         self.title = title
 
-        print("BookInfoPanel init, id: \(conspectus.id)")
+        print("BookInfoPanel init, id: \(book.id)")
     }
 
     var body: some View {
@@ -89,15 +87,15 @@ struct BookInfoPanel: View {
 
             if self.isExpanded {
                 VStack(alignment: .leading, spacing: 5) {
-                    FormInput(title: "TITEL", text: $book.title, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoTitle, onEnter: { self.textFocus.id = .bookInfoSubtitle })
-                    FormInput(title: "UNTERTITEL", text: $book.subTitle, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoSubtitle, onEnter: { self.textFocus.id = .bookInfoAuthor })
-                    FormInput(title: "AUTHOR", text: $book.authorText, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoAuthor, onEnter: { self.textFocus.id = .bookInfoIsbn })
-                    FormInput(title: "ISBN", text: $book.ISBN, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoIsbn, onEnter: { self.textFocus.id = .bookInfoWritten })
-                    FormInput(title: "GESCHRIEBEN", text: $book.writtenDate, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoWritten, onEnter: { self.textFocus.id = .bookInfoPublishDate })
-                    FormInput(title: "ERSCHEINUNGSJAHR", text: $book.publishedDate, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoPublishDate, onEnter: { self.textFocus.id = .bookInfoPagesCount })
-                    FormInput(title: "SEITENZAHL", text: $book.pageCount, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoPagesCount, onEnter: { self.textFocus.id = .bookInfoPublisher })
-                    FormInput(title: "VERLAG", text: $book.publisher, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoPublisher, onEnter: { self.textFocus.id = .bookInfoPlace })
-                    FormInput(title: "ORT", text: $book.place, isEditing: conspectus.isEditing, isFocused: textFocus.id == .bookInfoPlace, onEnter: { self.textFocus.id = .bookInfoTitle })
+                    FormInput(title: "TITEL", text: $book.content.title, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoTitle, onEnter: { self.textFocus.id = .bookInfoSubtitle })
+                    FormInput(title: "UNTERTITEL", text: $book.content.subTitle, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoSubtitle, onEnter: { self.textFocus.id = .bookInfoAuthor })
+                    FormInput(title: "AUTHOR", text: $book.content.authorText, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoAuthor, onEnter: { self.textFocus.id = .bookInfoIsbn })
+                    FormInput(title: "ISBN", text: $book.content.ISBN, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoIsbn, onEnter: { self.textFocus.id = .bookInfoWritten })
+                    FormInput(title: "GESCHRIEBEN", text: $book.content.writtenDate, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoWritten, onEnter: { self.textFocus.id = .bookInfoPublishDate })
+                    FormInput(title: "ERSCHEINUNGSJAHR", text: $book.content.publishedDate, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoPublishDate, onEnter: { self.textFocus.id = .bookInfoPagesCount })
+                    FormInput(title: "SEITENZAHL", text: $book.content.pageCount, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoPagesCount, onEnter: { self.textFocus.id = .bookInfoPublisher })
+                    FormInput(title: "VERLAG", text: $book.content.publisher, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoPublisher, onEnter: { self.textFocus.id = .bookInfoPlace })
+                    FormInput(title: "ORT", text: $book.content.place, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoPlace, onEnter: { self.textFocus.id = .bookInfoTitle })
                 }
 
                 HStack(alignment: .top, spacing: 0) {
@@ -108,15 +106,15 @@ struct BookInfoPanel: View {
                         .frame(width: 295, height: 30, alignment: .trailing)
                         .background(Color.F.inputBG)
 
-                    TextArea(text: $book.info, textColor: NSColor.F.black, font: font, isEditable: conspectus.isEditing)
+                    TextArea(text: $book.content.info, textColor: NSColor.F.black, font: font, isEditable: book.isEditing)
                         .layoutPriority(-1)
                         .saturation(0)
                         .colorScheme(.light)
                         .offset(x: 0, y: -1)
                         .padding(.leading, 3)
                         .padding(.trailing, 5)
-                        .background(conspectus.isEditing ? Color.F.inputBG : Color.F.white)
-                        .frame(height: TextArea.textHeightFrom(text: book.info, width: 670, font: font, isShown: isExpanded))
+                        .background(book.isEditing ? Color.F.inputBG : Color.F.white)
+                        .frame(height: TextArea.textHeightFrom(text: book.content.info, width: 670, font: font, isShown: isExpanded))
                 }
             }
         }

@@ -2,15 +2,14 @@
 //  Book.swift
 //  Faustus
 //
-//  Created by Alexander Dittner on 28.03.2020.
+//  Created by Alexander Dittner on 11.04.2020.
 //  Copyright © 2020 Alexander Dittner. All rights reserved.
 //
 
 import Combine
 import SwiftUI
 
-class Book: ObservableObject, ConspectusContent {
-    let id: UID
+class BookContent: ObservableObject {
     @Published var title: String = ""
     @Published var subTitle: String = ""
     @Published var ISBN: String = ""
@@ -22,13 +21,24 @@ class Book: ObservableObject, ConspectusContent {
     @Published var info: String = "Keine Inhaltsangabe"
     @Published var authorText: String = ""
     @Published var author: Conspectus?
-    @Published var hasChanges: Bool = false
+}
+
+class Book: Conspectus {
+    @ObservedObject var content: BookContent = BookContent()
+
+    override var genus: ConspectusGenus { return .book }
+
+    override var description: String {
+        return "\(content.title) \(content.authorText) \(content.writtenDate)"
+    }
+
+    override var hashName: String {
+        return "book" + content.title + content.writtenDate
+    }
+
     private var disposeBag: Set<AnyCancellable> = []
-
-    required init(id: UID) {
-        self.id = id
-
-        for prop in [$title, $subTitle, $ISBN, $writtenDate, $publishedDate, $pageCount, $publisher, $place, $info, $authorText] {
+    override func didInit() {
+        for prop in [content.$title, content.$subTitle, content.$ISBN, content.$writtenDate, content.$publishedDate, content.$pageCount, content.$publisher, content.$place, content.$info, content.$authorText] {
             prop
                 .removeDuplicates()
                 .map { _ in
@@ -38,7 +48,7 @@ class Book: ObservableObject, ConspectusContent {
                 .store(in: &disposeBag)
         }
 
-        $author
+        content.$author
             .removeDuplicates()
             .map { _ in
                 true
@@ -47,77 +57,55 @@ class Book: ObservableObject, ConspectusContent {
             .store(in: &disposeBag)
     }
 
-    func hasChangesToStore() -> Bool {
-        hasChanges
-    }
-
-    func didStore() {
-        hasChanges = false
-    }
-
-    func conspectusDidChange() {
-        hasChanges = true
-    }
-
-    func validate() -> ValidationStatus {
-        if title.isEmpty { return .emptyBookTitle }
-        if writtenDate.isEmpty { return .emptyWrittenYear }
-        if authorText.isEmpty && author == nil { return .emptyBookAuthor }
+    override func validate() -> ValidationStatus {
+        if content.title.isEmpty { return .emptyBookTitle }
+        if content.writtenDate.isEmpty { return .emptyWrittenYear }
+        if content.authorText.isEmpty && content.author == nil { return .emptyBookAuthor }
         return .ok
     }
 
-    func serialize() -> [String: Any] {
-        var dict: [String: Any] = ["id": id,
-                                   "title": title,
-                                   "subTitle": subTitle,
-                                   "ISBN": ISBN,
-                                   "writtenDate": writtenDate,
-                                   "publishedDate": publishedDate,
-                                   "pageCount": pageCount,
-                                   "publisher": publisher,
-                                   "place": place,
-                                   "info": info,
-                                   "authorText": authorText,
-        ]
-
-        if let author = author {
+    override func serialize() -> [String: Any] {
+        var dict = super.serialize()
+        dict["title"] = content.title
+        dict["subTitle"] = content.subTitle
+        dict["ISBN"] = content.ISBN
+        dict["writtenDate"] = content.writtenDate
+        dict["publishedDate"] = content.publishedDate
+        dict["pageCount"] = content.pageCount
+        dict["publisher"] = content.publisher
+        dict["place"] = content.place
+        dict["info"] = content.info
+        dict["authorText"] = content.authorText
+        if let author = content.author {
             dict["authorID"] = author.id
         }
         return dict
     }
 
-    func deserialize(from dict: [String: Any], bibliography: Bibliography) {
-        title = dict["title"] as? String ?? ""
-        subTitle = dict["subTitle"] as? String ?? ""
-        ISBN = dict["ISBN"] as? String ?? ""
-        writtenDate = dict["writtenDate"] as? String ?? ""
-        publishedDate = dict["publishedDate"] as? String ?? ""
-        pageCount = dict["pageCount"] as? String ?? ""
-        publisher = dict["publisher"] as? String ?? ""
-        place = dict["place"] as? String ?? ""
-        info = dict["info"] as? String ?? ""
-        authorText = dict["authorText"] as? String ?? ""
-        if let authorID = dict["authorID"] as? UID {
-            author = bibliography.read(authorID)
+    override func deserialize(_ bibliography: Bibliography) {
+        super.deserialize(bibliography)
+        if let dict = fileData {
+            content.title = dict["title"] as? String ?? ""
+            content.subTitle = dict["subTitle"] as? String ?? ""
+            content.ISBN = dict["ISBN"] as? String ?? ""
+            content.writtenDate = dict["writtenDate"] as? String ?? ""
+            content.publishedDate = dict["publishedDate"] as? String ?? ""
+            content.pageCount = dict["pageCount"] as? String ?? ""
+            content.publisher = dict["publisher"] as? String ?? ""
+            content.place = dict["place"] as? String ?? ""
+            content.info = dict["info"] as? String ?? ""
+            content.authorText = dict["authorText"] as? String ?? ""
+            if let authorID = dict["authorID"] as? UID {
+                content.author = bibliography.read(authorID) as? Author
+            }
         }
+
         hasChanges = false
     }
 
-    func removeLinks(with conspectus: Conspectus) {
-        if let author = author, author == conspectus {
-            self.author = nil
+    override func removeLinks(with conspectus: Conspectus) {
+        if let author = content.author, author.id == conspectus.id {
+            content.author = nil
         }
     }
-
-    func getUniqueName() -> String {
-        return "book" + title + writtenDate
-    }
-    
-    func getDescription() -> String {
-        return "\(title) \(authorText) \(writtenDate)"
-    }
-}
-
-extension Conspectus {
-    var asBook: Book? { return content as? Book }
 }

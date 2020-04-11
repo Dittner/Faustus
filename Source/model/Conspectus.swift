@@ -2,163 +2,161 @@
 //  Conspectus.swift
 //  Faustus
 //
-//  Created by Alexander Dittner on 28.03.2020.
+//  Created by Alexander Dittner on 10.04.2020.
 //  Copyright © 2020 Alexander Dittner. All rights reserved.
 //
 
 import Combine
 import SwiftUI
 
-enum ConspectusGenus: String {
-    case asUser
-    case asAuthor
-    case asBook
-    case asTag
+enum ValidationStatus: String {
+    case ok
+    case emptyName = "Das Feld Name ist nicht gefüllt"
+    case emptyPassword = "Das Feld Schlüssel ist nicht gefüllt"
+    case invalidUserPwd = "Schlüssel ist ungültig"
+    case emptyBirthYear = "Das Feld Geboren ist nicht gefüllt"
+    case lifeIsTooLong = "Die Lebensdauer ist zu lang"
+    case emptyBookTitle = "Das Feld Titel ist nicht gefüllt"
+    case emptyBookAuthor = "Das Feld Author ist nicht gefüllt"
+    case emptyWrittenYear = "Das Feld Geschrieben ist nicht gefüllt"
+    case emptyQuote = "Der Text eines Zitates ist nicht gefüllt"
+    case emptyPage = "Die Seitennummer eines Zitates ist nicht gefüllt"
+    case duplicate = "Ein Duplikat gefunden"
+}
 
-    func create(id: UID) -> ConspectusContent? {
+enum StoreResult: String {
+    case stored
+    case noChangesToStore
+    case failed
+}
+
+enum ConspectusGenus: String {
+    case user
+    case author
+    case book
+    case tag
+
+    func create() -> Conspectus {
         switch self {
-        case .asBook:
-            return Book(id: id)
-        case .asTag:
-            return Tag(id: id)
-        case .asAuthor:
-            return Author(id: id)
-        case .asUser:
-            return User(id: id)
+        case .user:
+            return User(location: .user)
+        case .author:
+            return Author(location: .authors)
+        case .book:
+            return Book(location: .books)
+        case .tag:
+            return Tag(location: .tags)
         }
     }
 }
 
 class Conspectus: ObservableObject, Equatable {
+    let id: UID
+    let fileUrl: URL
+    var fileData: [String: Any]?
+    var changedDate: String = ""
+    var createdDate: String = ""
+    var isNew: Bool
+
+    var uniqueNameBeforeChanges: String = ""
+    var description: String {
+        // Abstract property
+        return nil!
+    }
+
+    var hashName: String {
+        // Abstract property
+        return nil!
+    }
+
+    var genus: ConspectusGenus {
+        // Abstract property
+        return nil!
+    }
+
+    @Published var validationStatus: ValidationStatus = .ok
+    @Published var isEditing: Bool
+    @Published var hasChanges: Bool = true
+    @Published var isRemoved: Bool = false
+
+    private var disposeBag: Set<AnyCancellable> = []
+
     static func == (lhs: Conspectus, rhs: Conspectus) -> Bool {
         return lhs.id == rhs.id
     }
 
-    let id: UID
-    let fileUrl: URL
-    let content: ConspectusContent
-    var contentUniqueName: String = ""
-    let createdDate: String
-    private(set) var changedDate: String
-    let genus: ConspectusGenus
-    private(set) var isNew: Bool = false
-    private(set) var source: [String: Any]?
+    init?(from url: URL) {
+        if let dict = DocumentsStorage.readFile(from: url) {
+            id = dict["id"] as! UID
+            fileUrl = url
+            fileData = dict
+            isNew = false
+            isEditing = false
 
-    @Published var validationStatus: ValidationStatus = .ok
-    @Published var isEditing: Bool = false
-    @Published var isRemoved: Bool = false
-    private var disposeBag: Set<AnyCancellable> = []
-
-    init?(genus: ConspectusGenus, from url: URL) {
-        guard let data = DocumentsStorage.readFile(from: url) else { return nil }
-        do {
-            if let dict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                if let uid = dict["id"] as? UID {
-                    id = uid
-                    fileUrl = url
-                    self.genus = genus
-                    createdDate = dict["createdDate"] as? String ?? DateTimeUtils.localize(Date())
-                    changedDate = dict["changedDate"] as? String ?? DateTimeUtils.localize(Date())
-                    isRemoved = dict["isRemoved"] as? Bool ?? false
-                    content = genus.create(id: uid)!
-                    source = dict
-                    subscribeToIsRemoved()
-                } else {
-                    logErr(tag: .PARSING, msg: "Failed to read id from conspectus for a file \(url)")
-                    return nil
-                }
-
-            } else {
-                logErr(tag: .PARSING, msg: "Failed to transform conspectus dict to [String: Any] for a file \(url)")
-                return nil
-            }
-
-        } catch let error as NSError {
-            logErr(tag: .PARSING, msg: "Failed to parse json data to [String: Any] for a file \(url): \(error.localizedDescription)")
+        } else {
             return nil
         }
+
+        $isRemoved
+            .dropFirst()
+            .removeDuplicates()
+            .sink { _ in
+                self.changedDate = DateTimeUtils.localize(Date())
+            }
+            .store(in: &disposeBag)
+
+        didInit()
     }
 
-    init(genus: ConspectusGenus) {
+    init(location: StorageDirectory) {
         id = UID()
-        self.genus = genus
-        createdDate = DateTimeUtils.localize(Date())
-        changedDate = createdDate
-        content = genus.create(id: id)!
-        contentUniqueName = ""
-
-        let fileDir: String = Conspectus.genus2dir(genus).rawValue
-
-        fileUrl = DocumentsStorage.projectURL.appendingPathComponent(fileDir + "/" + id.description + ".faustus")
-
-        isEditing = true
+        fileData = nil
         isNew = true
-        subscribeToIsRemoved()
-    }
+        isEditing = true
 
-    func subscribeToIsRemoved() {
+        fileUrl = DocumentsStorage.projectURL.appendingPathComponent(location.rawValue + "/" + id.description + ".faustus")
+
         $isRemoved.dropFirst()
             .removeDuplicates()
             .sink { _ in
                 self.changedDate = DateTimeUtils.localize(Date())
-                self.content.conspectusDidChange()
             }
             .store(in: &disposeBag)
+
+        didInit()
     }
 
-    private static func genus2dir(_ genus: ConspectusGenus) -> StorageDirectory {
+    func didInit() {}
+
+    static func getDirLocation(by genus: ConspectusGenus) -> StorageDirectory {
         switch genus {
-        case .asAuthor:
+        case .author:
             return .authors
-        case .asUser:
+        case .user:
             return .user
-        case .asBook:
+        case .book:
             return .books
-        case .asTag:
+        case .tag:
             return .tags
         }
     }
 
-    func deserialize(_ bibliography: Bibliography) {
-        if let src = source {
-            content.deserialize(from: src, bibliography: bibliography)
-            contentUniqueName = content.getUniqueName()
-        }
-    }
-
-    private func write(dict: [String: Any]) -> Bool {
-        do {
-            var updateDict = dict
-            changedDate = DateTimeUtils.localize(Date())
-            updateDict["createdDate"] = createdDate
-            updateDict["changedDate"] = changedDate
-            updateDict["isRemoved"] = isRemoved
-
-            let data = try JSONSerialization.data(withJSONObject: updateDict, options: .fragmentsAllowed)
-
-            try data.write(to: fileUrl)
-            logInfo(tag: .IO, msg: "file with url = \(fileUrl) has been stored!")
-            return true
-        } catch {
-            logErr(tag: .IO, msg: "Unable to write file with url: \(fileUrl), error: \(error.localizedDescription)")
-            return false
-        }
-    }
-
     func store() -> StoreResult {
-        guard content.hasChangesToStore() else {
+        guard hasChanges else {
             return .noChangesToStore
         }
 
-        validationStatus = content.validate()
+        validationStatus = validate()
         if validationStatus == .ok {
-            validationStatus = checkAreThereDuplicates()
+            validationStatus = AppModel.shared.bibliography.hasDuplicate(of: self) ? .duplicate : .ok
         }
         if validationStatus == .ok {
-            if write(dict: content.serialize()) {
+            let oldHashName = fileData?["hashName"] as? String ?? ""
+            if write(dict: serialize()) {
                 isNew = false
-                updateContentUniqueName()
-                content.didStore()
+                hasChanges = false
+                AppModel.shared.bibliography.update(self, oldHashName: oldHashName)
+
                 return .stored
             } else {
                 return .failed
@@ -168,14 +166,36 @@ class Conspectus: ObservableObject, Equatable {
         }
     }
 
-    private func checkAreThereDuplicates() -> ValidationStatus {
-        return AppModel.shared.bibliography.hasDuplicate(of: self) ? .duplicate : .ok
+    func validate() -> ValidationStatus {
+        return .ok
     }
 
-    private func updateContentUniqueName() {
-        if contentUniqueName != content.getUniqueName() {
-            AppModel.shared.bibliography.update(self, oldUniqueName: contentUniqueName)
-            contentUniqueName = content.getUniqueName()
+    func serialize() -> [String: Any] {
+        changedDate = DateTimeUtils.localize(Date())
+        return ["id": id, "hashName": hashName, "createdDate": createdDate, "changedDate": changedDate, "isRemoved": isRemoved]
+    }
+
+    func deserialize(_ bibliography: Bibliography) {
+        if let dict = fileData {
+            createdDate = dict["createdDate"] as? String ?? DateTimeUtils.localize(Date())
+            changedDate = dict["changedDate"] as? String ?? DateTimeUtils.localize(Date())
+            isRemoved = dict["isRemoved"] as? Bool ?? false
+        }
+
+        hasChanges = false
+    }
+
+    private func write(dict: [String: Any]) -> Bool {
+        do {
+            let data = try JSONSerialization.data(withJSONObject: dict, options: .fragmentsAllowed)
+            try data.write(to: fileUrl)
+
+            fileData = dict
+            logInfo(tag: .IO, msg: "file with url = \(fileUrl) has been stored!")
+            return true
+        } catch {
+            logErr(tag: .IO, msg: "Unable to write file with url: \(fileUrl), error: \(error.localizedDescription)")
+            return false
         }
     }
 
@@ -187,20 +207,14 @@ class Conspectus: ObservableObject, Equatable {
         isRemoved = true
     }
 
+    func removeLinks(with conspectus: Conspectus) {}
+
     func destroy() {
         DocumentsStorage.deleteFile(from: fileUrl)
     }
 
-    public var description: String {
-        switch genus {
-        case .asAuthor:
-            return "Conspectus.asAuthor <\(asAuthor!.name)>"
-        case .asTag:
-            return "Conspectus.asTag <\(asTag!.name)>"
-        case .asBook:
-            return "Conspectus.asBook <\(asBook!.title)>"
-        case .asUser:
-            return "Conspectus.asUser <\(asUser!.surname)>"
-        }
+    func notifyChange() {
+        objectWillChange.send()
+        hasChanges = true
     }
 }

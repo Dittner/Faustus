@@ -2,16 +2,14 @@
 //  Author.swift
 //  Faustus
 //
-//  Created by Alexander Dittner on 24.03.2020.
+//  Created by Alexander Dittner on 10.04.2020.
 //  Copyright © 2020 Alexander Dittner. All rights reserved.
 //
 
 import Combine
 import SwiftUI
 
-class Author: ConspectusContent, ObservableObject {
-    let id: UID
-
+class AuthorContent: ObservableObject {
     @Published var info: String = "Keine"
     @Published var name: String = ""
     @Published var surname: String = ""
@@ -19,14 +17,11 @@ class Author: ConspectusContent, ObservableObject {
     @Published var deathYear: String = ""
     @Published var initials: String = ""
     @Published var years: String = ""
-    @Published private(set) var books: [Conspectus] = []
-    @Published var hasChanges: Bool = false
+    @Published var books: [Book] = []
 
     private var disposeBag: Set<AnyCancellable> = []
 
-    required init(id: UID) {
-        self.id = id
-
+    init() {
         $name
             .debounce(for: 0.2, scheduler: RunLoop.main)
             .removeDuplicates()
@@ -48,8 +43,25 @@ class Author: ConspectusContent, ObservableObject {
             }
             .assign(to: \.years, on: self)
             .store(in: &disposeBag)
+    }
+}
 
-        for prop in [$name, $surname, $birthYear, $deathYear, $info] {
+class Author: Conspectus {
+    @ObservedObject var content: AuthorContent = AuthorContent()
+
+    override var genus: ConspectusGenus { return .author }
+
+    override var description: String {
+        return "\(content.name) \(content.surname) \(content.birthYear)"
+    }
+
+    override var hashName: String {
+        return "author" + content.name + content.surname + content.birthYear
+    }
+
+    private var disposeBag: Set<AnyCancellable> = []
+    override func didInit() {
+        for prop in [content.$name, content.$surname, content.$birthYear, content.$deathYear, content.$info] {
             prop
                 .removeDuplicates()
                 .map { _ in
@@ -59,74 +71,59 @@ class Author: ConspectusContent, ObservableObject {
                 .store(in: &disposeBag)
         }
 
-        $books
-            .removeDuplicates()
+        content.$books
             .map { _ in
                 true
             }
             .assign(to: \.hasChanges, on: self)
             .store(in: &disposeBag)
     }
-    
-    func updateBooks(_ coll:[Conspectus]) {
-        for c in coll {
-            if !books.contains(c) {
-            }
-        }
-    }
 
-    func hasChangesToStore() -> Bool {
-        return hasChanges
-    }
-
-    func didStore() {
-        hasChanges = false
-    }
-
-    func conspectusDidChange() {
-        hasChanges = true
-    }
-
-    func validate() -> ValidationStatus {
-        if surname == "" {
+    override func validate() -> ValidationStatus {
+        if content.surname == "" {
             return .emptyName
-        } else if birthYear == "" {
+        } else if content.birthYear == "" {
             return .emptyBirthYear
-        } else if deathYear != "", let death = Int(deathYear), let birth = Int(birthYear), death - birth > 120 {
+        } else if content.deathYear != "", let death = Int(content.deathYear), let birth = Int(content.birthYear), death - birth > 120 {
             return .lifeIsTooLong
         } else {
             return .ok
         }
     }
 
-    func serialize() -> [String: Any] {
-        return ["id": id, "name": name, "surname": surname, "birthYear": birthYear, "deathYear": deathYear, "info": info, "books": books.map { $0.id }]
+    override func serialize() -> [String: Any] {
+        var dict = super.serialize()
+        dict["name"] = content.name
+        dict["surname"] = content.surname
+        dict["birthYear"] = content.birthYear
+        dict["deathYear"] = content.deathYear
+        dict["info"] = content.info
+        dict["books"] = content.books.map { $0.id }
+        return dict
     }
 
-    func deserialize(from dict: [String: Any], bibliography: Bibliography) {
-        name = dict["name"] as? String ?? ""
-        surname = dict["surname"] as? String ?? ""
-        birthYear = dict["birthYear"] as? String ?? ""
-        deathYear = dict["deathYear"] as? String ?? ""
-        info = dict["info"] as? String ?? ""
-        if let booksID = dict["books"] as? [UID] {
-            books = booksID.map { bibliography.read($0) }.compactMap { $0 }
+    override func deserialize(_ bibliography: Bibliography) {
+        super.deserialize(bibliography)
+        if let dict = fileData {
+            content.name = dict["name"] as? String ?? ""
+            content.surname = dict["surname"] as? String ?? ""
+            content.birthYear = dict["birthYear"] as? String ?? ""
+            content.deathYear = dict["deathYear"] as? String ?? ""
+            content.info = dict["info"] as? String ?? ""
+            if let booksID = dict["books"] as? [UID] {
+                content.books = booksID.map { bibliography.read($0) as? Book }.compactMap { $0 }
+            }
         }
+
         hasChanges = false
     }
 
-    func removeLinks(with conspectus: Conspectus) {
-    }
-
-    func getUniqueName() -> String {
-        return "author" + name + surname + birthYear
-    }
+    override func removeLinks(with conspectus: Conspectus) {}
     
-    func getDescription() -> String {
-        return "\(name) \(surname) \(birthYear)"
+    func updateBooks(_ coll:[Book]) {
+        for b in coll {
+            if !content.books.contains(b) {
+            }
+        }
     }
-}
-
-extension Conspectus {
-    var asAuthor: Author? { return content as? Author }
 }

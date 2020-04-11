@@ -2,37 +2,27 @@
 //  User.swift
 //  Faustus
 //
-//  Created by Alexander Dittner on 10.02.2020.
+//  Created by Alexander Dittner on 11.04.2020.
 //  Copyright © 2020 Alexander Dittner. All rights reserved.
 //
 
 import Combine
-import Foundation
+import SwiftUI
 
-class User: ConspectusContent, ObservableObject {
-    let id: UID
-
+class UserContent: ObservableObject {
+    @Published var info: String = "Keine"
     @Published var name: String = ""
     @Published var surname: String = ""
     @Published var initials: String = ""
-    @Published var pwd: String = ""
-    @Published var isLoggedIn: Bool = false
-    @Published var validationStatus: ValidationStatus = .ok
-    @Published private(set) var books: [Conspectus] = []
-    @Published var hasChanges: Bool = false
+    @Published var books: [Book] = []
 
-    private(set) var authorID: UID = UID()
-    var isRegistered: Bool {
-        return !encryptedPwd.isEmpty
-    }
-
-    private var encryptedPwd: String = ""
+    var pwd: String = ""
+    fileprivate var encryptedPwd: String = ""
+    var isLoggedIn: Bool = false
 
     private var disposeBag: Set<AnyCancellable> = []
 
-    required init(id: UID) {
-        self.id = id
-
+    init() {
         $name
             .debounce(for: 0.2, scheduler: RunLoop.main)
             .removeDuplicates()
@@ -46,8 +36,29 @@ class User: ConspectusContent, ObservableObject {
             }
             .assign(to: \.initials, on: self)
             .store(in: &disposeBag)
+    }
+}
 
-        for prop in [$name, $surname] {
+class User: Conspectus {
+    @ObservedObject var content: UserContent = UserContent()
+
+    override var genus: ConspectusGenus { return .user }
+
+    private func encryptPwd() -> String {
+        return ("Faustus" + content.pwd).sha512()!
+    }
+    
+    override var description: String {
+        return "\(content.name) \(content.surname)"
+    }
+
+    override var hashName: String {
+        return "user" + content.name + content.surname
+    }
+
+    private var disposeBag: Set<AnyCancellable> = []
+    override func didInit() {
+        for prop in [content.$name, content.$surname] {
             prop
                 .removeDuplicates()
                 .map { _ in
@@ -57,8 +68,7 @@ class User: ConspectusContent, ObservableObject {
                 .store(in: &disposeBag)
         }
 
-        $books
-            .removeDuplicates()
+        content.$books
             .map { _ in
                 true
             }
@@ -66,63 +76,46 @@ class User: ConspectusContent, ObservableObject {
             .store(in: &disposeBag)
     }
 
-    func updateBooks(_ coll:[Conspectus]) {
-        
-    }
-    
-    private func encryptPwd() -> String {
-        return ("Faustus" + pwd).sha512()!
-    }
-
-    func hasChangesToStore() -> Bool {
-        return hasChanges
-    }
-
-    func didStore() {
-        hasChanges = false
-    }
-
-    func conspectusDidChange() {
-        hasChanges = true
-    }
-
-    func validate() -> ValidationStatus {
-        if name.isEmpty || surname.isEmpty {
+    override func validate() -> ValidationStatus {
+        if content.name.isEmpty || content.surname.isEmpty {
             return .emptyName
-        } else if pwd.isEmpty {
+        } else if content.pwd.isEmpty {
             return .emptyPassword
-        } else if !encryptedPwd.isEmpty && encryptedPwd != encryptPwd() {
+        } else if !content.encryptedPwd.isEmpty && content.encryptedPwd != encryptPwd() {
             return .invalidUserPwd
         } else {
             return .ok
         }
     }
 
-    func serialize() -> [String: Any] {
-        return ["id": id, "name": name, "surname": surname, "encryptedPwd": encryptPwd(), "books": books.map { $0.id }]
+    override func serialize() -> [String: Any] {
+        var dict = super.serialize()
+        dict["name"] = content.name
+        dict["surname"] = content.surname
+        dict["books"] = content.books.map { $0.id }
+        return dict
     }
 
-    func deserialize(from dict: [String: Any], bibliography: Bibliography) {
-        name = dict["name"] as? String ?? ""
-        surname = dict["surname"] as? String ?? ""
-        encryptedPwd = dict["encryptedPwd"] as? String ?? ""
-        if let booksID = dict["books"] as? [UID] {
-            books = booksID.map { bibliography.read($0) }.compactMap { $0 }
+    override func deserialize(_ bibliography: Bibliography) {
+        super.deserialize(bibliography)
+        if let dict = fileData {
+            content.name = dict["name"] as? String ?? ""
+            content.surname = dict["surname"] as? String ?? ""
+            content.encryptedPwd = dict["encryptedPwd"] as? String ?? ""
+            if let booksID = dict["books"] as? [UID] {
+                content.books = booksID.map { bibliography.read($0) as? Book }.compactMap { $0 }
+            }
         }
+
         hasChanges = false
     }
 
-    func removeLinks(with conspectus: Conspectus) {}
-
-    func getUniqueName() -> String {
-        return "user" + name + surname
+    override func removeLinks(with conspectus: Conspectus) {}
+    
+    func updateBooks(_ coll:[Book]) {
+        for b in coll {
+            if !content.books.contains(b) {
+            }
+        }
     }
-
-    func getDescription() -> String {
-        return "\(name) \(surname)"
-    }
-}
-
-extension Conspectus {
-    var asUser: User? { return content as? User }
 }

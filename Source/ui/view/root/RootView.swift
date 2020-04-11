@@ -128,12 +128,12 @@ struct BooksChooser: View {
     @EnvironmentObject var modalViewObservable: ModalViewObservable
     @ObservedObject var controller: BooksChooserController
 
-    func select(c: Conspectus) {
-        controller.selectedBooks.append(c)
+    func select(b: Book) {
+        controller.selectedBooks.append(b)
     }
 
-    func deselect(c: Conspectus) {
-        controller.selectedBooks.removeAll { $0.id == c.id }
+    func deselect(b: Book) {
+        controller.selectedBooks.removeAll { $0.id == b.id }
     }
 
     var body: some View {
@@ -157,15 +157,15 @@ struct BooksChooser: View {
             if controller.filteredBooks.count > 0 {
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 1) {
-                        ForEach(controller.filteredBooks, id: \.id) { conspectus in
+                        ForEach(controller.filteredBooks, id: \.id) { book in
                             ConspectusRow(action: { event in
                                 if event == .selected {
-                                    self.select(c: conspectus)
+                                    self.select(b: book)
                                 } else {
-                                    self.deselect(c: conspectus)
+                                    self.deselect(b: book)
                                 }
 
-                            }, conspectus: conspectus, selectable: true, selected: self.controller.selectedBooks.contains(conspectus))
+                            }, conspectus: book, selectable: true, selected: self.controller.selectedBooks.contains(book))
                                 .frame(height: 50)
                         }
                     }

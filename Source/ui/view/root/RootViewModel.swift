@@ -62,10 +62,10 @@ final class RootViewModel: ViewModel {
         return p.eraseToAnyPublisher()
     }
 
-    func chooseBooks(selectedBooks: [Conspectus]) -> AnyPublisher<[Conspectus], Never> {
+    func chooseBooks(selectedBooks: [Book]) -> AnyPublisher<[Book], Never> {
         booksChooserController.show(selectedBooks, bibliography: model.bibliography)
 
-        let p = Future<[Conspectus], Never> { promise in
+        let p = Future<[Book], Never> { promise in
             self.booksChooserController.$result
                 .dropFirst()
                 .sink { result in
@@ -109,14 +109,14 @@ class DeleteConfirmationController: ObservableObject {
 
 class BooksChooserController: ObservableObject {
     enum ChooserResult {
-        case selected(_ result: [Conspectus])
+        case selected(_ result: [Book])
         case canceled
     }
 
     @Published var isModalViewShow: Bool = false
-    @Published var selectedBooks: [Conspectus] = []
-    @Published var allBooks: [Conspectus] = []
-    @Published var filteredBooks: [Conspectus] = []
+    @Published var selectedBooks: [Book] = []
+    @Published var allBooks: [Book] = []
+    @Published var filteredBooks: [Book] = []
     @Published var filterText: String = ""
     @Published var result: ChooserResult = .canceled
 
@@ -125,7 +125,7 @@ class BooksChooserController: ObservableObject {
     init() {
         Publishers.CombineLatest($filterText.debounce(for: 0.5, scheduler: RunLoop.main), $allBooks)
             .map { filterText, bookList in
-                filterText.isEmpty ? bookList : bookList.filter { $0.content.getDescription().hasSubstring(filterText) }
+                filterText.isEmpty ? bookList : bookList.filter { $0.description.hasSubstring(filterText) }
             }
             .sink { bookList in
                 self.filteredBooks = bookList
@@ -134,13 +134,14 @@ class BooksChooserController: ObservableObject {
             .store(in: &disposeBag)
     }
 
-    func show(_ selectedBooks: [Conspectus], bibliography: Bibliography) {
+    func show(_ selectedBooks: [Book], bibliography: Bibliography) {
         isModalViewShow = true
         self.selectedBooks = selectedBooks
 
         allBooks = bibliography.getValues()
-            .filter { $0.genus == .asBook && !$0.isRemoved }
-            .sorted { $0.asBook!.writtenDate > $1.asBook!.writtenDate }
+            .filter { $0 is Book && !$0.isRemoved }
+            .map { $0 as! Book }
+            .sorted { $0.content.writtenDate > $1.content.writtenDate }
 
         print("Books total = \(allBooks.count)")
     }

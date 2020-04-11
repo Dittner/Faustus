@@ -20,8 +20,8 @@ struct ParentTag: View {
     init(controller: TagTreeController) {
         self.controller = controller
         conspectus = controller.conspectus
-        curTag = controller.conspectus.asTag!
-        tagNodes = controller.tagTree.compactTree { $0.id != controller.conspectus.id }
+        curTag = controller.conspectus as! Tag
+        tagNodes = controller.tagTree.compactTree { $0.tag.id != controller.conspectus.id }
     }
 
     var body: some View {
@@ -30,21 +30,21 @@ struct ParentTag: View {
 
             if isExpanded {
                 if conspectus.isEditing {
-                    ForEach(tagNodes, id: \.id) { node in
-                        TagTreeNodeLink(node: node, isEditing: true, isSelected: self.curTag.parentTag?.id == node.id, action: {
+                    ForEach(tagNodes, id: \.tag.id) { node in
+                        TagTreeNodeLink(node: node, isEditing: true, isSelected: self.curTag.content.parentTag?.id == node.tag.id, action: {
                             action in
                             if action == .edit {
-                                self.curTag.parentTag = self.curTag.parentTag?.id == node.id ? nil : node.conspectus
+                                self.curTag.content.parentTag = self.curTag.content.parentTag?.id == node.tag.id ? nil : node.tag
                             }
                         })
                             .font(Font.custom(.pragmaticaLightItalics, size: 21))
 
                     }.padding(.leading, 40)
                         .padding(.trailing, 20)
-                } else if self.curTag.parentTag != nil {
-                    ConspectusLink(conspectus: self.curTag.parentTag!, isEditing: false, isSelected: false, action: { action in
+                } else if self.curTag.content.parentTag != nil {
+                    ConspectusLink(conspectus: self.curTag.content.parentTag!, isEditing: false, isSelected: false, action: { action in
                         if action == .navigate {
-                            self.curTag.parentTag?.show()
+                            self.curTag.content.parentTag?.show()
                         }
                     })
                         .font(Font.custom(.pragmaticaLightItalics, size: 21))
@@ -61,9 +61,8 @@ struct ParentTag: View {
 }
 
 struct TagTreeNodeLink: View {
-    @ObservedObject var conspectus: Conspectus
+    @ObservedObject var tag: Tag
     private let node: TagTreeNode
-    let name: String
     let isEditing: Bool
     let isSelected: Bool
     let levelOffset: CGFloat
@@ -73,17 +72,17 @@ struct TagTreeNodeLink: View {
 
     init(node: TagTreeNode, isEditing: Bool, isSelected: Bool, action: ((ConspectusLinkAction) -> Void)?) {
         self.node = node
-        conspectus = node.conspectus
-        switch node.conspectus.genus {
-        case .asAuthor:
-            name = "\(node.conspectus.asAuthor!.surname) \(node.conspectus.asAuthor!.initials)"
-        case .asBook:
-            name = "\(node.conspectus.asBook!.title), \(node.conspectus.asBook!.authorText), \(node.conspectus.asBook!.writtenDate)"
-        case .asTag:
-            name = node.conspectus.asTag!.name
-        default:
-            name = "Unknown Conspectus genus"
-        }
+        tag = node.tag
+//        switch node.conspectus.genus {
+//        case .asAuthor:
+//            name = "\(node.conspectus.asAuthor!.surname) \(node.conspectus.asAuthor!.initials)"
+//        case .asBook:
+//            name = "\(node.conspectus.asBook!.title), \(node.conspectus.asBook!.authorText), \(node.conspectus.asBook!.writtenDate)"
+//        case .asTag:
+//            name = node.conspectus.asTag!.name
+//        default:
+//            name = "Unknown Conspectus genus"
+//        }
 
         self.isEditing = isEditing
         self.isSelected = isSelected
@@ -102,24 +101,24 @@ struct TagTreeNodeLink: View {
                     .opacity(0.25)
                     .frame(width: levelOffset, height: height)
 
-                Text(name)
+                Text(tag.content.name)
                     .lineLimit(1)
                     .padding(.horizontal, 5)
                     .frame(height: height)
-                    .foregroundColor(self.isSelected ? Color.F.white : self.conspectus.isRemoved ? Color.F.red : Color.F.black)
-                    .background(self.isSelected ? self.conspectus.isRemoved ? Color.F.red : Color.F.black : Color.F.white)
+                    .foregroundColor(self.isSelected ? Color.F.white : self.tag.isRemoved ? Color.F.red : Color.F.black)
+                    .background(self.isSelected ? self.tag.isRemoved ? Color.F.red : Color.F.black : Color.F.white)
                     .font(Font.custom(.pragmaticaLight, size: 21))
                     .offset(x: -5, y: 0)
                     .onTapGesture {
                         self.onLinkAction?(.edit)
                     }
             } else {
-                Text(name)
+                Text(tag.content.name)
                     .underline(self.hover, color: Color.F.black)
                     .lineLimit(1)
                     .padding(.horizontal, 5)
                     .frame(height: height)
-                    .foregroundColor(conspectus.isRemoved ? Color.F.red : Color.F.black)
+                    .foregroundColor(tag.isRemoved ? Color.F.red : Color.F.black)
                     .background(Color.F.white)
                     .font(Font.custom(.pragmaticaLightItalics, size: 21))
                     .onHover { value in self.hover = value }

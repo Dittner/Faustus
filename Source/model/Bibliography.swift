@@ -23,9 +23,9 @@ final class Bibliography: ObservableObject {
         if !has(c.id) {
             dict[c.id] = c
             if !c.isNew {
-                uniqueNames[c.content.getUniqueName()] = c.id
+                uniqueNames[c.hashName] = c.id
             }
-            
+
             objectWillChange.send(getValues())
         }
     }
@@ -37,7 +37,7 @@ final class Bibliography: ObservableObject {
     func remove(_ c: Conspectus) {
         if has(c.id) {
             dict.removeValue(forKey: c.id)
-            uniqueNames.removeValue(forKey: c.content.getUniqueName())
+            uniqueNames.removeValue(forKey: c.hashName)
             objectWillChange.send(getValues())
         }
     }
@@ -46,13 +46,13 @@ final class Bibliography: ObservableObject {
         return Array(dict.values)
     }
 
-    func update(_ c: Conspectus, oldUniqueName: String) {
-        uniqueNames.removeValue(forKey: oldUniqueName)
-        uniqueNames[c.content.getUniqueName()] = c.id
+    func update(_ c: Conspectus, oldHashName: String) {
+        uniqueNames.removeValue(forKey: oldHashName)
+        uniqueNames[c.hashName] = c.id
     }
 
     func hasDuplicate(of c: Conspectus) -> Bool {
-        if let duplicateID = uniqueNames[c.content.getUniqueName()] {
+        if let duplicateID = uniqueNames[c.hashName] {
             return c.id != duplicateID
         } else {
             return false

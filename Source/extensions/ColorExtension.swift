@@ -28,13 +28,13 @@ extension Color {
 
     init(_ genus: ConspectusGenus) {
         switch genus {
-        case .asUser:
+        case .user:
             self.init(NSColor.F.author)
-        case .asAuthor:
+        case .author:
             self.init(NSColor.F.author)
-        case .asBook:
+        case .book:
             self.init(NSColor.F.book)
-        case .asTag:
+        case .tag:
             self.init(NSColor.F.tag)
         }
     }

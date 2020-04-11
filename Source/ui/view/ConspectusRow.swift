@@ -41,51 +41,52 @@ struct ConspectusRow: View {
 
         // print("ConspectusRow init with \(conspectus.genus)")
 
-        if let author = conspectus.asAuthor {
+        if let author = conspectus as? Author {
             textColor = Color.F.gray
             genusColor = Color.F.author
             iconName = "author"
-            Publishers.CombineLatest(author.$surname, author.$initials)
+            Publishers.CombineLatest(author.content.$surname, author.content.$initials)
                 .map { surname, initials in
                     "\(surname) \(initials)"
                 }
                 .assign(to: \.title, on: notifier)
                 .store(in: &disposeBag)
 
-            author.$years
+            author.content.$years
                 .assign(to: \.subTitle, on: notifier)
                 .store(in: &disposeBag)
-        } else if let user = conspectus.asUser {
+
+        } else if let user = conspectus as? User {
             textColor = Color.F.gray
             genusColor = Color.F.white
             iconName = "user"
-            Publishers.CombineLatest(user.$surname, user.$initials)
+            Publishers.CombineLatest(user.content.$surname, user.content.$initials)
                 .map { surname, initials in
                     "\(surname) \(initials)"
                 }
                 .assign(to: \.title, on: notifier)
                 .store(in: &disposeBag)
-        } else if let book = conspectus.asBook {
+        } else if let book = conspectus as? Book {
             textColor = Color.F.gray
             genusColor = Color.F.book
             iconName = "book"
 
-            book.$title
+            book.content.$title
                 .assign(to: \.title, on: notifier)
                 .store(in: &disposeBag)
 
-            Publishers.CombineLatest(book.$writtenDate, book.$authorText)
+            Publishers.CombineLatest(book.content.$writtenDate, book.content.$authorText)
                 .map { writtenDate, authorText in
                     "\(writtenDate), \(authorText)"
                 }
                 .assign(to: \.subTitle, on: notifier)
                 .store(in: &disposeBag)
-        } else if let tag = conspectus.asTag {
+        } else if let tag = conspectus as? Tag {
             textColor = Color.F.gray
             genusColor = Color.F.tag
             iconName = "tag"
 
-            tag.$name
+            tag.content.$name
                 .assign(to: \.title, on: notifier)
                 .store(in: &disposeBag)
         } else {

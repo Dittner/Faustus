@@ -19,13 +19,13 @@ enum SearchFilter {
     func toGenus() -> ConspectusGenus? {
         switch self {
         case .authors:
-            return .asAuthor
+            return .author
         case .books:
-            return .asBook
+            return .book
         case .tags:
-            return .asTag
+            return .tag
         case .quotes:
-            return .asBook
+            return .book
         case .removed:
             return nil
         }
@@ -51,24 +51,24 @@ final class SearchViewModel: ViewModel {
                 }
             }
             .map { filter, filterText, conspectusList -> (SearchFilter, [Conspectus]) in
-                filterText.isEmpty ? (filter, conspectusList) : (filter, conspectusList.filter { $0.content.getDescription().hasSubstring(filterText) })
+                filterText.isEmpty ? (filter, conspectusList) : (filter, conspectusList.filter { $0.description.hasSubstring(filterText) })
             }
             .map { filter, conspectusList in
                 if filter == .authors {
                     return conspectusList.sorted {
-                        $0.asAuthor!.birthYear > $1.asAuthor!.birthYear
+                        ($0 as! Author).content.birthYear > ($1 as! Author).content.birthYear
                     }
                 }
 
                 if filter == .books {
                     return conspectusList.sorted {
-                        $0.asBook!.writtenDate > $1.asBook!.writtenDate
+                        ($0 as! Book).content.writtenDate > ($1 as! Book).content.writtenDate
                     }
                 }
 
                 if filter == .tags {
                     return conspectusList.sorted {
-                        $0.asTag!.name < $1.asTag!.name
+                        ($0 as! Tag).content.name < ($1 as! Tag).content.name
                     }
                 }
 

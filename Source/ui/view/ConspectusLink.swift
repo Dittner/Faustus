@@ -26,12 +26,12 @@ struct ConspectusLink: View {
     init(conspectus: Conspectus, isEditing: Bool, isSelected: Bool, level: Int = 0, action: ((ConspectusLinkAction) -> Void)?) {
         self.conspectus = conspectus
         switch conspectus.genus {
-        case .asAuthor:
-            name = "\(conspectus.asAuthor!.surname) \(conspectus.asAuthor!.initials)"
-        case .asBook:
-            name = "\(conspectus.asBook!.title), \(conspectus.asBook!.authorText), \(conspectus.asBook!.writtenDate)"
-        case .asTag:
-            name = conspectus.asTag!.name
+        case .author:
+            name = "\((conspectus as! Author).content.surname) \((conspectus as! Author).content.initials)"
+        case .book:
+            name = "\((conspectus as! Book).content.title), \((conspectus as! Book).content.authorText), \((conspectus as! Book).content.writtenDate)"
+        case .tag:
+            name = (conspectus as! Tag).content.name
         default:
             name = "Unknown Conspectus genus"
         }

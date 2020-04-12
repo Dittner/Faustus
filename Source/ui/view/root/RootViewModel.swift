@@ -14,13 +14,21 @@ enum AppScreen: String {
     case docList
 }
 
+enum ModalViewCategory: String {
+    case no
+    case deleteConfirmation
+    case booksChooser
+    case authorChooser
+}
+
 final class RootViewModel: ViewModel {
     @Published var screen: AppScreen = .login
     @Published var keyLinesShown: Bool = false
-    @Published var isModalViewShow: Bool = false
+    @Published var modalView: ModalViewCategory = .no
 
-    let deleteConfirmationController: DeleteConfirmationController = DeleteConfirmationController()
-    let booksChooserController: BooksChooserController = BooksChooserController()
+    var deleteConfirmationController: DeleteConfirmationController = DeleteConfirmationController()
+    var booksChooserController: BooksChooserController = BooksChooserController()
+    var authorChooserController: AuthorChooserController = AuthorChooserController()
 
     static var shared: RootViewModel?
     private var disposeBag: Set<AnyCancellable> = []
@@ -34,17 +42,10 @@ final class RootViewModel: ViewModel {
             }
             .assign(to: \.screen, on: self)
             .store(in: &disposeBag)
-
-        Publishers.CombineLatest(deleteConfirmationController.$isModalViewShow, booksChooserController.$isModalViewShow)
-            .map { _, _ in
-                true
-            }
-            .assign(to: \.isModalViewShow, on: self)
-            .store(in: &disposeBag)
     }
 
     func confirmDelete() -> AnyPublisher<DeleteResult, Never> {
-        deleteConfirmationController.show()
+        modalView = .deleteConfirmation
 
         let p = Future<DeleteResult, Never> { promise in
             self.deleteConfirmationController.$result
@@ -56,6 +57,7 @@ final class RootViewModel: ViewModel {
                     case .canceled:
                         promise(.success(result))
                     }
+                    self.modalView = .no
                 }
                 .store(in: &self.disposeBag)
         }
@@ -63,6 +65,7 @@ final class RootViewModel: ViewModel {
     }
 
     func chooseBooks(selectedBooks: [Book]) -> AnyPublisher<[Book], Never> {
+        modalView = .booksChooser
         booksChooserController.show(selectedBooks, bibliography: model.bibliography)
 
         let p = Future<[Book], Never> { promise in
@@ -76,6 +79,29 @@ final class RootViewModel: ViewModel {
                     case .canceled:
                         promise(.success(selectedBooks))
                     }
+                    self.modalView = .no
+                }
+                .store(in: &self.disposeBag)
+        }
+        return p.eraseToAnyPublisher()
+    }
+
+    func chooseAuthor() -> AnyPublisher<Author?, Never> {
+        modalView = .authorChooser
+        authorChooserController.show(model.bibliography)
+
+        let p = Future<Author?, Never> { promise in
+            self.authorChooserController.$result
+                .dropFirst()
+                .sink { result in
+                    switch result {
+                    case let .selected(result):
+                        promise(.success(result))
+
+                    case .canceled:
+                        promise(.success(nil))
+                    }
+                    self.modalView = .no
                 }
                 .store(in: &self.disposeBag)
         }
@@ -89,20 +115,13 @@ enum DeleteResult {
 }
 
 class DeleteConfirmationController: ObservableObject {
-    @Published var isModalViewShow: Bool = false
     @Published var result: DeleteResult = .canceled
 
-    func show() {
-        isModalViewShow = true
-    }
-
     func cancel() {
-        isModalViewShow = false
         result = .canceled
     }
 
     func apply() {
-        isModalViewShow = false
         result = .deleted
     }
 }
@@ -113,7 +132,6 @@ class BooksChooserController: ObservableObject {
         case canceled
     }
 
-    @Published var isModalViewShow: Bool = false
     @Published var selectedBooks: [Book] = []
     @Published var allBooks: [Book] = []
     @Published var filteredBooks: [Book] = []
@@ -135,7 +153,6 @@ class BooksChooserController: ObservableObject {
     }
 
     func show(_ selectedBooks: [Book], bibliography: Bibliography) {
-        isModalViewShow = true
         self.selectedBooks = selectedBooks
 
         allBooks = bibliography.getValues()
@@ -147,12 +164,54 @@ class BooksChooserController: ObservableObject {
     }
 
     func cancel() {
-        isModalViewShow = false
         result = .canceled
     }
 
     func apply() {
-        isModalViewShow = false
         result = .selected(selectedBooks)
+    }
+}
+
+class AuthorChooserController: ObservableObject {
+    enum ChooserResult {
+        case selected(_ result: Author)
+        case canceled
+    }
+
+    @Published var selectedAuthor: Author?
+    @Published var allAuthors: [Author] = []
+    @Published var filteredAuthors: [Author] = []
+    @Published var filterText: String = ""
+    @Published var result: ChooserResult = .canceled
+
+    private var disposeBag: Set<AnyCancellable> = []
+
+    init() {
+        Publishers.CombineLatest($filterText.debounce(for: 0.5, scheduler: RunLoop.main), $allAuthors)
+            .map { filterText, authorList in
+                filterText.isEmpty ? authorList : authorList.filter { $0.description.hasSubstring(filterText) }
+            }
+            .sink { authorList in
+                self.filteredAuthors = authorList
+                print("Filtered list of Author = \(authorList.count)")
+            }
+            .store(in: &disposeBag)
+    }
+
+    func show(_ bibliography: Bibliography) {
+        allAuthors = bibliography.getValues()
+            .filter { $0 is Author && !$0.state.isRemoved }
+            .map { $0 as! Author }
+            .sorted { $0.content.surname > $1.content.surname }
+
+        print("Authors total = \(allAuthors.count)")
+    }
+
+    func cancel() {
+        result = .canceled
+    }
+
+    func apply() {
+        result = selectedAuthor != nil ? .selected(selectedAuthor!) : .canceled
     }
 }

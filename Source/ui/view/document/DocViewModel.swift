@@ -52,8 +52,16 @@ final class DocViewModel: ViewModel {
         model.closeSelectedConspectus()
     }
 
-    func select(_ conspectus: Conspectus) {
-        model.select(conspectus)
+    var chooseAuthorPublisher: AnyCancellable?
+    func chooseAuthor() {
+        if let book = selectedConspectus as? Book {
+            chooseAuthorPublisher?.cancel()
+            chooseAuthorPublisher = rootVM.chooseAuthor()
+                .sink { author in
+                    print("chooseAuthor has result")
+                    author?.booksColl.addBook(b: book)
+                }
+        }
     }
 
     var confirmPublisher: AnyCancellable?

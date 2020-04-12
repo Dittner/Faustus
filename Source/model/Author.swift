@@ -74,12 +74,25 @@ class BooksColl: ObservableObject {
             if book.id == id {
                 let b = books.remove(at: ind)
                 b.content.author = nil
+                _ = b.store()
 
                 owner.state.hasChanges = true
                 _ = owner.store()
 
                 break
             }
+        }
+    }
+    
+    func addBook(b: Book) {
+        if !books.contains(b) {
+            books.append(b)
+            if b.content.author != owner {
+                b.content.author = owner
+                _ = b.store()
+            }
+            owner.state.hasChanges = true
+            _ = owner.store()
         }
     }
 }
@@ -156,5 +169,9 @@ class Author: Conspectus, BooksOwner, ObservableObject {
         state.hasChanges = false
     }
 
-    override func removeLinks(with conspectus: Conspectus) {}
+    override func removeLinks(with conspectus: Conspectus) {
+        if let book = conspectus as? Book {
+            booksColl.removeBook(by: book.id)
+        }
+    }
 }

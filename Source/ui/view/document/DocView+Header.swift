@@ -142,14 +142,17 @@ struct AuthorHeader: View {
 }
 
 struct BookHeader: View {
+    @EnvironmentObject var vm: DocViewModel
     @EnvironmentObject var textFocus: TextFocus
     @ObservedObject var book: Book
+    @ObservedObject var bookContent: BookContent
     @ObservedObject var state: ConspectusState
     let onClosedAction: () -> Void
 
     init(book: Book, onClosed: @escaping () -> Void) {
         self.book = book
         state = book.state
+        bookContent = book.content
         onClosedAction = onClosed
 
         print("BookHeader init, book: \(book.id), has changes: \(state.hasChanges)")
@@ -190,7 +193,7 @@ struct BookHeader: View {
                     .frame(width: 30)
                     .opacity(state.hasChanges ? 1 : 0)
 
-                Spacer()
+                Spacer().frame(width: 250)
 
                 TextInput(title: "geschrieben", text: $book.content.writtenDate, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .right, isFocused: textFocus.id == .headerBookWritten, isSecure: false, format: "-?[0-9]{0,4}", isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerBookAuthor })
                     .saturation(0)
@@ -202,13 +205,32 @@ struct BookHeader: View {
                     .frame(width: 10, alignment: .center)
                     .opacity(book.content.authorText.isEmpty ? 0.25 : 1)
 
-                TextInput(title: "Author", text: $book.content.authorText, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerBookAuthor, isSecure: false, format: nil, isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerBookTitle })
-                    .saturation(0)
-                    .frame(width: 200)
+                if bookContent.author == nil {
+                    TextInput(title: "Author", text: $book.content.authorText, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerBookAuthor, isSecure: false, format: nil, isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerBookTitle })
+                        .saturation(0)
+                        .frame(width: 300)
+                } else {
+                    ConspectusLink(conspectus: bookContent.author!, isEditing: self.state.isEditing, isSelected: false, fontSize: 16, height: 20, isLightMode: false, action: { result in
+                        switch result {
+                        case .edit:
+                            print("Edited link")
+                        case .remove:
+                            self.bookContent.author = nil
+                        case .navigate:
+                            self.bookContent.author!.show()
+                        }
+                    }).frame(width: 300)
+                }
 
-                Spacer()
-
-                Spacer().frame(width: 30)
+                SelectableText(text: "+Author", color: Color.F.white)
+                    .font(Font.custom(.mono, size: 13))
+                    .padding(.leading, 0)
+                    .padding(.top, 0)
+                    .onTapGesture {
+                        self.vm.chooseAuthor()
+                    }
+                    .frame(width: 180, alignment: .trailing)
+                    .opacity(state.isEditing && bookContent.author == nil ? 1 : 0)
             }
             .padding(.horizontal, 15)
             .frame(height: 50)

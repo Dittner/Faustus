@@ -105,5 +105,9 @@ class User: Conspectus, BooksOwner, ObservableObject {
         state.hasChanges = false
     }
 
-    override func removeLinks(with conspectus: Conspectus) {}
+    override func removeLinks(with conspectus: Conspectus) {
+        if let book = conspectus as? Book {
+            booksColl.removeBook(by: book.id)
+        }
+    }
 }

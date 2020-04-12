@@ -106,6 +106,7 @@ class Book: Conspectus, ObservableObject {
     override func removeLinks(with conspectus: Conspectus) {
         if let author = content.author, author.id == conspectus.id {
             content.author = nil
+            _ = store()
         }
     }
 }

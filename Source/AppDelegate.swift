@@ -78,4 +78,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @IBAction func menuSave(_ sender: Any) {
         _ = AppModel.shared.selectedConspectus.store()
     }
+
+    @IBAction func toggleEditState(_ sender: Any) {
+        if !AppModel.shared.selectedConspectus.state.isRemoved {
+            AppModel.shared.selectedConspectus.state.isEditing.toggle()
+        }
+    }
 }

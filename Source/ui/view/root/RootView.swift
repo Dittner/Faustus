@@ -74,19 +74,31 @@ struct RootView: View {
                 }
             }
 
-            if vm.isModalViewShow {
-                if self.vm.deleteConfirmationController.isModalViewShow {
-                    GeometryReader { _ in
-                        DeleteConfirmation(controller: self.vm.deleteConfirmationController)
-                    }.background(Color.F.black.opacity(0.25))
-                } else if self.vm.booksChooserController.isModalViewShow {
-                    GeometryReader { _ in
-                        BooksChooser(controller: self.vm.booksChooserController)
-                    }.background(Color.F.black.opacity(0.25))
-                }
-            }
+            ModalView()
 
         }.edgesIgnoringSafeArea(.all)
+    }
+}
+
+struct ModalView: View {
+    @EnvironmentObject var vm: RootViewModel
+
+    var body: some View {
+        ZStack(alignment: .center) {
+            if self.vm.modalView == .deleteConfirmation {
+                GeometryReader { _ in
+                    DeleteConfirmation(controller: self.vm.deleteConfirmationController)
+                }.background(Color.F.black.opacity(0.25))
+            } else if self.vm.modalView == .booksChooser {
+                GeometryReader { _ in
+                    BooksChooser(controller: self.vm.booksChooserController)
+                }.background(Color.F.black.opacity(0.25))
+            } else if self.vm.modalView == .authorChooser {
+                GeometryReader { _ in
+                    AuthorChooser(controller: self.vm.authorChooserController)
+                }.background(Color.F.black.opacity(0.25))
+            }
+        }
     }
 }
 
@@ -98,7 +110,7 @@ struct DeleteConfirmation: View {
         VStack(alignment: .center, spacing: 0) {
             Text("Unwiderruflich löschen?")
                 .lineLimit(1)
-                .font(Font.custom(.pragmaticaExtraLight, size: 21))
+                .font(Font.custom(.mono, size: 16))
                 .foregroundColor(Color.F.white)
                 .frame(width: 300, height: 100)
 
@@ -166,6 +178,68 @@ struct BooksChooser: View {
                                 }
 
                             }, conspectus: book, selectable: true, selected: self.controller.selectedBooks.contains(book))
+                                .frame(height: 50)
+                        }
+                    }
+                }
+            } else {
+                Spacer()
+            }
+
+            HStack(alignment: .bottom, spacing: 200) {
+                Button("", action: {
+                    self.modalViewObservable.isShown = false
+                    self.controller.cancel()
+                }).buttonStyle(RedButtonStyle(title: "Abbrechen"))
+                    .frame(width: 150, height: 50)
+
+                Button("", action: {
+                    self.modalViewObservable.isShown = false
+                    self.controller.apply()
+                }).buttonStyle(GreenButtonStyle(title: "Sichern"))
+                    .frame(width: 150, height: 50)
+            }
+        }.onAppear { self.modalViewObservable.isShown = true }
+            .frame(width: 500, height: 700)
+            .background(Color.F.modalViewBG)
+            .cornerRadius(5)
+            .shadow(color: Color.F.black05, radius: 5, x: 0, y: 5)
+    }
+}
+
+struct AuthorChooser: View {
+    @EnvironmentObject var textFocus: TextFocus
+    @EnvironmentObject var modalViewObservable: ModalViewObservable
+    @ObservedObject var controller: AuthorChooserController
+
+    var body: some View {
+        VStack(alignment: .center, spacing: 1) {
+            HStack(alignment: .lastTextBaseline, spacing: 0) {
+                Image("search")
+                    .renderingMode(.template)
+                    .foregroundColor(Color.F.white)
+                    .frame(width: 50)
+
+                TextInput(title: "", text: $controller.filterText, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaLight, size: 21), alignment: .left, isFocused: textFocus.id == .modalBookChooserSearch, isSecure: false, format: nil, isEditable: true, onEnterAction: nil)
+                    .frame(height: 50, alignment: .leading)
+                    .padding(.horizontal, -5)
+                    .saturation(0)
+                    .colorScheme(.dark)
+                    .onAppear {
+                        self.textFocus.id = .modalBookChooserSearch
+                    }
+            }.background(Color.F.black)
+
+            if controller.filteredAuthors.count > 0 {
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        ForEach(controller.filteredAuthors, id: \.id) { author in
+                            ConspectusRow(action: { event in
+                                if event == .selected {
+                                    self.controller.selectedAuthor = author
+                                }
+
+                            }, conspectus: author, selectable: true, selected: self.controller.selectedAuthor == author)
                                 .frame(height: 50)
                         }
                     }

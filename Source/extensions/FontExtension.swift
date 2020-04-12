@@ -14,6 +14,7 @@ enum FontName: String {
     case pragmaticaLight = "PragmaticaLight"
     case pragmaticaLightItalics = "PragmaticaLight-Oblique"
     case pragmaticaExtraLight = "PragmaticaExtraLight-Reg"
+    case pragmaticaExtraLightItalics = "PragmaticaExtraLight-Oblique"
     case pragmaticaSemiBold = "PragmaticaMedium"
     case pragmaticaBold = "PragmaticaBold-Reg"
     case mono = "PTMono-Regular"

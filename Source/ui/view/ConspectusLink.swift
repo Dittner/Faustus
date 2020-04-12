@@ -17,15 +17,17 @@ enum ConspectusLinkAction: Int {
 
 struct ConspectusLink: View {
     @ObservedObject var state: ConspectusState
-    //let conspectus: Conspectus
     let name: String
     let isEditing: Bool
     let isSelected: Bool
-    let height: CGFloat = 30
+    let fontSize: CGFloat
+    let textColor: Color
+    let selectedTextColor: Color
+    let btnIconColor: Color
+    let height: CGFloat
     let onLinkAction: ((ConspectusLinkAction) -> Void)?
 
-    init(conspectus: Conspectus, isEditing: Bool, isSelected: Bool, level: Int = 0, action: ((ConspectusLinkAction) -> Void)?) {
-        //self.conspectus = conspectus
+    init(conspectus: Conspectus, isEditing: Bool, isSelected: Bool, fontSize:CGFloat = 21, height:CGFloat = 30, isLightMode:Bool = true, level: Int = 0, action: ((ConspectusLinkAction) -> Void)?) {
         state = conspectus.state
         switch conspectus.genus {
         case .author:
@@ -40,6 +42,12 @@ struct ConspectusLink: View {
 
         self.isEditing = isEditing
         self.isSelected = isSelected
+        self.fontSize = fontSize
+        
+        self.textColor = isLightMode ? Color.F.black : Color.F.white
+        self.selectedTextColor = isLightMode ? Color.F.white : Color.F.black
+        self.btnIconColor = isLightMode ? Color.F.white : Color.F.black
+        self.height = height
         onLinkAction = action
     }
 
@@ -48,35 +56,36 @@ struct ConspectusLink: View {
     var body: some View {
         HStack(alignment: .center, spacing: 0) {
             if isEditing {
-                Text(name)
+                Text(" \(name)")
                     .lineLimit(1)
                     .padding(.horizontal, 5)
                     .frame(height: height)
-                    .foregroundColor(self.isSelected ? Color.F.white : self.state.isRemoved ? Color.F.red : Color.F.black)
-                    .background(self.isSelected ? self.state.isRemoved ? Color.F.red : Color.F.black : Color.F.white)
-                    .font(Font.custom(.pragmaticaLight, size: 21))
+                    .foregroundColor(self.isSelected ? selectedTextColor : self.state.isRemoved ? Color.F.red : textColor)
+                    .background(self.isSelected ? self.state.isRemoved ? Color.F.red : Color.F.black : Color.F.clear)
+                    .font(Font.custom(.pragmaticaLight, size: fontSize))
                     .offset(x: -5, y: 0)
                     .onTapGesture {
                         self.onLinkAction?(.edit)
                     }
 
                 Button("", action: { self.onLinkAction?(.remove) })
-                    .buttonStyle(IconButtonStyle(iconName: "smallClose", iconColor: Color.F.white, bgColor: Color.F.black, width: 20, height: 20, radius: 10))
+                    .buttonStyle(IconButtonStyle(iconName: "smallClose", iconColor: btnIconColor, bgColor: textColor, width: 20, height: 20, radius: 10))
             } else {
-                Text(name)
-                    .underline(self.hover, color: Color.F.black)
+                Text(" \(name)")
+                    .underline(self.hover, color: self.state.isRemoved ? Color.F.red : textColor)
                     .lineLimit(1)
                     .padding(.horizontal, 5)
                     .frame(height: height)
-                    .foregroundColor(state.isRemoved ? Color.F.red : Color.F.black)
-                    .background(Color.F.white)
-                    .font(Font.custom(.pragmaticaLightItalics, size: 21))
+                    .foregroundColor(state.isRemoved ? Color.F.red : textColor)
+                    .font(Font.custom(.pragmaticaLightItalics, size: fontSize))
                     .onHover { value in self.hover = value }
                     .offset(x: -5, y: 0)
                     .onTapGesture {
                         self.onLinkAction?(.navigate)
                     }
             }
+            
+            Spacer()
         }
     }
 }

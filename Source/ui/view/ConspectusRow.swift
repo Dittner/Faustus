@@ -22,13 +22,12 @@ struct ConspectusRow: View {
         @Published var title: String = ""
         @Published var subTitle: String = ""
         @Published var isSelected: Bool = false
+        @Published var hasLinks: Bool = false
     }
 
     @ObservedObject private var state: ConspectusState
     @ObservedObject private var notifier = Notifier()
     private let isSelectable: Bool
-
-    private let font = NSFont(name: .pragmaticaLight, size: 21)
     private let textColor: Color
     private let genusColor: Color
     private let iconName: String
@@ -36,7 +35,7 @@ struct ConspectusRow: View {
 
     init(action: @escaping (ConspectusRowAction) -> Void, conspectus: Conspectus, selectable: Bool = false, selected: Bool = false) {
         self.action = action
-        self.state = conspectus.state
+        state = conspectus.state
         isSelectable = selectable
 
         // print("ConspectusRow init with \(conspectus.genus)")
@@ -75,11 +74,31 @@ struct ConspectusRow: View {
                 .assign(to: \.title, on: notifier)
                 .store(in: &disposeBag)
 
-            Publishers.CombineLatest(book.content.$writtenDate, book.content.$authorText)
-                .map { writtenDate, authorText in
-                    "\(writtenDate), \(authorText)"
+            Publishers.CombineLatest3(book.content.$writtenDate, book.content.$author, book.content.$authorText)
+                .map { writtenDate, author, authorText in
+                    var a:String = ""
+                    var b:String = ""
+                    if let user = author as? User {
+                        a = writtenDate
+                        b = "\(user.content.surname) \(user.content.initials)"
+                    } else if let author = author as? Author {
+                        a = writtenDate
+                        b = "\(author.content.surname) \(author.content.initials)"
+                    } else {
+                        a = writtenDate
+                        b = "\(authorText)"
+                    }
+                    
+                    return b.isEmpty ? a : a + ", " + b
                 }
                 .assign(to: \.subTitle, on: notifier)
+                .store(in: &disposeBag)
+
+            book.content.$author
+                .map { value in
+                    value is User || value is Author
+                }
+                .assign(to: \.hasLinks, on: notifier)
                 .store(in: &disposeBag)
         } else if let tag = conspectus as? Tag {
             textColor = Color.F.gray
@@ -143,7 +162,7 @@ struct ConspectusRow: View {
                 Text("\(self.notifier.subTitle)")
                     .allowsHitTesting(false)
                     .lineLimit(1)
-                    .font(Font.custom(.pragmaticaExtraLight, size: 12))
+                    .font(Font.custom(self.notifier.hasLinks ? .pragmaticaExtraLightItalics : .pragmaticaExtraLight, size: 12))
                     .frame(minWidth: 100, idealWidth: 500, maxWidth: .infinity, minHeight: 30, idealHeight: 50, maxHeight: 50, alignment: .topLeading)
                     .offset(x: 50, y: 28)
                     .frame(width: geometry.size.width - 50, height: 50)

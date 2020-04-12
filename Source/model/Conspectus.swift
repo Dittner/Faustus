@@ -117,8 +117,6 @@ class Conspectus: Equatable {
             return nil
         }
 
-        subscribeToIsRemoved()
-
         didInit()
     }
 
@@ -133,8 +131,6 @@ class Conspectus: Equatable {
         state.changedDate = DateTimeUtils.localize(Date())
 
         fileUrl = DocumentsStorage.projectURL.appendingPathComponent(location.rawValue + "/" + id.description + ".faustus")
-
-        subscribeToIsRemoved()
 
         didInit()
     }

@@ -14,7 +14,7 @@ public protocol KK: ObservableObject {
     var title: String { get set }
 }
 
-public protocol BookOwner: ObservableObject {
+public protocol BooksHaber: ObservableObject {
     var bookListName: String { get set }
 }
 
@@ -23,7 +23,7 @@ class DomainObject: KK {
     @Published var title: String = "DomainObject"
 }
 
-class AA: DomainObject, BookOwner {
+class AA: DomainObject, BooksHaber {
     var bookListName: String = "" { willSet { objectWillChange.send() } }
     @Published var hasChanges: Bool = true
 
@@ -31,7 +31,7 @@ class AA: DomainObject, BookOwner {
 
 }
 
-class UU: DomainObject, BookOwner {
+class UU: DomainObject, BooksHaber {
     var bookListName: String = "" { willSet { objectWillChange.send() } }
 }
 
@@ -48,7 +48,7 @@ struct Header: View {
     }
 }
 
-struct BookColl<Model>: View where Model: BookOwner {
+struct BC<Model>: View where Model: BooksHaber {
     @ObservedObject var bookOwner: Model
 
     var body: some View {
@@ -65,10 +65,10 @@ struct DemoView: View {
     var body: some View {
         VStack {
             Header(konspekt: AA())
-            BookColl(bookOwner: AA())
+            BC(bookOwner: AA())
 
             Header(konspekt: UU())
-            BookColl(bookOwner: UU())
+            BC(bookOwner: UU())
         }.padding()
     }
 }

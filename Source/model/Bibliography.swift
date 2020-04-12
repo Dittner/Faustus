@@ -22,10 +22,12 @@ final class Bibliography: ObservableObject {
     func write(_ c: Conspectus) {
         if !has(c.id) {
             dict[c.id] = c
-            if !c.isNew {
+            if !c.state.isNew {
                 uniqueNames[c.hashName] = c.id
             }
 
+            print("Hash Name = \(c.hashName)")
+            
             objectWillChange.send(getValues())
         }
     }
@@ -49,6 +51,13 @@ final class Bibliography: ObservableObject {
     func update(_ c: Conspectus, oldHashName: String) {
         uniqueNames.removeValue(forKey: oldHashName)
         uniqueNames[c.hashName] = c.id
+    }
+    
+    func updateHashNames() {
+        uniqueNames = [:]
+        for c in getValues() {
+            uniqueNames[c.hashName] = c.id
+        }
     }
 
     func hasDuplicate(of c: Conspectus) -> Bool {

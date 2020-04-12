@@ -11,7 +11,7 @@ import SwiftUI
 
 struct ParentTag: View {
     @ObservedObject var controller: TagTreeController
-    @ObservedObject var conspectus: Conspectus
+    @ObservedObject var state: ConspectusState
     @ObservedObject var curTag: Tag
     let tagNodes: [TagTreeNode]
     @State private var isExpanded: Bool = true
@@ -19,7 +19,7 @@ struct ParentTag: View {
 
     init(controller: TagTreeController) {
         self.controller = controller
-        conspectus = controller.conspectus
+        state = controller.conspectus.state
         curTag = controller.conspectus as! Tag
         tagNodes = controller.tagTree.compactTree { $0.tag.id != controller.conspectus.id }
     }
@@ -29,7 +29,7 @@ struct ParentTag: View {
             Section(isExpanded: $isExpanded, title: "SUPERTAG")
 
             if isExpanded {
-                if conspectus.isEditing {
+                if state.isEditing {
                     ForEach(tagNodes, id: \.tag.id) { node in
                         TagTreeNodeLink(node: node, isEditing: true, isSelected: self.curTag.content.parentTag?.id == node.tag.id, action: {
                             action in
@@ -62,6 +62,7 @@ struct ParentTag: View {
 
 struct TagTreeNodeLink: View {
     @ObservedObject var tag: Tag
+    @ObservedObject var state: ConspectusState
     private let node: TagTreeNode
     let isEditing: Bool
     let isSelected: Bool
@@ -73,6 +74,8 @@ struct TagTreeNodeLink: View {
     init(node: TagTreeNode, isEditing: Bool, isSelected: Bool, action: ((ConspectusLinkAction) -> Void)?) {
         self.node = node
         tag = node.tag
+        state = node.tag.state
+
 //        switch node.conspectus.genus {
 //        case .asAuthor:
 //            name = "\(node.conspectus.asAuthor!.surname) \(node.conspectus.asAuthor!.initials)"
@@ -105,8 +108,8 @@ struct TagTreeNodeLink: View {
                     .lineLimit(1)
                     .padding(.horizontal, 5)
                     .frame(height: height)
-                    .foregroundColor(self.isSelected ? Color.F.white : self.tag.isRemoved ? Color.F.red : Color.F.black)
-                    .background(self.isSelected ? self.tag.isRemoved ? Color.F.red : Color.F.black : Color.F.white)
+                    .foregroundColor(self.isSelected ? Color.F.white : self.state.isRemoved ? Color.F.red : Color.F.black)
+                    .background(self.isSelected ? self.state.isRemoved ? Color.F.red : Color.F.black : Color.F.white)
                     .font(Font.custom(.pragmaticaLight, size: 21))
                     .offset(x: -5, y: 0)
                     .onTapGesture {
@@ -118,7 +121,7 @@ struct TagTreeNodeLink: View {
                     .lineLimit(1)
                     .padding(.horizontal, 5)
                     .frame(height: height)
-                    .foregroundColor(tag.isRemoved ? Color.F.red : Color.F.black)
+                    .foregroundColor(state.isRemoved ? Color.F.red : Color.F.black)
                     .background(Color.F.white)
                     .font(Font.custom(.pragmaticaLightItalics, size: 21))
                     .onHover { value in self.hover = value }

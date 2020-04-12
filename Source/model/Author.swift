@@ -17,7 +17,6 @@ class AuthorContent: ObservableObject {
     @Published var deathYear: String = ""
     @Published var initials: String = ""
     @Published var years: String = ""
-    @Published var books: [Book] = []
 
     private var disposeBag: Set<AnyCancellable> = []
 
@@ -46,8 +45,52 @@ class AuthorContent: ObservableObject {
     }
 }
 
-class Author: Conspectus {
+class BooksColl: ObservableObject {
+    var owner: Conspectus!
+    @Published var books: [Book] = []
+
+    func updateBooks(_ coll: [Book]) {
+        for b in coll {
+            if !books.contains(b) {
+                b.content.author = owner
+                _ = b.store()
+            }
+        }
+
+        for b in books {
+            if !coll.contains(b) {
+                b.content.author = nil
+                _ = b.store()
+            }
+        }
+
+        books = coll
+        owner.state.hasChanges = true
+        _ = owner.store()
+    }
+
+    func removeBook(by id: UID) {
+        for (ind, book) in books.enumerated() {
+            if book.id == id {
+                let b = books.remove(at: ind)
+                b.content.author = nil
+
+                owner.state.hasChanges = true
+                _ = owner.store()
+
+                break
+            }
+        }
+    }
+}
+
+protocol BooksOwner {
+    var booksColl: BooksColl { get }
+}
+
+class Author: Conspectus, BooksOwner, ObservableObject {
     @ObservedObject var content: AuthorContent = AuthorContent()
+    @ObservedObject var booksColl: BooksColl = BooksColl()
 
     override var genus: ConspectusGenus { return .author }
 
@@ -61,22 +104,17 @@ class Author: Conspectus {
 
     private var disposeBag: Set<AnyCancellable> = []
     override func didInit() {
+        booksColl.owner = self
+
         for prop in [content.$name, content.$surname, content.$birthYear, content.$deathYear, content.$info] {
             prop
                 .removeDuplicates()
                 .map { _ in
                     true
                 }
-                .assign(to: \.hasChanges, on: self)
+                .assign(to: \.hasChanges, on: state)
                 .store(in: &disposeBag)
         }
-
-        content.$books
-            .map { _ in
-                true
-            }
-            .assign(to: \.hasChanges, on: self)
-            .store(in: &disposeBag)
     }
 
     override func validate() -> ValidationStatus {
@@ -98,7 +136,7 @@ class Author: Conspectus {
         dict["birthYear"] = content.birthYear
         dict["deathYear"] = content.deathYear
         dict["info"] = content.info
-        dict["books"] = content.books.map { $0.id }
+        dict["books"] = booksColl.books.map { $0.id }
         return dict
     }
 
@@ -111,19 +149,12 @@ class Author: Conspectus {
             content.deathYear = dict["deathYear"] as? String ?? ""
             content.info = dict["info"] as? String ?? ""
             if let booksID = dict["books"] as? [UID] {
-                content.books = booksID.map { bibliography.read($0) as? Book }.compactMap { $0 }
+                booksColl.books = booksID.map { bibliography.read($0) as? Book }.compactMap { $0 }
             }
         }
 
-        hasChanges = false
+        state.hasChanges = false
     }
 
     override func removeLinks(with conspectus: Conspectus) {}
-    
-    func updateBooks(_ coll:[Book]) {
-        for b in coll {
-            if !content.books.contains(b) {
-            }
-        }
-    }
 }

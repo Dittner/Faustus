@@ -10,7 +10,7 @@ import Combine
 import SwiftUI
 
 final class DocViewModel: ViewModel {
-    @Published var selectedConspectus: Conspectus = AppModel.shared.user
+    @Published var selectedConspectus: Conspectus
 
     let tagTreeController = TagTreeController()
     let bookListController = BookListController()
@@ -18,13 +18,18 @@ final class DocViewModel: ViewModel {
     private var disposeBag: Set<AnyCancellable> = []
 
     init() {
+        selectedConspectus = AppModel.shared.user
+
         logInfo(tag: .APP, msg: "DocViewModel init")
         model.$selectedConspectus
             .removeDuplicates()
             .sink { newValue in
-                self.bookListController.update(conspectus: newValue)
+                if newValue is BooksOwner {
+                    self.bookListController.update(with: (newValue as! BooksOwner).booksColl)
+                }
+
                 self.tagTreeController.update(conspectus: newValue)
-                
+
                 self.selectedConspectus = newValue
             }
             .store(in: &disposeBag)
@@ -33,7 +38,7 @@ final class DocViewModel: ViewModel {
             .removeDuplicates()
             .compactMap { $0 }
             .flatMap { conspectus in
-                conspectus.$isEditing
+                conspectus.state.$isEditing
             }
             .removeDuplicates()
             .sink { _ in

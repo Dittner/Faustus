@@ -14,7 +14,6 @@ class UserContent: ObservableObject {
     @Published var name: String = ""
     @Published var surname: String = ""
     @Published var initials: String = ""
-    @Published var books: [Book] = []
 
     var pwd: String = ""
     fileprivate var encryptedPwd: String = ""
@@ -39,15 +38,16 @@ class UserContent: ObservableObject {
     }
 }
 
-class User: Conspectus {
+class User: Conspectus, BooksOwner, ObservableObject {
     @ObservedObject var content: UserContent = UserContent()
+    @ObservedObject var booksColl: BooksColl = BooksColl()
 
     override var genus: ConspectusGenus { return .user }
 
     private func encryptPwd() -> String {
         return ("Faustus" + content.pwd).sha512()!
     }
-    
+
     override var description: String {
         return "\(content.name) \(content.surname)"
     }
@@ -58,22 +58,17 @@ class User: Conspectus {
 
     private var disposeBag: Set<AnyCancellable> = []
     override func didInit() {
+        booksColl.owner = self
+
         for prop in [content.$name, content.$surname] {
             prop
                 .removeDuplicates()
                 .map { _ in
                     true
                 }
-                .assign(to: \.hasChanges, on: self)
+                .assign(to: \.hasChanges, on: state)
                 .store(in: &disposeBag)
         }
-
-        content.$books
-            .map { _ in
-                true
-            }
-            .assign(to: \.hasChanges, on: self)
-            .store(in: &disposeBag)
     }
 
     override func validate() -> ValidationStatus {
@@ -92,7 +87,7 @@ class User: Conspectus {
         var dict = super.serialize()
         dict["name"] = content.name
         dict["surname"] = content.surname
-        dict["books"] = content.books.map { $0.id }
+        dict["books"] = booksColl.books.map { $0.id }
         return dict
     }
 
@@ -103,19 +98,12 @@ class User: Conspectus {
             content.surname = dict["surname"] as? String ?? ""
             content.encryptedPwd = dict["encryptedPwd"] as? String ?? ""
             if let booksID = dict["books"] as? [UID] {
-                content.books = booksID.map { bibliography.read($0) as? Book }.compactMap { $0 }
+                booksColl.books = booksID.map { bibliography.read($0) as? Book }.compactMap { $0 }
             }
         }
 
-        hasChanges = false
+        state.hasChanges = false
     }
 
     override func removeLinks(with conspectus: Conspectus) {}
-    
-    func updateBooks(_ coll:[Book]) {
-        for b in coll {
-            if !content.books.contains(b) {
-            }
-        }
-    }
 }

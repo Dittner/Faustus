@@ -53,6 +53,7 @@ class AppModel: ObservableObject {
         loadBooks()
         loadTags()
         deserialize()
+        bibliography.updateHashNames()
 
         prepareRecentOpenedStack()
         // Font.printAllSystemFonts()
@@ -152,15 +153,15 @@ class AppModel: ObservableObject {
     //
 
     func removeSelectedConspectus() {
-        if selectedConspectus.isNew {
+        if selectedConspectus.state.isNew {
             bibliography.remove(selectedConspectus)
             recentOpened.removeFirst()
             selectedConspectus = recentOpened[0]
-        } else if selectedConspectus.isRemoved {
+        } else if selectedConspectus.state.isRemoved {
             logInfo(tag: .APP, msg: "Destroy conspectus, id: \(selectedConspectus.id)")
             for conspectus in bibliography.getValues() {
                 conspectus.removeLinks(with: selectedConspectus)
-                if conspectus.hasChanges {
+                if conspectus.state.hasChanges {
                     _ = conspectus.store()
                 }
             }
@@ -171,7 +172,7 @@ class AppModel: ObservableObject {
         } else {
             logInfo(tag: .APP, msg: "Remove conspectus, id: \(selectedConspectus.id)")
             selectedConspectus.remove()
-            selectedConspectus.isEditing = false
+            selectedConspectus.state.isEditing = false
         }
     }
 }

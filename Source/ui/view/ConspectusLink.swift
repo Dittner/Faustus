@@ -16,7 +16,8 @@ enum ConspectusLinkAction: Int {
 }
 
 struct ConspectusLink: View {
-    @ObservedObject var conspectus: Conspectus
+    @ObservedObject var state: ConspectusState
+    //let conspectus: Conspectus
     let name: String
     let isEditing: Bool
     let isSelected: Bool
@@ -24,7 +25,8 @@ struct ConspectusLink: View {
     let onLinkAction: ((ConspectusLinkAction) -> Void)?
 
     init(conspectus: Conspectus, isEditing: Bool, isSelected: Bool, level: Int = 0, action: ((ConspectusLinkAction) -> Void)?) {
-        self.conspectus = conspectus
+        //self.conspectus = conspectus
+        state = conspectus.state
         switch conspectus.genus {
         case .author:
             name = "\((conspectus as! Author).content.surname) \((conspectus as! Author).content.initials)"
@@ -50,8 +52,8 @@ struct ConspectusLink: View {
                     .lineLimit(1)
                     .padding(.horizontal, 5)
                     .frame(height: height)
-                    .foregroundColor(self.isSelected ? Color.F.white : self.conspectus.isRemoved ? Color.F.red : Color.F.black)
-                    .background(self.isSelected ? self.conspectus.isRemoved ? Color.F.red : Color.F.black : Color.F.white)
+                    .foregroundColor(self.isSelected ? Color.F.white : self.state.isRemoved ? Color.F.red : Color.F.black)
+                    .background(self.isSelected ? self.state.isRemoved ? Color.F.red : Color.F.black : Color.F.white)
                     .font(Font.custom(.pragmaticaLight, size: 21))
                     .offset(x: -5, y: 0)
                     .onTapGesture {
@@ -66,7 +68,7 @@ struct ConspectusLink: View {
                     .lineLimit(1)
                     .padding(.horizontal, 5)
                     .frame(height: height)
-                    .foregroundColor(conspectus.isRemoved ? Color.F.red : Color.F.black)
+                    .foregroundColor(state.isRemoved ? Color.F.red : Color.F.black)
                     .background(Color.F.white)
                     .font(Font.custom(.pragmaticaLightItalics, size: 21))
                     .onHover { value in self.hover = value }

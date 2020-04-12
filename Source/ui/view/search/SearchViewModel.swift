@@ -45,9 +45,9 @@ final class SearchViewModel: ViewModel {
         Publishers.CombineLatest3($selectedFilter, $filterText.debounce(for: 0.5, scheduler: RunLoop.main), model.bibliography.objectWillChange)
             .map { filter, filterText, conspectusList -> (SearchFilter, String, [Conspectus]) in
                 if filter == .removed {
-                    return (filter, filterText, conspectusList.filter { $0.isRemoved })
+                    return (filter, filterText, conspectusList.filter { $0.state.isRemoved })
                 } else {
-                    return (filter, filterText, conspectusList.filter { !$0.isRemoved && $0.genus == filter.toGenus()! })
+                    return (filter, filterText, conspectusList.filter { !$0.state.isRemoved && $0.genus == filter.toGenus()! })
                 }
             }
             .map { filter, filterText, conspectusList -> (SearchFilter, [Conspectus]) in
@@ -74,7 +74,7 @@ final class SearchViewModel: ViewModel {
 
                 if filter == .removed {
                     return conspectusList.sorted {
-                        $0.changedDate < $1.changedDate
+                        $0.state.changedDate < $1.state.changedDate
                     }
                 }
 

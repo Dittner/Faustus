@@ -16,7 +16,7 @@ struct InfoPanel: View {
 
     @EnvironmentObject var modalViewObservable: ModalViewObservable
     @ObservedObject private var notifier: Notifier
-    @ObservedObject var conspectus: Conspectus
+    @ObservedObject var state: ConspectusState
     @State private var isExpanded: Bool = true
 
     private let font = NSFont(name: .pragmaticaLight, size: 21)
@@ -24,7 +24,7 @@ struct InfoPanel: View {
     private var disposeBag: Set<AnyCancellable> = []
 
     init(conspectus: Conspectus, title: String = "INFO") {
-        self.conspectus = conspectus
+        self.state = conspectus.state
         self.title = title
         notifier = Notifier()
 
@@ -52,13 +52,13 @@ struct InfoPanel: View {
             Section(isExpanded: $isExpanded, title: title)
 
             if self.isExpanded {
-                TextArea(text: $notifier.info, textColor: NSColor.F.black, font: font, isEditable: conspectus.isEditing && !modalViewObservable.isShown)
+                TextArea(text: $notifier.info, textColor: NSColor.F.black, font: font, isEditable: state.isEditing && !modalViewObservable.isShown)
                     .layoutPriority(-1)
                     .saturation(0)
                     .colorScheme(.light)
                     .padding(.leading, 35)
                     .padding(.trailing, 20)
-                    .background(conspectus.isEditing ? Color.F.inputBG : Color.F.white)
+                    .background(state.isEditing ? Color.F.inputBG : Color.F.white)
                     .frame(height: TextArea.textHeightFrom(text: notifier.info, width: 925, font: font, isShown: isExpanded))
             }
         }
@@ -68,6 +68,7 @@ struct InfoPanel: View {
 struct BookInfoPanel: View {
     @EnvironmentObject var textFocus: TextFocus
     @ObservedObject var book: Book
+    @ObservedObject var state: ConspectusState
     @State private var isExpanded: Bool = true
 
     private let font = NSFont(name: .pragmaticaLight, size: 18)
@@ -76,6 +77,7 @@ struct BookInfoPanel: View {
 
     init(book: Book, title: String = "INFO") {
         self.book = book
+        self.state = book.state
         self.title = title
 
         print("BookInfoPanel init, id: \(book.id)")
@@ -87,15 +89,15 @@ struct BookInfoPanel: View {
 
             if self.isExpanded {
                 VStack(alignment: .leading, spacing: 5) {
-                    FormInput(title: "TITEL", text: $book.content.title, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoTitle, onEnter: { self.textFocus.id = .bookInfoSubtitle })
-                    FormInput(title: "UNTERTITEL", text: $book.content.subTitle, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoSubtitle, onEnter: { self.textFocus.id = .bookInfoAuthor })
-                    FormInput(title: "AUTHOR", text: $book.content.authorText, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoAuthor, onEnter: { self.textFocus.id = .bookInfoIsbn })
-                    FormInput(title: "ISBN", text: $book.content.ISBN, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoIsbn, onEnter: { self.textFocus.id = .bookInfoWritten })
-                    FormInput(title: "GESCHRIEBEN", text: $book.content.writtenDate, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoWritten, onEnter: { self.textFocus.id = .bookInfoPublishDate })
-                    FormInput(title: "ERSCHEINUNGSJAHR", text: $book.content.publishedDate, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoPublishDate, onEnter: { self.textFocus.id = .bookInfoPagesCount })
-                    FormInput(title: "SEITENZAHL", text: $book.content.pageCount, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoPagesCount, onEnter: { self.textFocus.id = .bookInfoPublisher })
-                    FormInput(title: "VERLAG", text: $book.content.publisher, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoPublisher, onEnter: { self.textFocus.id = .bookInfoPlace })
-                    FormInput(title: "ORT", text: $book.content.place, isEditing: book.isEditing, isFocused: textFocus.id == .bookInfoPlace, onEnter: { self.textFocus.id = .bookInfoTitle })
+                    FormInput(title: "TITEL", text: $book.content.title, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoTitle, onEnter: { self.textFocus.id = .bookInfoSubtitle })
+                    FormInput(title: "UNTERTITEL", text: $book.content.subTitle, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoSubtitle, onEnter: { self.textFocus.id = .bookInfoAuthor })
+                    FormInput(title: "AUTHOR", text: $book.content.authorText, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoAuthor, onEnter: { self.textFocus.id = .bookInfoIsbn })
+                    FormInput(title: "ISBN", text: $book.content.ISBN, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoIsbn, onEnter: { self.textFocus.id = .bookInfoWritten })
+                    FormInput(title: "GESCHRIEBEN", text: $book.content.writtenDate, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoWritten, onEnter: { self.textFocus.id = .bookInfoPublishDate })
+                    FormInput(title: "ERSCHEINUNGSJAHR", text: $book.content.publishedDate, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPublishDate, onEnter: { self.textFocus.id = .bookInfoPagesCount })
+                    FormInput(title: "SEITENZAHL", text: $book.content.pageCount, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPagesCount, onEnter: { self.textFocus.id = .bookInfoPublisher })
+                    FormInput(title: "VERLAG", text: $book.content.publisher, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPublisher, onEnter: { self.textFocus.id = .bookInfoPlace })
+                    FormInput(title: "ORT", text: $book.content.place, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPlace, onEnter: { self.textFocus.id = .bookInfoTitle })
                 }
 
                 HStack(alignment: .top, spacing: 0) {
@@ -106,14 +108,14 @@ struct BookInfoPanel: View {
                         .frame(width: 295, height: 30, alignment: .trailing)
                         .background(Color.F.inputBG)
 
-                    TextArea(text: $book.content.info, textColor: NSColor.F.black, font: font, isEditable: book.isEditing)
+                    TextArea(text: $book.content.info, textColor: NSColor.F.black, font: font, isEditable: state.isEditing)
                         .layoutPriority(-1)
                         .saturation(0)
                         .colorScheme(.light)
                         .offset(x: 0, y: -1)
                         .padding(.leading, 3)
                         .padding(.trailing, 5)
-                        .background(book.isEditing ? Color.F.inputBG : Color.F.white)
+                        .background(state.isEditing ? Color.F.inputBG : Color.F.white)
                         .frame(height: TextArea.textHeightFrom(text: book.content.info, width: 670, font: font, isShown: isExpanded))
                 }
             }

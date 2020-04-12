@@ -23,7 +23,7 @@ class BookContent: ObservableObject {
     @Published var author: Conspectus?
 }
 
-class Book: Conspectus {
+class Book: Conspectus, ObservableObject {
     @ObservedObject var content: BookContent = BookContent()
 
     override var genus: ConspectusGenus { return .book }
@@ -44,7 +44,7 @@ class Book: Conspectus {
                 .map { _ in
                     true
                 }
-                .assign(to: \.hasChanges, on: self)
+                .assign(to: \.hasChanges, on: state)
                 .store(in: &disposeBag)
         }
 
@@ -53,7 +53,7 @@ class Book: Conspectus {
             .map { _ in
                 true
             }
-            .assign(to: \.hasChanges, on: self)
+            .assign(to: \.hasChanges, on: state)
             .store(in: &disposeBag)
     }
 
@@ -100,7 +100,7 @@ class Book: Conspectus {
             }
         }
 
-        hasChanges = false
+        state.hasChanges = false
     }
 
     override func removeLinks(with conspectus: Conspectus) {

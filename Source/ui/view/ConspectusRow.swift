@@ -24,7 +24,7 @@ struct ConspectusRow: View {
         @Published var isSelected: Bool = false
     }
 
-    @ObservedObject private var conspectus: Conspectus
+    @ObservedObject private var state: ConspectusState
     @ObservedObject private var notifier = Notifier()
     private let isSelectable: Bool
 
@@ -36,7 +36,7 @@ struct ConspectusRow: View {
 
     init(action: @escaping (ConspectusRowAction) -> Void, conspectus: Conspectus, selectable: Bool = false, selected: Bool = false) {
         self.action = action
-        self.conspectus = conspectus
+        self.state = conspectus.state
         isSelectable = selectable
 
         // print("ConspectusRow init with \(conspectus.genus)")
@@ -148,7 +148,7 @@ struct ConspectusRow: View {
                     .offset(x: 50, y: 28)
                     .frame(width: geometry.size.width - 50, height: 50)
 
-                if self.conspectus.isRemoved {
+                if self.state.isRemoved {
                     Image("remove")
                         .renderingMode(.template)
                         .allowsHitTesting(false)

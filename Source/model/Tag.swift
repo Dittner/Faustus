@@ -15,7 +15,7 @@ class TagContent: ObservableObject {
     @Published var parentTag: Tag?
 }
 
-class Tag: Conspectus {
+class Tag: Conspectus, ObservableObject {
     @ObservedObject var content: TagContent = TagContent()
 
     override var genus: ConspectusGenus { return .tag }
@@ -36,7 +36,7 @@ class Tag: Conspectus {
                 .map { _ in
                     true
                 }
-                .assign(to: \.hasChanges, on: self)
+            .assign(to: \.hasChanges, on: self.state)
                 .store(in: &disposeBag)
         }
 
@@ -45,7 +45,7 @@ class Tag: Conspectus {
             .map { _ in
                 true
             }
-            .assign(to: \.hasChanges, on: self)
+        .assign(to: \.hasChanges, on: self.state)
             .store(in: &disposeBag)
     }
 
@@ -76,7 +76,7 @@ class Tag: Conspectus {
             }
         }
 
-        hasChanges = false
+        state.hasChanges = false
     }
 
     override func removeLinks(with conspectus: Conspectus) {

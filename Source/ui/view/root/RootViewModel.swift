@@ -139,7 +139,7 @@ class BooksChooserController: ObservableObject {
         self.selectedBooks = selectedBooks
 
         allBooks = bibliography.getValues()
-            .filter { $0 is Book && !$0.isRemoved }
+            .filter { $0 is Book && !$0.state.isRemoved }
             .map { $0 as! Book }
             .sorted { $0.content.writtenDate > $1.content.writtenDate }
 

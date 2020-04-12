@@ -117,23 +117,25 @@ struct DocView: View {
 }
 
 struct StatusBoard: View {
-    @ObservedObject var conspectus: Conspectus
+    let conspectus: Conspectus
+    @ObservedObject var state: ConspectusState
 
     init(conspectus: Conspectus) {
         self.conspectus = conspectus
+        self.state = conspectus.state
         print("ValidationInfoBoard init, id: \(conspectus.id)")
     }
 
     var body: some View {
         VStack(alignment: .center, spacing: 0) {
-            if conspectus.validationStatus == .ok {
+            if state.validationStatus == .ok {
                 Color(conspectus.genus)
                     .frame(width: 30, height: 10)
                     .offset(y: 0)
 
                 Spacer()
             } else {
-                Text(conspectus.validationStatus.rawValue)
+                Text(state.validationStatus.rawValue)
                     .lineLimit(1)
                     .font(Font.custom(.pragmatica, size: 21))
                     .foregroundColor(Color.F.white)
@@ -147,25 +149,25 @@ struct StatusBoard: View {
 
 struct StoreStateBoard: View {
     @EnvironmentObject var vm: DocViewModel
-    @ObservedObject var conspectus: Conspectus
+    @ObservedObject var state: ConspectusState
     private let isUser: Bool
 
     init(conspectus: Conspectus) {
-        self.conspectus = conspectus
+        self.state = conspectus.state
         isUser = conspectus is User
         print("StoreInfoBoard init, id: \(conspectus.id)")
     }
 
     var body: some View {
         HStack(alignment: .top, spacing: 15) {
-            if conspectus.isEditing || conspectus.isRemoved {
+            if state.isEditing || state.isRemoved {
                 SelectableText(text: "Löschen", color: Color.F.black05)
                     .font(Font.custom(.mono, size: 13))
                     .padding(.leading, 0)
                     .padding(.top, 0)
                     .opacity(isUser ? 0 : 1)
                     .onTapGesture {
-                        if self.conspectus.isRemoved {
+                        if self.state.isRemoved {
                             self.vm.confirmDelete()
                         } else {
                             self.vm.removeSelectedConspectus()
@@ -173,19 +175,19 @@ struct StoreStateBoard: View {
                     }
             }
 
-            if conspectus.isRemoved {
+            if state.isRemoved {
                 SelectableText(text: "Zurücklegen", color: Color.F.black05)
                     .font(Font.custom(.mono, size: 13))
                     .padding(.leading, 0)
                     .padding(.top, 0)
                     .onTapGesture {
-                        self.conspectus.isRemoved = false
+                        self.state.isRemoved = false
                     }
             }
 
             Spacer()
 
-            Text("\(conspectus.createdDate) / \(conspectus.changedDate)")
+            Text("\(state.createdDate) / \(state.changedDate)")
                 .lineLimit(1)
                 .font(Font.custom(.mono, size: 13))
                 .foregroundColor(Color.F.black05)
@@ -231,25 +233,27 @@ struct Section: View {
 
 struct BookList: View {
     @ObservedObject var controller: BookListController
-    @ObservedObject var conspectus: Conspectus
+    @ObservedObject var booksColl: BooksColl
+    @ObservedObject var state: ConspectusState
     @State private var isExpanded: Bool = true
 
     private let font = NSFont(name: .pragmaticaLight, size: 21)
     private let title: String
 
     init(controller: BookListController, title: String = "BÜCHER") {
-        self.controller = controller
-        conspectus = controller.conspectus
         self.title = title
+        self.controller = controller
+        booksColl = controller.booksColl
+        state = controller.booksColl.owner.state
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Section(isExpanded: $isExpanded, title: title, isEditing: self.conspectus.isEditing, action: controller.addBook)
+            Section(isExpanded: $isExpanded, title: title, isEditing: self.state.isEditing, action: controller.addBook)
 
             if isExpanded {
-                ForEach(controller.books, id: \.id) { book in
-                    ConspectusLink(conspectus: book, isEditing: self.conspectus.isEditing, isSelected: false, action: { result in
+                ForEach(booksColl.books, id: \.id) { book in
+                    ConspectusLink(conspectus: book, isEditing: self.state.isEditing, isSelected: false, action: { result in
                         switch result {
                         case .edit:
                             print("Edited link")

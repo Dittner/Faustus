@@ -24,7 +24,7 @@ struct LoginView: View {
                 .foregroundColor(Color.F.light)
                 .offset(x: /*@START_MENU_TOKEN@*/0.0/*@END_MENU_TOKEN@*/, y: -80.0)
 
-            if vm.user.isNew {
+            if vm.user.state.isNew {
                 TextInput(title: "Vorname", text: $vm.user.content.name, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaLight, size: 16), alignment: .left, isFocused: textFocus.id == .loginUserName, isSecure: false, format: nil, isEditable: true, onEnterAction: { self.textFocus.id = .loginUserSurname })
                     .frame(width: 250, height: 35, alignment: .leading)
                     .padding(.horizontal, 5)

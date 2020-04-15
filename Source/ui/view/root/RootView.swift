@@ -97,47 +97,41 @@ struct ModalView: View {
                 GeometryReader { _ in
                     AuthorChooser(controller: self.vm.authorChooserController)
                 }.background(Color.F.black.opacity(0.25))
+            } else if self.vm.modalView == .parentTagChooser {
+                GeometryReader { _ in
+                    ParentTagChooser(controller: self.vm.parentTagChooserController)
+                }.background(Color.F.black.opacity(0.25))
+            } else if self.vm.modalView == .tagsChooser {
+                GeometryReader { _ in
+                    TagsChooser(controller: self.vm.tagsChooserController)
+                }.background(Color.F.black.opacity(0.25))
             }
         }
     }
 }
 
 struct DeleteConfirmation: View {
-    @EnvironmentObject var modalViewObservable: ModalViewObservable
     @ObservedObject var controller: DeleteConfirmationController
 
     var body: some View {
         VStack(alignment: .center, spacing: 0) {
             Text("Unwiderruflich löschen?")
                 .lineLimit(1)
-                .font(Font.custom(.mono, size: 16))
+                .font(Font.custom(.pragmaticaExtraLight, size: 21))
                 .foregroundColor(Color.F.white)
                 .frame(width: 300, height: 100)
 
-            HStack(alignment: .bottom, spacing: 100) {
-                Button("", action: {
-                    self.modalViewObservable.isShown = false
-                    self.controller.apply()
-                }).buttonStyle(RedButtonStyle(title: "JA"))
-                    .frame(width: 100, height: 50)
-
-                Button("", action: {
-                    self.modalViewObservable.isShown = false
-                    self.controller.cancel()
-                }).buttonStyle(GreenButtonStyle(title: "NEIN"))
-                    .frame(width: 100, height: 50)
-            }
-        }.onAppear { self.modalViewObservable.isShown = true }
-            .frame(width: 300, height: 150)
-            .background(Color.F.modalViewBG)
-            .cornerRadius(5)
-            .shadow(color: Color.F.black05, radius: 5, x: 0, y: 5)
+            ModalViewFooter(controller: controller)
+        }
+        .frame(width: 300, height: 150)
+        .background(Color.F.modalViewBG)
+        .cornerRadius(5)
+        .shadow(color: Color.F.black05, radius: 5, x: 0, y: 5)
     }
 }
 
 struct BooksChooser: View {
     @EnvironmentObject var textFocus: TextFocus
-    @EnvironmentObject var modalViewObservable: ModalViewObservable
     @ObservedObject var controller: BooksChooserController
 
     func select(b: Book) {
@@ -186,30 +180,17 @@ struct BooksChooser: View {
                 Spacer()
             }
 
-            HStack(alignment: .bottom, spacing: 200) {
-                Button("", action: {
-                    self.modalViewObservable.isShown = false
-                    self.controller.cancel()
-                }).buttonStyle(RedButtonStyle(title: "Abbrechen"))
-                    .frame(width: 150, height: 50)
-
-                Button("", action: {
-                    self.modalViewObservable.isShown = false
-                    self.controller.apply()
-                }).buttonStyle(GreenButtonStyle(title: "Sichern"))
-                    .frame(width: 150, height: 50)
-            }
-        }.onAppear { self.modalViewObservable.isShown = true }
-            .frame(width: 500, height: 700)
-            .background(Color.F.modalViewBG)
-            .cornerRadius(5)
-            .shadow(color: Color.F.black05, radius: 5, x: 0, y: 5)
+            ModalViewFooter(controller: controller)
+        }
+        .frame(width: 500, height: 700)
+        .background(Color.F.modalViewBG)
+        .cornerRadius(5)
+        .shadow(color: Color.F.black05, radius: 5, x: 0, y: 5)
     }
 }
 
 struct AuthorChooser: View {
     @EnvironmentObject var textFocus: TextFocus
-    @EnvironmentObject var modalViewObservable: ModalViewObservable
     @ObservedObject var controller: AuthorChooserController
 
     var body: some View {
@@ -248,23 +229,184 @@ struct AuthorChooser: View {
                 Spacer()
             }
 
-            HStack(alignment: .bottom, spacing: 200) {
-                Button("", action: {
-                    self.modalViewObservable.isShown = false
-                    self.controller.cancel()
-                }).buttonStyle(RedButtonStyle(title: "Abbrechen"))
-                    .frame(width: 150, height: 50)
+            ModalViewFooter(controller: controller)
+        }
+        .frame(width: 500, height: 700)
+        .background(Color.F.modalViewBG)
+        .cornerRadius(5)
+        .shadow(color: Color.F.black05, radius: 5, x: 0, y: 5)
+    }
+}
 
-                Button("", action: {
-                    self.modalViewObservable.isShown = false
-                    self.controller.apply()
-                }).buttonStyle(GreenButtonStyle(title: "Sichern"))
-                    .frame(width: 150, height: 50)
+struct ParentTagChooser: View {
+    @ObservedObject var controller: ParentTagChooserController
+    @ObservedObject var state: ConspectusState
+    @ObservedObject var owner: Tag
+    let tagNodes: [TagTreeNode]
+
+    init(controller: ParentTagChooserController) {
+        self.controller = controller
+        state = controller.owner.state
+        owner = controller.owner
+        tagNodes = controller.tagTree.compactTree { $0.tag.id != controller.owner.id }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if tagNodes.count > 0 {
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        ForEach(tagNodes, id: \.tag.id) { node in
+                            TagTreeNodeLink(node: node, isSelected: self.controller.selectedTag == node.tag, action: {
+                                self.controller.selectedTag = self.controller.selectedTag == node.tag ? nil : node.tag
+                            })
+                                .font(Font.custom(.pragmaticaLight, size: 21))
+                        }
+                    }.padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .frame(width: 500, alignment: .topLeading)
+                }.frame(width: 500, height: 650, alignment: .topLeading)
+            } else {
+                Spacer()
             }
-        }.onAppear { self.modalViewObservable.isShown = true }
-            .frame(width: 500, height: 700)
+
+            ModalViewFooter(controller: controller)
+        }
+        .frame(width: 500, height: 700)
+        .background(Color.F.modalViewBG)
+        .cornerRadius(5)
+        .shadow(color: Color.F.black05, radius: 5, x: 0, y: 5)
+    }
+}
+
+struct TagsChooser: View {
+    @ObservedObject var controller: TagsChooserController
+    let tagNodes: [TagTreeNode]
+
+    init(controller: TagsChooserController) {
+        self.controller = controller
+        tagNodes = controller.tagTree.nodeList
+        print("TagsChooser init")
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if tagNodes.count > 0 {
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        ForEach(tagNodes, id: \.tag.id) { node in
+                            TagTreeNodeLink(node: node, isSelected: self.controller.selectedTags.contains(node.tag), action: {
+                                self.controller.selectDeselect(node.tag)
+                            })
+                                .font(Font.custom(.pragmaticaLight, size: 18))
+                        }
+                    }.padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .frame(width: 500, alignment: .topLeading)
+                }.frame(width: 500, height: 650, alignment: .topLeading)
+            } else {
+                Spacer()
+            }
+
+            ModalViewFooter(controller: controller)
+
+        }.frame(width: 500, height: 700)
             .background(Color.F.modalViewBG)
             .cornerRadius(5)
             .shadow(color: Color.F.black05, radius: 5, x: 0, y: 5)
+    }
+}
+
+struct ModalViewFooter: View {
+    enum ModalViewResult {
+        case apply
+        case cancel
+    }
+
+    let controller: ChooserController
+
+    @EnvironmentObject var modalViewObservable: ModalViewObservable
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 0) {
+            Button("", action: {
+                self.modalViewObservable.isShown = false
+                self.controller.cancel()
+            }).buttonStyle(RedButtonStyle())
+                .frame(width: 100, height: 50)
+
+            Spacer()
+
+            Button("", action: {
+                self.modalViewObservable.isShown = false
+                self.controller.apply()
+            }).buttonStyle(GreenButtonStyle())
+                .frame(width: 100, height: 50)
+
+        }.onAppear { self.modalViewObservable.isShown = true }
+    }
+}
+
+struct TagTreeNodeLink: View {
+    @ObservedObject var tag: Tag
+    @ObservedObject var state: ConspectusState
+    private let node: TagTreeNode
+    let isSelected: Bool
+    let levelOffset: CGFloat
+    let levelWidth: Int = 40
+    let height: CGFloat = 30
+    let onTapAction: (() -> Void)?
+
+    init(node: TagTreeNode, isSelected: Bool, action: (() -> Void)?) {
+        self.node = node
+        tag = node.tag
+        state = node.tag.state
+
+        self.isSelected = isSelected
+        levelOffset = CGFloat(node.level * levelWidth)
+        onTapAction = action
+    }
+
+    @State private var hover = false
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 0) {
+            TreeNodeLines(node: node, levelWidth: levelWidth)
+                .stroke()
+                .foregroundColor(Color.F.white)
+                .opacity(0.25)
+                .frame(width: levelOffset, height: height)
+
+            Text(tag.content.name)
+                .lineLimit(1)
+                .padding(.horizontal, 5)
+                .frame(height: height)
+                .foregroundColor(self.isSelected ? Color.F.black : self.state.isRemoved ? Color.F.red : Color.F.white)
+                .background(self.isSelected ? self.state.isRemoved ? Color.F.red : Color.F.white : Color.F.clear)
+                .offset(x: -5, y: 0)
+                .onTapGesture {
+                    self.onTapAction?()
+                }
+        }
+    }
+}
+
+struct TreeNodeLines: Shape {
+    let node: TagTreeNode
+    let levelWidth: Int
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        if rect.width > 0 {
+            let linesAmount = Int(rect.width) / levelWidth
+
+            for i in 0 ... linesAmount - 1 {
+                path.move(to: CGPoint(x: i * levelWidth + levelWidth / 2, y: 0))
+                path.addLine(to: CGPoint(x: i * levelWidth + levelWidth / 2, y: Int(rect.height)))
+            }
+
+            path.move(to: CGPoint(x: Int(rect.width - CGFloat(levelWidth / 2)), y: Int(rect.height / 2)))
+            path.addLine(to: CGPoint(x: Int(rect.width - 2), y: Int(rect.height / 2)))
+        }
+
+        return path
     }
 }

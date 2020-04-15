@@ -22,12 +22,7 @@ enum ValidationStatus: String {
     case emptyQuote = "Der Text eines Zitates ist nicht gefüllt"
     case emptyPage = "Die Seitennummer eines Zitates ist nicht gefüllt"
     case duplicate = "Ein Duplikat gefunden"
-}
-
-enum StoreResult: String {
-    case stored
-    case noChangesToStore
-    case failed
+    case failedToWrite = "Das Speichern ist fehlgeschlagen!"
 }
 
 enum ConspectusGenus: String {
@@ -73,6 +68,41 @@ class ConspectusState: ObservableObject {
     }
 }
 
+class LinkColl: ObservableObject {
+    var owner: Conspectus!
+    @Published var links: [Conspectus] = []
+
+    func removeLink(from c: Conspectus) {
+        for (ind, link) in links.enumerated() {
+            if link == c {
+                links.remove(at: ind)
+                c.linkColl.removeLink(from: owner)
+
+                if let tag = c as? Tag {
+                    let tagsChildren = links.filter { $0 is Tag && ($0 as! Tag).content.parentTag == tag }
+                    for child in tagsChildren {
+                        removeLink(from: child)
+                    }
+                }
+
+                owner.state.hasChanges = true
+                _ = owner.store()
+
+                break
+            }
+        }
+    }
+
+    func addLink(to c: Conspectus) {
+        if !links.contains(c) {
+            links.append(c)
+            c.linkColl.addLink(to: owner)
+            owner.state.hasChanges = true
+            _ = owner.store()
+        }
+    }
+}
+
 class Conspectus: Equatable {
     let id: UID
     let fileUrl: URL
@@ -95,6 +125,7 @@ class Conspectus: Equatable {
     }
 
     let state: ConspectusState
+    let linkColl: LinkColl
 
     private var disposeBag: Set<AnyCancellable> = []
 
@@ -108,11 +139,10 @@ class Conspectus: Equatable {
             fileUrl = url
             fileData = dict
             state = ConspectusState()
+            linkColl = LinkColl()
+            linkColl.owner = self
             state.isNew = false
             state.isEditing = false
-
-            print("Conspectud init = \(id)")
-
         } else {
             return nil
         }
@@ -124,6 +154,7 @@ class Conspectus: Equatable {
         id = UID()
         fileData = nil
         state = ConspectusState()
+
         state.isNew = true
         state.isEditing = true
 
@@ -132,6 +163,8 @@ class Conspectus: Equatable {
 
         fileUrl = DocumentsStorage.projectURL.appendingPathComponent(location.rawValue + "/" + id.description + ".faustus")
 
+        linkColl = LinkColl()
+        linkColl.owner = self
         didInit()
     }
 
@@ -150,35 +183,48 @@ class Conspectus: Equatable {
         }
     }
 
-    func store() -> StoreResult {
-        guard state.hasChanges else {
-            return .noChangesToStore
-        }
+    var storeDebouncer: Debouncer = Debouncer(seconds: 0.5)
+    func store() {
+        guard state.hasChanges else { return }
 
-        state.validationStatus = validate()
-        if state.validationStatus == .ok {
-            state.validationStatus = AppModel.shared.bibliography.hasDuplicate(of: self) ? .duplicate : .ok
+        storeDebouncer.debounce {
+            self.executeStore()
         }
+    }
+
+    private func executeStore() {
+        state.validationStatus = validate()
+
         if state.validationStatus == .ok {
             let oldHashName = fileData?["hashName"] as? String ?? ""
             if write(dict: serialize()) {
                 state.isNew = false
                 state.hasChanges = false
                 AppModel.shared.bibliography.update(self, oldHashName: oldHashName)
-                return .stored
+            } else {
+                state.validationStatus = .failedToWrite
+                if AppModel.shared.selectedConspectus != self {
+                    show()
+                }
             }
         }
-        
-        return .failed
     }
 
     func validate() -> ValidationStatus {
-        return .ok
+        return AppModel.shared.bibliography.hasDuplicate(of: self) ? .duplicate : .ok
     }
 
     func serialize() -> [String: Any] {
         state.changedDate = DateTimeUtils.localize(Date())
-        return ["id": id, "hashName": hashName, "createdDate": state.createdDate, "changedDate": state.changedDate, "isRemoved": state.isRemoved]
+
+        var dict: [String: Any] = [:]
+        dict["id"] = id
+        dict["hashName"] = hashName
+        dict["createdDate"] = state.createdDate
+        dict["changedDate"] = state.changedDate
+        dict["isRemoved"] = state.isRemoved
+        dict["links"] = linkColl.links.map { $0.id }
+        return dict
     }
 
     func deserialize(_ bibliography: Bibliography) {
@@ -186,6 +232,10 @@ class Conspectus: Equatable {
             state.createdDate = dict["createdDate"] as? String ?? DateTimeUtils.localize(Date())
             state.changedDate = dict["changedDate"] as? String ?? DateTimeUtils.localize(Date())
             state.isRemoved = dict["isRemoved"] as? Bool ?? false
+
+            if let linksIDs = dict["links"] as? [UID] {
+                linkColl.links = linksIDs.map { bibliography.read($0) }.compactMap { $0 }
+            }
         }
 
         state.hasChanges = false
@@ -213,7 +263,9 @@ class Conspectus: Equatable {
         state.isRemoved = true
     }
 
-    func removeLinks(with conspectus: Conspectus) {}
+    func didDestroy(_ conspectus: Conspectus) {
+        linkColl.removeLink(from: conspectus)
+    }
 
     func destroy() {
         DocumentsStorage.deleteFile(from: fileUrl)

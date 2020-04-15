@@ -72,15 +72,12 @@ class User: Conspectus, BooksOwner, ObservableObject {
     }
 
     override func validate() -> ValidationStatus {
-        if content.name.isEmpty || content.surname.isEmpty {
-            return .emptyName
-        } else if content.pwd.isEmpty {
-            return .emptyPassword
-        } else if !content.encryptedPwd.isEmpty && content.encryptedPwd != encryptPwd() {
-            return .invalidUserPwd
-        } else {
-            return .ok
-        }
+        let conspectusValidation = super.validate()
+        if conspectusValidation != .ok { return conspectusValidation }
+        if content.name.isEmpty || content.surname.isEmpty { return .emptyName }
+        if content.pwd.isEmpty { return .emptyPassword }
+        if !content.encryptedPwd.isEmpty && content.encryptedPwd != encryptPwd() { return .invalidUserPwd }
+        return .ok
     }
 
     override func serialize() -> [String: Any] {
@@ -105,9 +102,10 @@ class User: Conspectus, BooksOwner, ObservableObject {
         state.hasChanges = false
     }
 
-    override func removeLinks(with conspectus: Conspectus) {
+    override func didDestroy(_ conspectus: Conspectus) {
+        super.didDestroy(conspectus)
         if let book = conspectus as? Book {
-            booksColl.removeBook(by: book.id)
+            booksColl.removeBook(book)
         }
     }
 }

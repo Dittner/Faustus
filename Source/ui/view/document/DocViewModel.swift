@@ -12,8 +12,9 @@ import SwiftUI
 final class DocViewModel: ViewModel {
     @Published var selectedConspectus: Conspectus
 
-    let tagTreeController = TagTreeController()
     let bookListController = BookListController()
+    let tagTreeController = TagTreeController()
+    let linkListController = LinkListController()
 
     private var disposeBag: Set<AnyCancellable> = []
 
@@ -28,7 +29,8 @@ final class DocViewModel: ViewModel {
                     self.bookListController.update(with: (newValue as! BooksOwner).booksColl)
                 }
 
-                self.tagTreeController.update(conspectus: newValue)
+                self.tagTreeController.update(newValue, self.model.bibliography)
+                self.linkListController.update(with: newValue.linkColl)
 
                 self.selectedConspectus = newValue
             }
@@ -74,6 +76,18 @@ final class DocViewModel: ViewModel {
                     self.removeSelectedConspectus()
                 }
             }
+    }
+
+    var chooseParentTagPublisher: AnyCancellable?
+    func chooseParentTag() {
+        if let ownerTag = selectedConspectus as? Tag {
+            chooseParentTagPublisher?.cancel()
+            chooseParentTagPublisher = rootVM.chooseParentTag(owner: ownerTag)
+                .sink { tag in
+                    print("chooseParentTag has result")
+                    ownerTag.content.parentTag = tag
+                }
+        }
     }
 
     func removeSelectedConspectus() {

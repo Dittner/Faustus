@@ -23,6 +23,58 @@ class BookContent: ObservableObject {
     @Published var author: Conspectus?
 }
 
+class BooksColl: ObservableObject {
+    var owner: Conspectus!
+    @Published var books: [Book] = []
+
+    func updateBooks(_ coll: [Book]) {
+        for b in coll {
+            if !books.contains(b) {
+                b.content.author = owner
+                _ = b.store()
+            }
+        }
+
+        for b in books {
+            if !coll.contains(b) {
+                b.content.author = nil
+                _ = b.store()
+            }
+        }
+
+        books = coll
+        owner.state.hasChanges = true
+        _ = owner.store()
+    }
+
+    func removeBook(_ bookToRemove: Book) {
+        for (ind, book) in books.enumerated() {
+            if book == bookToRemove {
+                let b = books.remove(at: ind)
+                b.content.author = nil
+                _ = b.store()
+
+                owner.state.hasChanges = true
+                _ = owner.store()
+
+                break
+            }
+        }
+    }
+
+    func addBook(b: Book) {
+        if !books.contains(b) {
+            books.append(b)
+            if b.content.author != owner {
+                b.content.author = owner
+                _ = b.store()
+            }
+            owner.state.hasChanges = true
+            _ = owner.store()
+        }
+    }
+}
+
 class Book: Conspectus, ObservableObject {
     @ObservedObject var content: BookContent = BookContent()
 
@@ -58,6 +110,8 @@ class Book: Conspectus, ObservableObject {
     }
 
     override func validate() -> ValidationStatus {
+        let conspectusValidation = super.validate()
+        if conspectusValidation != .ok { return conspectusValidation }
         if content.title.isEmpty { return .emptyBookTitle }
         if content.writtenDate.isEmpty { return .emptyWrittenYear }
         if content.authorText.isEmpty && content.author == nil { return .emptyBookAuthor }
@@ -103,7 +157,8 @@ class Book: Conspectus, ObservableObject {
         state.hasChanges = false
     }
 
-    override func removeLinks(with conspectus: Conspectus) {
+    override func didDestroy(_ conspectus: Conspectus) {
+        super.didDestroy(conspectus)
         if let author = content.author, author.id == conspectus.id {
             content.author = nil
             _ = store()

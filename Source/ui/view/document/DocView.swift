@@ -23,14 +23,14 @@ struct DocView: View {
             if vm.selectedConspectus is User {
                 UserHeader(user: vm.selectedConspectus as! User, onClosed: vm.close)
 
-                StatusBoard(conspectus: vm.selectedConspectus)
+                StatusPanel(conspectus: vm.selectedConspectus)
                     .zIndex(1)
 
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 15) {
-                        StoreStateBoard(conspectus: vm.selectedConspectus)
-                        BookList(controller: vm.bookListController, title: "AUFSÄTZE")
-
+                        StoreStatePanel(conspectus: vm.selectedConspectus)
+                        BookListView(controller: vm.bookListController, title: "AUFSÄTZE")
+                        LinkListView(controller: vm.linkListController)
                     }.padding(.leading, 15)
                 }
                 .offset(x: 0, y: -validationInfoBoardHeight)
@@ -46,14 +46,16 @@ struct DocView: View {
             else if vm.selectedConspectus is Author {
                 AuthorHeader(author: vm.selectedConspectus as! Author, onClosed: vm.close)
 
-                StatusBoard(conspectus: vm.selectedConspectus)
+                StatusPanel(conspectus: vm.selectedConspectus)
                     .zIndex(1)
 
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 15) {
-                        StoreStateBoard(conspectus: vm.selectedConspectus)
+                        StoreStatePanel(conspectus: vm.selectedConspectus)
                         InfoPanel(conspectus: vm.selectedConspectus)
-                        BookList(controller: vm.bookListController)
+                        BookListView(controller: vm.bookListController)
+                        TagLinksView(controller: vm.tagTreeController)
+                        LinkListView(controller: vm.linkListController)
                     }.padding(.leading, 15)
                 }
                 .offset(x: 0, y: -validationInfoBoardHeight)
@@ -69,15 +71,16 @@ struct DocView: View {
             else if vm.selectedConspectus is Book {
                 BookHeader(book: vm.selectedConspectus as! Book, onClosed: vm.close)
 
-                StatusBoard(conspectus: vm.selectedConspectus)
+                StatusPanel(conspectus: vm.selectedConspectus)
                     .zIndex(1)
 
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 15) {
-                        StoreStateBoard(conspectus: vm.selectedConspectus)
+                        StoreStatePanel(conspectus: vm.selectedConspectus)
                         BookInfoPanel(book: vm.selectedConspectus as! Book)
-
+                        TagLinksView(controller: vm.tagTreeController)
                         // QuoteCell(quote: vm.quote, isEditing: true)
+                        LinkListView(controller: vm.linkListController)
 
                     }.padding(.leading, 15)
                 }
@@ -94,14 +97,14 @@ struct DocView: View {
             else if vm.selectedConspectus is Tag {
                 TagHeader(tag: vm.selectedConspectus as! Tag, onClosed: vm.close)
 
-                StatusBoard(conspectus: vm.selectedConspectus)
+                StatusPanel(conspectus: vm.selectedConspectus)
                     .zIndex(1)
 
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 15) {
-                        StoreStateBoard(conspectus: vm.selectedConspectus)
+                        StoreStatePanel(conspectus: vm.selectedConspectus)
                         InfoPanel(conspectus: vm.selectedConspectus)
-                        ParentTag(controller: vm.tagTreeController)
+                        LinkListView(controller: vm.linkListController)
 
                     }.padding(.leading, 15)
                 }
@@ -116,13 +119,13 @@ struct DocView: View {
     }
 }
 
-struct StatusBoard: View {
+struct StatusPanel: View {
     let conspectus: Conspectus
     @ObservedObject var state: ConspectusState
 
     init(conspectus: Conspectus) {
         self.conspectus = conspectus
-        self.state = conspectus.state
+        state = conspectus.state
         print("ValidationInfoBoard init, id: \(conspectus.id)")
     }
 
@@ -147,13 +150,13 @@ struct StatusBoard: View {
     }
 }
 
-struct StoreStateBoard: View {
+struct StoreStatePanel: View {
     @EnvironmentObject var vm: DocViewModel
     @ObservedObject var state: ConspectusState
     private let isUser: Bool
 
     init(conspectus: Conspectus) {
-        self.state = conspectus.state
+        state = conspectus.state
         isUser = conspectus is User
         print("StoreInfoBoard init, id: \(conspectus.id)")
     }
@@ -198,18 +201,19 @@ struct StoreStateBoard: View {
     }
 }
 
-struct Section: View {
+struct SectionView: View {
     @Binding var isExpanded: Bool
     let title: String
     var isEditing: Bool = false
     var action: (() -> Void)?
+    let actionBtnIcon: String = "plus"
 
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .center) {
                 if self.isEditing && self.action != nil {
                     Button("", action: self.action!)
-                        .buttonStyle(IconButtonStyle(iconName: "plus", iconColor: Color.F.white, bgColor: Color.F.black, width: 20, height: 20))
+                        .buttonStyle(IconButtonStyle(iconName: self.actionBtnIcon, iconColor: Color.F.black, bgColor: Color.F.white, width: 20, height: 20))
                         .offset(x: 10 - geometry.size.width / 2)
                 }
 
@@ -231,7 +235,7 @@ struct Section: View {
     }
 }
 
-struct BookList: View {
+struct BookListView: View {
     @ObservedObject var controller: BookListController
     @ObservedObject var booksColl: BooksColl
     @ObservedObject var state: ConspectusState
@@ -248,24 +252,88 @@ struct BookList: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Section(isExpanded: $isExpanded, title: title, isEditing: self.state.isEditing, action: controller.addBook)
+        VStack(alignment: .leading, spacing: 0) {
+            SectionView(isExpanded: $isExpanded, title: title, isEditing: self.state.isEditing, action: controller.addBook)
 
             if isExpanded {
                 ForEach(booksColl.books, id: \.id) { book in
-                    ConspectusLink(conspectus: book, isEditing: self.state.isEditing, isSelected: false, action: { result in
+                    ConspectusLink(conspectus: book, isEditing: self.state.isEditing, action: { result in
                         switch result {
-                        case .edit:
-                            print("Edited link")
                         case .remove:
-                            self.controller.removeBook(with: book.id)
+                            self.controller.removeBook(book)
                         case .navigate:
                             book.show()
                         }
                     })
                 }.padding(.leading, 40)
-                    .padding(.trailing, 20)
+                    .padding(.trailing, 0)
                     .padding(.top, 0)
+            }
+        }
+    }
+}
+
+struct TagLinksView: View {
+    @ObservedObject var controller: TagTreeController
+    @ObservedObject var state: ConspectusState
+
+    @State private var isExpanded: Bool = true
+    private var disposeBag: Set<AnyCancellable> = []
+
+    init(controller: TagTreeController) {
+        self.controller = controller
+        state = controller.owner.state
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SectionView(isExpanded: $isExpanded, title: "TAGS", isEditing: self.state.isEditing, action: controller.chooseTags)
+
+            if isExpanded {
+                ForEach(controller.tagNodes, id: \.tag.id) { node in
+                    ConspectusLink(conspectus: node.tag, isEditing: self.state.isEditing, action: { result in
+                        if result == .navigate {
+                            node.tag.show()
+                        } else if result == .remove {
+                            self.controller.removeTag(node.tag)
+                        }
+                    }).offset(x: CGFloat(node.level * 40), y: 0)
+
+                }.padding(.leading, 40)
+                    .padding(.trailing, 0)
+            }
+        }
+    }
+}
+
+struct LinkListView: View {
+     @ObservedObject var controller: LinkListController
+    @ObservedObject var state: ConspectusState
+
+    @State private var isExpanded: Bool = true
+    private var disposeBag: Set<AnyCancellable> = []
+
+    init(controller: LinkListController) {
+        self.controller = controller
+        state = controller.linkColl.owner.state
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            SectionView(isExpanded: $isExpanded, title: "LINKS", isEditing: self.state.isEditing)
+
+            if isExpanded {
+                ForEach(controller.filteredLinks, id: \.id) { c in
+                    ConspectusLink(conspectus: c, isEditing: self.state.isEditing, showDetails: true, action: { result in
+                        if result == .navigate {
+                            c.show()
+                        } else if result == .remove {
+                            self.controller.removeLink(c)
+                        }
+                    })
+
+                }.padding(.leading, 0)
+                    .padding(.trailing, 0)
             }
         }
     }

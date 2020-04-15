@@ -56,7 +56,7 @@ class AppModel: ObservableObject {
         bibliography.updateHashNames()
 
         prepareRecentOpenedStack()
-        //Font.printAllSystemFonts()
+        // Font.printAllSystemFonts()
     }
 
     private func loadAuthors() {
@@ -125,7 +125,8 @@ class AppModel: ObservableObject {
     }
 
     func select(_ conspectus: Conspectus) {
-        if selectedConspectus != conspectus && selectedConspectus.store() != .failed {
+        if selectedConspectus != conspectus && selectedConspectus.validate() == .ok {
+            selectedConspectus.store()
             selectedConspectus = conspectus
         }
     }
@@ -133,7 +134,8 @@ class AppModel: ObservableObject {
     func closeSelectedConspectus() {
         guard recentOpened.count > 1 else { return }
 
-        if selectedConspectus.store() != .failed {
+        if selectedConspectus.validate() == .ok {
+            selectedConspectus.store()
             recentOpened.append(selectedConspectus)
             recentOpened.removeFirst()
             selectedConspectus = recentOpened[0]
@@ -141,7 +143,8 @@ class AppModel: ObservableObject {
     }
 
     func createConspectus(_ genus: ConspectusGenus) {
-        if selectedConspectus.store() != .failed {
+        if selectedConspectus.validate() == .ok {
+            selectedConspectus.store()
             let c = genus.create()
             selectedConspectus = c
             bibliography.write(c)
@@ -160,7 +163,7 @@ class AppModel: ObservableObject {
         } else if selectedConspectus.state.isRemoved {
             logInfo(tag: .APP, msg: "Destroy conspectus, id: \(selectedConspectus.id)")
             for conspectus in bibliography.getValues() {
-                conspectus.removeLinks(with: selectedConspectus)
+                conspectus.didDestroy(selectedConspectus)
                 if conspectus.state.hasChanges {
                     _ = conspectus.store()
                 }

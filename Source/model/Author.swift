@@ -45,58 +45,6 @@ class AuthorContent: ObservableObject {
     }
 }
 
-class BooksColl: ObservableObject {
-    var owner: Conspectus!
-    @Published var books: [Book] = []
-
-    func updateBooks(_ coll: [Book]) {
-        for b in coll {
-            if !books.contains(b) {
-                b.content.author = owner
-                _ = b.store()
-            }
-        }
-
-        for b in books {
-            if !coll.contains(b) {
-                b.content.author = nil
-                _ = b.store()
-            }
-        }
-
-        books = coll
-        owner.state.hasChanges = true
-        _ = owner.store()
-    }
-
-    func removeBook(by id: UID) {
-        for (ind, book) in books.enumerated() {
-            if book.id == id {
-                let b = books.remove(at: ind)
-                b.content.author = nil
-                _ = b.store()
-
-                owner.state.hasChanges = true
-                _ = owner.store()
-
-                break
-            }
-        }
-    }
-    
-    func addBook(b: Book) {
-        if !books.contains(b) {
-            books.append(b)
-            if b.content.author != owner {
-                b.content.author = owner
-                _ = b.store()
-            }
-            owner.state.hasChanges = true
-            _ = owner.store()
-        }
-    }
-}
-
 protocol BooksOwner {
     var booksColl: BooksColl { get }
 }
@@ -131,15 +79,11 @@ class Author: Conspectus, BooksOwner, ObservableObject {
     }
 
     override func validate() -> ValidationStatus {
-        if content.surname == "" {
-            return .emptyName
-        } else if content.birthYear == "" {
-            return .emptyBirthYear
-        } else if content.deathYear != "", let death = Int(content.deathYear), let birth = Int(content.birthYear), death - birth > 120 {
-            return .lifeIsTooLong
-        } else {
-            return .ok
-        }
+        let conspectusValidation = super.validate()
+        if conspectusValidation != .ok { return conspectusValidation } else if content.surname == "" { return .emptyName }
+        if content.birthYear == "" { return .emptyBirthYear }
+        if content.deathYear != "", let death = Int(content.deathYear), let birth = Int(content.birthYear), death - birth > 120 { return .lifeIsTooLong }
+        return .ok
     }
 
     override func serialize() -> [String: Any] {
@@ -161,17 +105,18 @@ class Author: Conspectus, BooksOwner, ObservableObject {
             content.birthYear = dict["birthYear"] as? String ?? ""
             content.deathYear = dict["deathYear"] as? String ?? ""
             content.info = dict["info"] as? String ?? ""
-            if let booksID = dict["books"] as? [UID] {
-                booksColl.books = booksID.map { bibliography.read($0) as? Book }.compactMap { $0 }
+            if let booksIDs = dict["books"] as? [UID] {
+                booksColl.books = booksIDs.map { bibliography.read($0) as? Book }.compactMap { $0 }
             }
         }
 
         state.hasChanges = false
     }
 
-    override func removeLinks(with conspectus: Conspectus) {
+    override func didDestroy(_ conspectus: Conspectus) {
+        super.didDestroy(conspectus)
         if let book = conspectus as? Book {
-            booksColl.removeBook(by: book.id)
+            booksColl.removeBook(book)
         }
     }
 }

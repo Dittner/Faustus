@@ -23,7 +23,7 @@ final class LoginViewModel: ViewModel {
 
     func login() {
         let status = user.validate()
-        if status == .ok && user.store() != .failed {
+        if status == .ok {
             errorMsg = ""
             let appDelegate = NSApplication.shared.delegate as! AppDelegate
             appDelegate.window?.makeFirstResponder(nil)

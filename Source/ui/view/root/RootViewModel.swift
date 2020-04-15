@@ -19,6 +19,8 @@ enum ModalViewCategory: String {
     case deleteConfirmation
     case booksChooser
     case authorChooser
+    case parentTagChooser
+    case tagsChooser
 }
 
 final class RootViewModel: ViewModel {
@@ -29,6 +31,8 @@ final class RootViewModel: ViewModel {
     var deleteConfirmationController: DeleteConfirmationController = DeleteConfirmationController()
     var booksChooserController: BooksChooserController = BooksChooserController()
     var authorChooserController: AuthorChooserController = AuthorChooserController()
+    var parentTagChooserController: ParentTagChooserController = ParentTagChooserController()
+    var tagsChooserController: TagsChooserController = TagsChooserController()
 
     static var shared: RootViewModel?
     private var disposeBag: Set<AnyCancellable> = []
@@ -107,111 +111,48 @@ final class RootViewModel: ViewModel {
         }
         return p.eraseToAnyPublisher()
     }
-}
 
-enum DeleteResult {
-    case deleted
-    case canceled
-}
+    func chooseParentTag(owner: Tag) -> AnyPublisher<Tag?, Never> {
+        modalView = .parentTagChooser
+        parentTagChooserController.show(owner, model.bibliography)
 
-class DeleteConfirmationController: ObservableObject {
-    @Published var result: DeleteResult = .canceled
+        let p = Future<Tag?, Never> { promise in
+            self.parentTagChooserController.$result
+                .dropFirst()
+                .sink { result in
+                    switch result {
+                    case let .selected(result):
+                        promise(.success(result))
 
-    func cancel() {
-        result = .canceled
+                    case .canceled:
+                        promise(.success(nil))
+                    }
+                    self.modalView = .no
+                }
+                .store(in: &self.disposeBag)
+        }
+        return p.eraseToAnyPublisher()
     }
+    
+    func chooseTags(owner: Conspectus) -> AnyPublisher<([Tag],[Tag]), Never> {
+        modalView = .tagsChooser
+        tagsChooserController.show(owner, model.bibliography)
 
-    func apply() {
-        result = .deleted
-    }
-}
+        let p = Future<([Tag],[Tag]), Never> { promise in
+            self.tagsChooserController.$result
+                .dropFirst()
+                .sink { result in
+                    switch result {
+                    case let .selected(added, removed):
+                        promise(.success((added, removed)))
 
-class BooksChooserController: ObservableObject {
-    enum ChooserResult {
-        case selected(_ result: [Book])
-        case canceled
-    }
-
-    @Published var selectedBooks: [Book] = []
-    @Published var allBooks: [Book] = []
-    @Published var filteredBooks: [Book] = []
-    @Published var filterText: String = ""
-    @Published var result: ChooserResult = .canceled
-
-    private var disposeBag: Set<AnyCancellable> = []
-
-    init() {
-        Publishers.CombineLatest($filterText.debounce(for: 0.5, scheduler: RunLoop.main), $allBooks)
-            .map { filterText, bookList in
-                filterText.isEmpty ? bookList : bookList.filter { $0.description.hasSubstring(filterText) }
-            }
-            .sink { bookList in
-                self.filteredBooks = bookList
-                print("Filtered list of Book = \(bookList.count)")
-            }
-            .store(in: &disposeBag)
-    }
-
-    func show(_ selectedBooks: [Book], bibliography: Bibliography) {
-        self.selectedBooks = selectedBooks
-
-        allBooks = bibliography.getValues()
-            .filter { $0 is Book && !$0.state.isRemoved }
-            .map { $0 as! Book }
-            .sorted { $0.content.writtenDate > $1.content.writtenDate }
-
-        print("Books total = \(allBooks.count)")
-    }
-
-    func cancel() {
-        result = .canceled
-    }
-
-    func apply() {
-        result = .selected(selectedBooks)
-    }
-}
-
-class AuthorChooserController: ObservableObject {
-    enum ChooserResult {
-        case selected(_ result: Author)
-        case canceled
-    }
-
-    @Published var selectedAuthor: Author?
-    @Published var allAuthors: [Author] = []
-    @Published var filteredAuthors: [Author] = []
-    @Published var filterText: String = ""
-    @Published var result: ChooserResult = .canceled
-
-    private var disposeBag: Set<AnyCancellable> = []
-
-    init() {
-        Publishers.CombineLatest($filterText.debounce(for: 0.5, scheduler: RunLoop.main), $allAuthors)
-            .map { filterText, authorList in
-                filterText.isEmpty ? authorList : authorList.filter { $0.description.hasSubstring(filterText) }
-            }
-            .sink { authorList in
-                self.filteredAuthors = authorList
-                print("Filtered list of Author = \(authorList.count)")
-            }
-            .store(in: &disposeBag)
-    }
-
-    func show(_ bibliography: Bibliography) {
-        allAuthors = bibliography.getValues()
-            .filter { $0 is Author && !$0.state.isRemoved }
-            .map { $0 as! Author }
-            .sorted { $0.content.surname > $1.content.surname }
-
-        print("Authors total = \(allAuthors.count)")
-    }
-
-    func cancel() {
-        result = .canceled
-    }
-
-    func apply() {
-        result = selectedAuthor != nil ? .selected(selectedAuthor!) : .canceled
+                    case .canceled:
+                        promise(.success(([], [])))
+                    }
+                    self.modalView = .no
+                }
+                .store(in: &self.disposeBag)
+        }
+        return p.eraseToAnyPublisher()
     }
 }

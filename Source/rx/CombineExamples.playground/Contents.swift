@@ -52,3 +52,15 @@ if b.a?.id == nil {
 } else {
     print("b.a?.id == nil //false")
 }
+
+
+var mas:[String] = []
+mas.append("Hello, ")
+
+func add(_ str:String, to arr: inout[String]) {
+    arr.append(str)
+}
+
+add("World", to: &mas)
+
+print(mas)

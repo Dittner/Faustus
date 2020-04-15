@@ -6,22 +6,24 @@
 //  Copyright © 2020 Alexander Dittner. All rights reserved.
 //
 
+//Example
+//var storeDebouncer: Debouncer = Debouncer(seconds: 5)
+//func store() {
+//    storeDebouncer.debounce {
+//        writeDataOnDisk()
+//    }
+//}
+
 import Foundation
 
 class Debouncer {
-    // MARK: - Properties
-
     private let queue = DispatchQueue.main
     private var workItem = DispatchWorkItem(block: {})
     private var interval: TimeInterval
 
-    // MARK: - Initializer
-
     init(seconds: TimeInterval) {
         interval = seconds
     }
-
-    // MARK: - Debouncing function
 
     func debounce(action: @escaping (() -> Void)) {
         workItem.cancel()

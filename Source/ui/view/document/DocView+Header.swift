@@ -47,12 +47,10 @@ struct UserHeader: View {
             .frame(height: 50)
 
             HStack(alignment: .lastTextBaseline, spacing: 0) {
-                Image("changed")
-                    .renderingMode(.template)
-                    .allowsHitTesting(false)
-                    .foregroundColor(Color.F.white)
-                    .frame(width: 30)
-                    .opacity(state.hasChanges ? 1 : 0)
+                Button("") {
+                    _ = self.user.store()
+                    }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: Color.F.black))
+                .opacity(state.hasChanges ? 1 : 0)
 
                 Spacer()
             }
@@ -107,12 +105,10 @@ struct AuthorHeader: View {
             .frame(height: 30)
 
             HStack(alignment: .lastTextBaseline, spacing: 0) {
-                Image("changed")
-                    .renderingMode(.template)
-                    .allowsHitTesting(false)
-                    .foregroundColor(Color.F.white)
-                    .frame(width: 30)
-                    .opacity(state.hasChanges ? 1 : 0)
+                Button("") {
+                    _ = self.author.store()
+                }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: state.isRemoved ? Color.F.red : Color.F.black))
+                .opacity(state.hasChanges ? 1 : 0)
 
                 Spacer()
 
@@ -186,12 +182,10 @@ struct BookHeader: View {
             .frame(height: 30)
 
             HStack(alignment: .lastTextBaseline, spacing: 0) {
-                Image("changed")
-                    .renderingMode(.template)
-                    .allowsHitTesting(false)
-                    .foregroundColor(Color.F.white)
-                    .frame(width: 30)
-                    .opacity(state.hasChanges ? 1 : 0)
+                Button("") {
+                    _ = self.book.store()
+                    }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: state.isRemoved ? Color.F.red : Color.F.black))
+                .opacity(state.hasChanges ? 1 : 0)
 
                 Spacer().frame(width: 250)
 
@@ -210,12 +204,10 @@ struct BookHeader: View {
                         .saturation(0)
                         .frame(width: 300)
                 } else {
-                    ConspectusLink(conspectus: bookContent.author!, isEditing: self.state.isEditing, isSelected: false, fontSize: 16, height: 20, isLightMode: false, action: { result in
+                    ConspectusLink(conspectus: bookContent.author!, isEditing: self.state.isEditing, fontSize: 16, height: 20, isLightMode: false, action: { result in
                         switch result {
-                        case .edit:
-                            print("Edited link")
                         case .remove:
-                            self.bookContent.author = nil
+                            (self.bookContent.author! as! BooksOwner).booksColl.removeBook(self.book)
                         case .navigate:
                             self.bookContent.author!.show()
                         }
@@ -239,13 +231,17 @@ struct BookHeader: View {
 }
 
 struct TagHeader: View {
+    @EnvironmentObject var vm: DocViewModel
     @EnvironmentObject var textFocus: TextFocus
     @ObservedObject var tag: Tag
     @ObservedObject var state: ConspectusState
+    @ObservedObject var tagContent: TagContent
+    
     let onClosedAction: () -> Void
 
     init(tag: Tag, onClosed: @escaping () -> Void) {
         self.tag = tag
+        self.tagContent = tag.content
         state = tag.state
         onClosedAction = onClosed
 
@@ -280,14 +276,22 @@ struct TagHeader: View {
             .frame(height: 30)
 
             HStack(alignment: .lastTextBaseline, spacing: 0) {
-                Image("changed")
-                    .renderingMode(.template)
-                    .allowsHitTesting(false)
-                    .foregroundColor(Color.F.white)
-                    .frame(width: 30)
-                    .opacity(state.hasChanges ? 1 : 0)
+                Button("") {
+                    _ = self.tag.store()
+                    }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: state.isRemoved ? Color.F.red : Color.F.black))
+                .opacity(state.hasChanges ? 1 : 0)
 
                 Spacer()
+
+                SelectableText(text: "+Supertag", color: Color.F.white)
+                    .font(Font.custom(.mono, size: 13))
+                    .padding(.leading, 0)
+                    .padding(.top, 0)
+                    .onTapGesture {
+                        self.vm.chooseParentTag()
+                    }
+                    .frame(width: 180, alignment: .trailing)
+                    .opacity(state.isEditing && tagContent.parentTag == nil ? 1 : 0)
             }
             .padding(.horizontal, 15)
             .frame(height: 50)

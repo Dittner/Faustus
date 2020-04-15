@@ -10,7 +10,6 @@ import Combine
 import SwiftUI
 
 enum ConspectusLinkAction: Int {
-    case edit
     case remove
     case navigate
 }
@@ -18,16 +17,16 @@ enum ConspectusLinkAction: Int {
 struct ConspectusLink: View {
     @ObservedObject var state: ConspectusState
     let name: String
+    let details: String
     let isEditing: Bool
-    let isSelected: Bool
-    let fontSize: CGFloat
+    let font: Font
     let textColor: Color
-    let selectedTextColor: Color
     let btnIconColor: Color
     let height: CGFloat
+    let showDetails: Bool
     let onLinkAction: ((ConspectusLinkAction) -> Void)?
 
-    init(conspectus: Conspectus, isEditing: Bool, isSelected: Bool, fontSize:CGFloat = 21, height:CGFloat = 30, isLightMode:Bool = true, level: Int = 0, action: ((ConspectusLinkAction) -> Void)?) {
+    init(conspectus: Conspectus, isEditing: Bool, fontSize: CGFloat = 21, height: CGFloat = 30, isLightMode: Bool = true, level: Int = 0, showDetails: Bool = false, action: ((ConspectusLinkAction) -> Void)?) {
         state = conspectus.state
         switch conspectus.genus {
         case .author:
@@ -41,51 +40,65 @@ struct ConspectusLink: View {
         }
 
         self.isEditing = isEditing
-        self.isSelected = isSelected
-        self.fontSize = fontSize
-        
-        self.textColor = isLightMode ? Color.F.black : Color.F.white
-        self.selectedTextColor = isLightMode ? Color.F.white : Color.F.black
-        self.btnIconColor = isLightMode ? Color.F.white : Color.F.black
+
+        textColor = isLightMode ? Color.F.black : Color.F.white
+        btnIconColor = isLightMode ? Color.F.white : Color.F.black
         self.height = height
+        self.showDetails = showDetails
+        font = Font.custom(showDetails ? .pragmaticaSemiBold : isEditing ? .pragmaticaLight : .pragmaticaLightItalics, size: fontSize)
+        details = ""
         onLinkAction = action
     }
 
     @State private var hover = false
 
     var body: some View {
-        HStack(alignment: .center, spacing: 0) {
-            if isEditing {
-                Text(" \(name)")
-                    .lineLimit(1)
-                    .padding(.horizontal, 5)
-                    .frame(height: height)
-                    .foregroundColor(self.isSelected ? selectedTextColor : self.state.isRemoved ? Color.F.red : textColor)
-                    .background(self.isSelected ? self.state.isRemoved ? Color.F.red : Color.F.black : Color.F.clear)
-                    .font(Font.custom(.pragmaticaLight, size: fontSize))
-                    .offset(x: -5, y: 0)
-                    .onTapGesture {
-                        self.onLinkAction?(.edit)
-                    }
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center, spacing: 5) {
+                if showDetails {
+                    Spacer().frame(width: 35)
 
-                Button("", action: { self.onLinkAction?(.remove) })
-                    .buttonStyle(IconButtonStyle(iconName: "smallClose", iconColor: btnIconColor, bgColor: textColor, width: 20, height: 20, radius: 10))
-            } else {
+                    Image("link")
+                        .renderingMode(.template)
+                        .allowsHitTesting(false)
+                        .foregroundColor(state.isRemoved ? Color.F.red : textColor)
+                }
+
                 Text(" \(name)")
-                    .underline(self.hover, color: self.state.isRemoved ? Color.F.red : textColor)
+                    .underline(self.hover && !isEditing, color: self.state.isRemoved ? Color.F.red : textColor)
                     .lineLimit(1)
-                    .padding(.horizontal, 5)
                     .frame(height: height)
                     .foregroundColor(state.isRemoved ? Color.F.red : textColor)
-                    .font(Font.custom(.pragmaticaLightItalics, size: fontSize))
+                    .font(self.font)
                     .onHover { value in self.hover = value }
-                    .offset(x: -5, y: 0)
                     .onTapGesture {
-                        self.onLinkAction?(.navigate)
+                        if !self.isEditing {
+                            self.onLinkAction?(.navigate)
+                        }
                     }
+
+                if showDetails {
+                    Spacer()
+                }
+
+                if isEditing {
+                    Button("", action: { self.onLinkAction?(.remove) })
+                        .buttonStyle(IconButtonStyle(iconName: "smallClose", iconColor: btnIconColor, bgColor: textColor, width: 20, height: 20, radius: 10))
+                }
+
+                if !showDetails {
+                    Spacer()
+                }
             }
-            
-            Spacer()
-        }
+
+            if showDetails && !details.isEmpty {
+                Text(details)
+                    .padding(.horizontal, 5)
+                    .foregroundColor(textColor)
+                    .font(Font.custom(.pragmaticaLight, size: 21))
+                    .offset(x: -5, y: 0)
+            }
+        }.padding(.vertical, showDetails ? 5 : 0)
+            .background(showDetails ? Color.F.inputBG : Color.clear)
     }
 }

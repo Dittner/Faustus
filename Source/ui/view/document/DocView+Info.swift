@@ -18,13 +18,15 @@ struct InfoPanel: View {
     @ObservedObject private var notifier: Notifier
     @ObservedObject var state: ConspectusState
     @State private var isExpanded: Bool = true
+    let asTag: Tag?
 
     private let font = NSFont(name: .pragmaticaLight, size: 21)
     private let title: String
     private var disposeBag: Set<AnyCancellable> = []
 
     init(conspectus: Conspectus, title: String = "INFO") {
-        self.state = conspectus.state
+        asTag = conspectus as? Tag
+        state = conspectus.state
         self.title = title
         notifier = Notifier()
 
@@ -48,10 +50,31 @@ struct InfoPanel: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Section(isExpanded: $isExpanded, title: title)
+        VStack(alignment: .leading, spacing: 0) {
+            SectionView(isExpanded: $isExpanded, title: title)
 
             if self.isExpanded {
+                if self.asTag != nil && self.asTag!.content.parentTag != nil {
+                    Spacer().frame(height: 5)
+
+                    HStack(alignment: .lastTextBaseline, spacing: 5) {
+                        Text("Supertag")
+                            .font(Font.custom(.pragmaticaSemiBold, size: 21))
+                            .foregroundColor(Color.F.black)
+                            .padding(.leading, 40)
+                            .frame(height: 30, alignment: .leading)
+
+                        ConspectusLink(conspectus: self.asTag!.content.parentTag!, isEditing: self.state.isEditing, action: { action in
+                            if action == .navigate {
+                                self.asTag!.content.parentTag?.show()
+                            } else if action == .remove {
+                                self.asTag!.content.parentTag = nil
+                            }
+                        })
+                    }
+
+                    Spacer().frame(height: 5)
+                }
                 TextArea(text: $notifier.info, textColor: NSColor.F.black, font: font, isEditable: state.isEditing && !modalViewObservable.isShown)
                     .layoutPriority(-1)
                     .saturation(0)
@@ -77,7 +100,7 @@ struct BookInfoPanel: View {
 
     init(book: Book, title: String = "INFO") {
         self.book = book
-        self.state = book.state
+        state = book.state
         self.title = title
 
         print("BookInfoPanel init, id: \(book.id)")
@@ -85,7 +108,7 @@ struct BookInfoPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Section(isExpanded: $isExpanded, title: title)
+            SectionView(isExpanded: $isExpanded, title: title)
 
             if self.isExpanded {
                 VStack(alignment: .leading, spacing: 5) {

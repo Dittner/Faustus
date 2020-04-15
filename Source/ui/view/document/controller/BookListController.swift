@@ -26,7 +26,7 @@ class BookListController: ViewModel {
             }
     }
 
-    func removeBook(with uid: UID) {
-        booksColl.removeBook(by: uid)
+    func removeBook(_ book: Book) {
+        booksColl.removeBook(book)
     }
 }

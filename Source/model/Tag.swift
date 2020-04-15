@@ -50,6 +50,8 @@ class Tag: Conspectus, ObservableObject {
     }
 
     override func validate() -> ValidationStatus {
+        let conspectusValidation = super.validate()
+        if conspectusValidation != .ok { return conspectusValidation }
         if content.name.isEmpty { return .emptyName }
         return .ok
     }
@@ -79,7 +81,8 @@ class Tag: Conspectus, ObservableObject {
         state.hasChanges = false
     }
 
-    override func removeLinks(with conspectus: Conspectus) {
+    override func didDestroy(_ conspectus: Conspectus) {
+        super.didDestroy(conspectus)
         if let parent = content.parentTag, parent.id == conspectus.id, let tag = conspectus as? Tag {
             content.parentTag = tag.content.parentTag == nil ? nil : tag.content.parentTag
         }

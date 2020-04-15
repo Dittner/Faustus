@@ -116,7 +116,6 @@ struct IconButtonStyle: ButtonStyle {
     }
 }
 
-
 struct CreateButtonStyle: ButtonStyle {
     var iconName: String
     let width: CGFloat = 50
@@ -142,28 +141,26 @@ struct CreateButtonStyle: ButtonStyle {
 }
 
 struct GreenButtonStyle: ButtonStyle {
-    let title: String
     func makeBody(configuration: Self.Configuration) -> some View {
         return ZStack(alignment: .center) {
             RoundedRectangle(cornerRadius: 2)
                 .foregroundColor(configuration.isPressed ? Color.F.green.opacity(0.8) : Color.F.green)
 
-            Text(title)
-                .font(Font.custom(.pragmatica, size: 18))
+            Image("ok")
+                .renderingMode(.template)
                 .foregroundColor(Color.F.white)
         }
     }
 }
 
 struct RedButtonStyle: ButtonStyle {
-    let title: String
     func makeBody(configuration: Self.Configuration) -> some View {
         return ZStack(alignment: .center) {
             RoundedRectangle(cornerRadius: 2)
                 .foregroundColor(configuration.isPressed ? Color.F.red.opacity(0.8) : Color.F.red)
 
-            Text(title)
-                .font(Font.custom(.pragmatica, size: 18))
+            Image("close")
+                .renderingMode(.template)
                 .foregroundColor(Color.F.white)
         }
     }

@@ -23,7 +23,7 @@ class BookContent: ObservableObject {
     @Published var author: Conspectus?
 }
 
-class BooksColl: ObservableObject {
+class BookColl: ObservableObject {
     var owner: Conspectus!
     @Published var books: [Book] = []
 
@@ -43,8 +43,7 @@ class BooksColl: ObservableObject {
         }
 
         books = coll
-        owner.state.hasChanges = true
-        _ = owner.store()
+        _ = owner.store(forced: true)
     }
 
     func removeBook(_ bookToRemove: Book) {
@@ -54,29 +53,51 @@ class BooksColl: ObservableObject {
                 b.content.author = nil
                 _ = b.store()
 
-                owner.state.hasChanges = true
-                _ = owner.store()
+                _ = owner.store(forced: true)
 
                 break
             }
         }
     }
 
-    func addBook(b: Book) {
+    func addBook(_ b: Book) {
         if !books.contains(b) {
             books.append(b)
             if b.content.author != owner {
                 b.content.author = owner
                 _ = b.store()
             }
-            owner.state.hasChanges = true
+            owner.state.markAsChanged()
             _ = owner.store()
         }
     }
 }
 
+class QuoteColl: ObservableObject {
+    var owner: Book!
+    @Published var quotes: [Quote] = []
+
+    func removeQuote(_ quoteToRemove: Quote) {
+        for (ind, quote) in quotes.enumerated() {
+            if quote == quoteToRemove {
+                let g = quotes.remove(at: ind)
+                // q.linkColl.removeAllLinks()
+
+                _ = owner.store(forced: true)
+
+                break
+            }
+        }
+    }
+
+    func createQuote() {
+        quotes.insert(Quote(book: owner), at: 0)
+    }
+}
+
 class Book: Conspectus, ObservableObject {
     @ObservedObject var content: BookContent = BookContent()
+    @ObservedObject var quoteColl: QuoteColl = QuoteColl()
 
     override var genus: ConspectusGenus { return .book }
 
@@ -90,22 +111,22 @@ class Book: Conspectus, ObservableObject {
 
     private var disposeBag: Set<AnyCancellable> = []
     override func didInit() {
+        quoteColl.owner = self
+
         for prop in [content.$title, content.$subTitle, content.$ISBN, content.$writtenDate, content.$publishedDate, content.$pageCount, content.$publisher, content.$place, content.$info, content.$authorText] {
             prop
                 .removeDuplicates()
-                .map { _ in
-                    true
+                .sink { _ in
+                    self.state.markAsChanged()
                 }
-                .assign(to: \.hasChanges, on: state)
                 .store(in: &disposeBag)
         }
 
         content.$author
             .removeDuplicates()
-            .map { _ in
-                true
+            .sink { _ in
+                self.state.markAsChanged()
             }
-            .assign(to: \.hasChanges, on: state)
             .store(in: &disposeBag)
     }
 
@@ -115,6 +136,13 @@ class Book: Conspectus, ObservableObject {
         if content.title.isEmpty { return .emptyBookTitle }
         if content.writtenDate.isEmpty { return .emptyWrittenYear }
         if content.authorText.isEmpty && content.author == nil { return .emptyBookAuthor }
+        if quoteColl.quotes.count > 0 {
+            for q in quoteColl.quotes {
+                if !q.isValid {
+                    return .invalidQuote
+                }
+            }
+        }
         return .ok
     }
 
@@ -132,6 +160,14 @@ class Book: Conspectus, ObservableObject {
         dict["authorText"] = content.authorText
         if let author = content.author {
             dict["authorID"] = author.id
+        }
+
+        if quoteColl.quotes.count > 0 {
+            var quotes: [[String: Any]] = []
+            for q in quoteColl.quotes {
+                quotes.append(q.serialize())
+            }
+            dict["quotes"] = quotes
         }
         return dict
     }
@@ -152,9 +188,17 @@ class Book: Conspectus, ObservableObject {
             if let authorID = dict["authorID"] as? UID {
                 content.author = bibliography.read(authorID) as? Author
             }
+
+            if let quotes = dict["quotes"] as? [[String: Any]] {
+                var res: [Quote] = []
+                for quoteData in quotes {
+                    res.append(Quote(book: self).deserialize(quoteData))
+                }
+                quoteColl.quotes = res.sorted { $0 < $1 }
+            }
         }
 
-        state.hasChanges = false
+        state.markAsNotChanged()
     }
 
     override func didDestroy(_ conspectus: Conspectus) {

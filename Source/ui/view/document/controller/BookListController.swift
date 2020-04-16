@@ -10,23 +10,23 @@ import Combine
 import SwiftUI
 
 class BookListController: ViewModel {
-    @Published var booksColl: BooksColl!
+    @Published var bookColl: BookColl!
 
-    func update(with booksColl: BooksColl) {
-        self.booksColl = booksColl
+    func update(with booksColl: BookColl) {
+        self.bookColl = booksColl
     }
 
     var chooseBooksPublisher: AnyCancellable?
     func addBook() {
         chooseBooksPublisher?.cancel()
-        chooseBooksPublisher = rootVM.chooseBooks(selectedBooks: booksColl.books)
+        chooseBooksPublisher = rootVM.chooseBooks(selectedBooks: bookColl.books)
             .sink { result in
                 print("chooseBooks has result")
-                self.booksColl.updateBooks(result)
+                self.bookColl.updateBooks(result)
             }
     }
 
     func removeBook(_ book: Book) {
-        booksColl.removeBook(book)
+        bookColl.removeBook(book)
     }
 }

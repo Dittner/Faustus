@@ -23,6 +23,7 @@ enum ValidationStatus: String {
     case emptyPage = "Die Seitennummer eines Zitates ist nicht gefüllt"
     case duplicate = "Ein Duplikat gefunden"
     case failedToWrite = "Das Speichern ist fehlgeschlagen!"
+    case invalidQuote = "Ein Zitat ist nicht gefüllt"
 }
 
 enum ConspectusGenus: String {
@@ -50,11 +51,23 @@ class ConspectusState: ObservableObject {
     @Published var createdDate: String = ""
     @Published var validationStatus: ValidationStatus = .ok
     @Published var isEditing: Bool = false
-    @Published var hasChanges: Bool = true
+    @Published private(set) var hasChanges: Bool = true
     @Published var isRemoved: Bool = false
     var isNew: Bool = false
 
     private var disposeBag: Set<AnyCancellable> = []
+
+    func markAsChanged() {
+        if !hasChanges {
+            hasChanges = true
+        }
+    }
+
+    func markAsNotChanged() {
+        if hasChanges {
+            hasChanges = false
+        }
+    }
 
     init() {
         $isRemoved
@@ -85,7 +98,7 @@ class LinkColl: ObservableObject {
                     }
                 }
 
-                owner.state.hasChanges = true
+                owner.state.markAsChanged()
                 _ = owner.store()
 
                 break
@@ -97,7 +110,7 @@ class LinkColl: ObservableObject {
         if !links.contains(c) {
             links.append(c)
             c.linkColl.addLink(to: owner)
-            owner.state.hasChanges = true
+            owner.state.markAsChanged()
             _ = owner.store()
         }
     }
@@ -183,9 +196,14 @@ class Conspectus: Equatable {
         }
     }
 
-    var storeDebouncer: Debouncer = Debouncer(seconds: 0.5)
-    func store() {
-        guard state.hasChanges else { return }
+    var storeDebouncer: Debouncer = Debouncer(seconds: 0.25)
+
+    func store(forced: Bool = false) {
+        if forced {
+            state.markAsChanged()
+        } else if !state.hasChanges {
+            return
+        }
 
         storeDebouncer.debounce {
             self.executeStore()
@@ -199,7 +217,7 @@ class Conspectus: Equatable {
             let oldHashName = fileData?["hashName"] as? String ?? ""
             if write(dict: serialize()) {
                 state.isNew = false
-                state.hasChanges = false
+                state.markAsNotChanged()
                 AppModel.shared.bibliography.update(self, oldHashName: oldHashName)
             } else {
                 state.validationStatus = .failedToWrite
@@ -238,7 +256,7 @@ class Conspectus: Equatable {
             }
         }
 
-        state.hasChanges = false
+        state.markAsNotChanged()
     }
 
     private func write(dict: [String: Any]) -> Bool {

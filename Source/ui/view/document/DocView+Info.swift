@@ -17,7 +17,8 @@ struct InfoPanel: View {
     @EnvironmentObject var modalViewObservable: ModalViewObservable
     @ObservedObject private var notifier: Notifier
     @ObservedObject var state: ConspectusState
-    @State private var isExpanded: Bool = true
+    @State private var isExpanded: Bool = InfoPanel.isExpanded
+    static var isExpanded: Bool = false
     let asTag: Tag?
 
     private let font = NSFont(name: .pragmaticaLight, size: 21)
@@ -46,12 +47,14 @@ struct InfoPanel: View {
                 .store(in: &disposeBag)
         }
 
+        isExpanded = InfoPanel.isExpanded
         print("InfoPanel init, id: \(conspectus.id)")
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionView(isExpanded: $isExpanded, title: title)
+            SectionView(isExpanded: $isExpanded, title: title, onExpand: {value in InfoPanel.isExpanded = value
+            })
 
             if self.isExpanded {
                 if self.asTag != nil && self.asTag!.content.parentTag != nil {
@@ -84,15 +87,16 @@ struct InfoPanel: View {
                     .background(state.isEditing ? Color.F.inputBG : Color.F.white)
                     .frame(height: TextArea.textHeightFrom(text: notifier.info, width: 925, font: font, isShown: isExpanded))
             }
-        }
+        }.onDisappear { InfoPanel.isExpanded = self.isExpanded }
     }
 }
 
 struct BookInfoPanel: View {
+    @EnvironmentObject var modalViewObservable: ModalViewObservable
     @EnvironmentObject var textFocus: TextFocus
     @ObservedObject var book: Book
     @ObservedObject var state: ConspectusState
-    @State private var isExpanded: Bool = true
+    @State private var isExpanded: Bool = InfoPanel.isExpanded
 
     private let font = NSFont(name: .pragmaticaLight, size: 18)
     private let title: String
@@ -102,13 +106,14 @@ struct BookInfoPanel: View {
         self.book = book
         state = book.state
         self.title = title
-
+        isExpanded = InfoPanel.isExpanded
         print("BookInfoPanel init, id: \(book.id)")
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            SectionView(isExpanded: $isExpanded, title: title)
+            SectionView(isExpanded: $isExpanded, title: title, onExpand: {value in InfoPanel.isExpanded = value
+            })
 
             if self.isExpanded {
                 VStack(alignment: .leading, spacing: 5) {
@@ -121,7 +126,7 @@ struct BookInfoPanel: View {
                     FormInput(title: "SEITENZAHL", text: $book.content.pageCount, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPagesCount, onEnter: { self.textFocus.id = .bookInfoPublisher })
                     FormInput(title: "VERLAG", text: $book.content.publisher, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPublisher, onEnter: { self.textFocus.id = .bookInfoPlace })
                     FormInput(title: "ORT", text: $book.content.place, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPlace, onEnter: { self.textFocus.id = .bookInfoTitle })
-                }
+                }.disabled(modalViewObservable.isShown)
 
                 HStack(alignment: .top, spacing: 0) {
                     Text("INHALTSANGABE")
@@ -131,7 +136,7 @@ struct BookInfoPanel: View {
                         .frame(width: 295, height: 30, alignment: .trailing)
                         .background(Color.F.inputBG)
 
-                    TextArea(text: $book.content.info, textColor: NSColor.F.black, font: font, isEditable: state.isEditing)
+                    TextArea(text: $book.content.info, textColor: NSColor.F.black, font: font, isEditable: state.isEditing && !modalViewObservable.isShown)
                         .layoutPriority(-1)
                         .saturation(0)
                         .colorScheme(.light)
@@ -142,7 +147,7 @@ struct BookInfoPanel: View {
                         .frame(height: TextArea.textHeightFrom(text: book.content.info, width: 670, font: font, isShown: isExpanded))
                 }
             }
-        }
+        }.onDisappear { InfoPanel.isExpanded = self.isExpanded }
     }
 }
 
@@ -164,7 +169,7 @@ struct FormInput: View {
                     .frame(width: self.titleWidth - 5, height: 30, alignment: .trailing)
                     .background(Color.F.inputBG)
 
-                TextInput(title: "", text: self.$text, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 18), alignment: .left, isFocused: self.isFocused, isSecure: false, format: nil, isEditable: true, onEnterAction: self.onEnter)
+                TextInput(title: "", text: self.$text, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 18), alignment: .left, isFocused: self.isFocused, isSecure: false, format: nil, isEditable: self.isEditing, onEnterAction: self.onEnter)
                     .saturation(0)
                     .colorScheme(.light)
                     .padding(.horizontal, 0)

@@ -46,12 +46,12 @@ class AuthorContent: ObservableObject {
 }
 
 protocol BooksOwner {
-    var booksColl: BooksColl { get }
+    var booksColl: BookColl { get }
 }
 
 class Author: Conspectus, BooksOwner, ObservableObject {
     @ObservedObject var content: AuthorContent = AuthorContent()
-    @ObservedObject var booksColl: BooksColl = BooksColl()
+    @ObservedObject var booksColl: BookColl = BookColl()
 
     override var genus: ConspectusGenus { return .author }
 
@@ -70,10 +70,9 @@ class Author: Conspectus, BooksOwner, ObservableObject {
         for prop in [content.$name, content.$surname, content.$birthYear, content.$deathYear, content.$info] {
             prop
                 .removeDuplicates()
-                .map { _ in
-                    true
+                .sink { _ in
+                    self.state.markAsChanged()
                 }
-                .assign(to: \.hasChanges, on: state)
                 .store(in: &disposeBag)
         }
     }
@@ -110,7 +109,7 @@ class Author: Conspectus, BooksOwner, ObservableObject {
             }
         }
 
-        state.hasChanges = false
+        state.markAsNotChanged()
     }
 
     override func didDestroy(_ conspectus: Conspectus) {

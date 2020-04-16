@@ -33,19 +33,17 @@ class Tag: Conspectus, ObservableObject {
         for prop in [content.$name, content.$info] {
             prop
                 .removeDuplicates()
-                .map { _ in
-                    true
+                .sink { _ in
+                    self.state.markAsChanged()
                 }
-            .assign(to: \.hasChanges, on: self.state)
                 .store(in: &disposeBag)
         }
 
         content.$parentTag
             .removeDuplicates()
-            .map { _ in
-                true
+            .sink { _ in
+                self.state.markAsChanged()
             }
-        .assign(to: \.hasChanges, on: self.state)
             .store(in: &disposeBag)
     }
 
@@ -78,7 +76,7 @@ class Tag: Conspectus, ObservableObject {
             }
         }
 
-        state.hasChanges = false
+        state.markAsNotChanged()
     }
 
     override func didDestroy(_ conspectus: Conspectus) {

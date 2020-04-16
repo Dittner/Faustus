@@ -30,7 +30,6 @@ struct DocView: View {
                     VStack(alignment: .leading, spacing: 15) {
                         StoreStatePanel(conspectus: vm.selectedConspectus)
                         BookListView(controller: vm.bookListController, title: "AUFSÄTZE")
-                        LinkListView(controller: vm.linkListController)
                     }.padding(.leading, 15)
                 }
                 .offset(x: 0, y: -validationInfoBoardHeight)
@@ -53,8 +52,8 @@ struct DocView: View {
                     VStack(alignment: .leading, spacing: 15) {
                         StoreStatePanel(conspectus: vm.selectedConspectus)
                         InfoPanel(conspectus: vm.selectedConspectus)
-                        BookListView(controller: vm.bookListController)
                         TagLinksView(controller: vm.tagTreeController)
+                        BookListView(controller: vm.bookListController)
                         LinkListView(controller: vm.linkListController)
                     }.padding(.leading, 15)
                 }
@@ -79,8 +78,8 @@ struct DocView: View {
                         StoreStatePanel(conspectus: vm.selectedConspectus)
                         BookInfoPanel(book: vm.selectedConspectus as! Book)
                         TagLinksView(controller: vm.tagTreeController)
-                        // QuoteCell(quote: vm.quote, isEditing: true)
                         LinkListView(controller: vm.linkListController)
+                        QuoteListView(controller: vm.quoteListController)
 
                     }.padding(.leading, 15)
                 }
@@ -206,6 +205,7 @@ struct SectionView: View {
     let title: String
     var isEditing: Bool = false
     var action: (() -> Void)?
+    var onExpand: ((_ isExpanded: Bool) -> Void)?
     let actionBtnIcon: String = "plus"
 
     var body: some View {
@@ -224,8 +224,19 @@ struct SectionView: View {
                     .padding(.leading, 0)
                     .offset(y: 3)
 
-                Toggle("", isOn: self.$isExpanded)
-                    .toggleStyle(CollapseToggleStyle())
+                Button(action: {
+                    self.isExpanded.toggle()
+                    self.onExpand?(self.isExpanded)
+                }) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .foregroundColor(self.isExpanded ? Color.F.black : Color.F.clear)
+
+                    Image("dropdown")
+                        .renderingMode(.template)
+                        .foregroundColor(self.isExpanded ? Color.F.white : Color.F.black)
+                        .rotationEffect(Angle(degrees: self.isExpanded ? 0 : -90))
+                }.buttonStyle(PlainButtonStyle())
+                    .frame(width: 20, height: 20)
                     .offset(x: geometry.size.width / 2 - 10)
 
                 Separator(color: Color.F.black, width: .infinity)
@@ -237,23 +248,24 @@ struct SectionView: View {
 
 struct BookListView: View {
     @ObservedObject var controller: BookListController
-    @ObservedObject var booksColl: BooksColl
+    @ObservedObject var booksColl: BookColl
     @ObservedObject var state: ConspectusState
-    @State private var isExpanded: Bool = true
-
+    @State private var isExpanded: Bool = BookListView.isExpanded
+    static var isExpanded: Bool = true
     private let font = NSFont(name: .pragmaticaLight, size: 21)
     private let title: String
 
     init(controller: BookListController, title: String = "BÜCHER") {
         self.title = title
         self.controller = controller
-        booksColl = controller.booksColl
-        state = controller.booksColl.owner.state
+        booksColl = controller.bookColl
+        state = controller.bookColl.owner.state
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionView(isExpanded: $isExpanded, title: title, isEditing: self.state.isEditing, action: controller.addBook)
+            SectionView(isExpanded: $isExpanded, title: title, isEditing: self.state.isEditing, action: controller.addBook, onExpand: {value in BookListView.isExpanded = value
+            })
 
             if isExpanded {
                 ForEach(booksColl.books, id: \.id) { book in
@@ -277,17 +289,21 @@ struct TagLinksView: View {
     @ObservedObject var controller: TagTreeController
     @ObservedObject var state: ConspectusState
 
-    @State private var isExpanded: Bool = true
+    @State private var isExpanded: Bool = TagLinksView.isExpanded
+    static var isExpanded: Bool = false
+
     private var disposeBag: Set<AnyCancellable> = []
 
     init(controller: TagTreeController) {
         self.controller = controller
         state = controller.owner.state
+        isExpanded = TagLinksView.isExpanded
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionView(isExpanded: $isExpanded, title: "TAGS", isEditing: self.state.isEditing, action: controller.chooseTags)
+            SectionView(isExpanded: $isExpanded, title: "TAGS", isEditing: self.state.isEditing, action: controller.chooseTags, onExpand: {value in TagLinksView.isExpanded = value
+            })
 
             if isExpanded {
                 ForEach(controller.tagNodes, id: \.tag.id) { node in
@@ -302,25 +318,28 @@ struct TagLinksView: View {
                 }.padding(.leading, 40)
                     .padding(.trailing, 0)
             }
-        }
+        }.onDisappear { TagLinksView.isExpanded = self.isExpanded }
     }
 }
 
 struct LinkListView: View {
-     @ObservedObject var controller: LinkListController
+    @ObservedObject var controller: LinkListController
     @ObservedObject var state: ConspectusState
 
-    @State private var isExpanded: Bool = true
+    @State private var isExpanded: Bool = LinkListView.isExpanded
+    static var isExpanded: Bool = false
     private var disposeBag: Set<AnyCancellable> = []
 
     init(controller: LinkListController) {
         self.controller = controller
         state = controller.linkColl.owner.state
+        isExpanded = LinkListView.isExpanded
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            SectionView(isExpanded: $isExpanded, title: "LINKS", isEditing: self.state.isEditing)
+            SectionView(isExpanded: $isExpanded, title: "LINKS", isEditing: self.state.isEditing, onExpand: {value in LinkListView.isExpanded = value
+            })
 
             if isExpanded {
                 ForEach(controller.filteredLinks, id: \.id) { c in
@@ -335,7 +354,97 @@ struct LinkListView: View {
                 }.padding(.leading, 0)
                     .padding(.trailing, 0)
             }
-        }
+        }.onDisappear { LinkListView.isExpanded = self.isExpanded }
+    }
+}
+
+struct QuoteListView: View {
+    @ObservedObject var controller: QuoteListController
+    @ObservedObject var state: ConspectusState
+
+    @State private var isExpanded: Bool = QuoteListView.isExpanded
+    static var isExpanded: Bool = true
+
+    init(controller: QuoteListController) {
+        self.controller = controller
+        state = controller.book.state
+        isExpanded = QuoteListView.isExpanded
+        print("QuoteListView init")
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            SectionView(isExpanded: $isExpanded, title: "ZITATE", isEditing: self.state.isEditing, action: controller.createQuote, onExpand: {value in QuoteListView.isExpanded = value
+            })
+
+            if isExpanded {
+                ForEach(controller.quotes, id: \.id) { q in
+                    QuoteCell(quote: q, isEditing: self.state.isEditing, onRemove: {
+                        self.controller.removeQuote(q)
+                    })
+                }.padding(.leading, 0)
+                    .padding(.trailing, 0)
+            }
+        }.onDisappear { QuoteListView.isExpanded = self.isExpanded }
+    }
+}
+
+struct QuoteCell: View {
+    @ObservedObject var quote: Quote
+    private static let pagesFont: NSFont = NSFont(name: .pragmaticaBold, size: 21)
+    private static let textFont: NSFont = NSFont(name: .pragmaticaLight, size: 21)
+    private let isEditing: Bool
+    let onRemoveAction: (() -> Void)?
+
+    init(quote: Quote, isEditing: Bool, onRemove: (() -> Void)?) {
+        self.quote = quote
+        self.isEditing = isEditing
+        onRemoveAction = onRemove
+        print("QuoteCell quote id = \(quote.id)")
+    }
+
+    func pageInputWidthFrom(text: String, isEditing: Bool) -> CGFloat {
+        return isEditing ? 70 : (CGFloat(text.count) + 0.5) * 12
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .lastTextBaseline, spacing: 0) {
+                Text("S.")
+                    .font(Font.custom(.pragmaticaBold, size: 21))
+                    .foregroundColor(Color.F.black)
+
+                EditableText("", text: $quote.startPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .right, isEditing: isEditing, format: "[1-9][0-9]{0,4}")
+                    .frame(width: pageInputWidthFrom(text: quote.startPage, isEditing: isEditing))
+
+                Text("–")
+                    .font(Font.custom(.pragmaticaBold, size: 21))
+                    .foregroundColor(Color.F.black)
+                    .opacity($quote.endPage.wrappedValue.count == 0 && !isEditing ? 0 : 1)
+
+                EditableText("", text: $quote.endPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .left, isEditing: isEditing, format: "[1-9][0-9]{0,4}")
+                    .frame(width: 70)
+
+                Spacer()
+                
+                if isEditing {
+                    Button("", action: { self.onRemoveAction?() })
+                        .buttonStyle(IconButtonStyle(iconName: "smallClose", iconColor: Color.F.white, bgColor: Color.F.black, width: 20, height: 20, radius: 10))
+                }
+            }.frame(height: 40)
+
+            TextArea(text: $quote.text, textColor: NSColor.F.black, font: QuoteCell.textFont, isEditable: self.isEditing)
+                .layoutPriority(-1)
+                .lineSpacing(5)
+                .padding(.horizontal, -4)
+                .padding(.trailing, 20)
+                .frame(height: TextArea.textHeightFrom(text: quote.text, width: 925, font: QuoteCell.textFont, isShown: true))
+
+        }.saturation(0)
+            .colorScheme(.light)
+            .padding(.leading, 40)
+            .padding(.vertical, 5)
+            .background(quote.isValid ? Color.F.quoteBG : Color.F.red.opacity(0.05))
     }
 }
 
@@ -386,63 +495,3 @@ struct EditableText: View {
         }
     }
 }
-
-struct QuoteCell: View {
-    @ObservedObject var quote: Quote
-    private static let pagesFont: NSFont = NSFont(name: .pragmaticaBold, size: 21)
-    private static let textFont: NSFont = NSFont(name: .pragmaticaLight, size: 21)
-    private let isEditing: Bool
-
-    init(quote: Quote, isEditing: Bool) {
-        self.quote = quote
-        self.isEditing = isEditing
-        print("QuoteCell quote id = \(quote.id)")
-    }
-
-    func pageInputWidthFrom(text: String, isEditing: Bool) -> CGFloat {
-        return isEditing ? 70 : (CGFloat(text.count) + 0.5) * 12
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .lastTextBaseline, spacing: 0) {
-                Text("S.")
-                    .font(Font.custom(.pragmaticaBold, size: 21))
-                    .foregroundColor(Color.F.black)
-
-                EditableText("", text: $quote.startPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .right, isEditing: isEditing, format: "[1-9][0-9]{0,4}")
-                    .frame(width: pageInputWidthFrom(text: quote.startPage, isEditing: isEditing))
-
-                Text("–")
-                    .font(Font.custom(.pragmaticaBold, size: 21))
-                    .foregroundColor(Color.F.black)
-                    .opacity($quote.endPage.wrappedValue.count == 0 && !isEditing ? 0 : 1)
-
-                EditableText("", text: $quote.endPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .left, isEditing: isEditing, format: "[1-9][0-9]{0,4}")
-                    .frame(width: 70)
-
-                Spacer()
-            }.frame(height: 40)
-
-            TextArea(text: $quote.text, textColor: NSColor.F.black, font: QuoteCell.textFont, isEditable: self.isEditing)
-                .layoutPriority(-1)
-                .lineSpacing(5)
-                .padding(.horizontal, -4)
-                .frame(height: TextArea.textHeightFrom(text: quote.text, width: 925, font: QuoteCell.textFont, isShown: true))
-
-        }.saturation(0)
-            .colorScheme(.light)
-            .padding(.leading, 40)
-            .padding(.trailing, 20)
-            .padding(.vertical, 5)
-            .background(Color.F.quoteBG)
-    }
-}
-
-#if DEBUG
-    struct DocView_Previews: PreviewProvider {
-        static var previews: some View {
-            DocView()
-        }
-    }
-#endif

@@ -15,6 +15,7 @@ final class DocViewModel: ViewModel {
     let bookListController = BookListController()
     let tagTreeController = TagTreeController()
     let linkListController = LinkListController()
+    let quoteListController = QuoteListController()
 
     private var disposeBag: Set<AnyCancellable> = []
 
@@ -27,6 +28,10 @@ final class DocViewModel: ViewModel {
             .sink { newValue in
                 if newValue is BooksOwner {
                     self.bookListController.update(with: (newValue as! BooksOwner).booksColl)
+                }
+                
+                if newValue is Book {
+                    self.quoteListController.update(with: newValue as! Book)
                 }
 
                 self.tagTreeController.update(newValue, self.model.bibliography)
@@ -61,7 +66,7 @@ final class DocViewModel: ViewModel {
             chooseAuthorPublisher = rootVM.chooseAuthor()
                 .sink { author in
                     print("chooseAuthor has result")
-                    author?.booksColl.addBook(b: book)
+                    author?.booksColl.addBook(book)
                 }
         }
     }

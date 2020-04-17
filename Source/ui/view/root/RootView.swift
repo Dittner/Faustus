@@ -74,7 +74,7 @@ struct RootView: View {
                 }
             }
 
-            ModalView()
+            ModalView(controller: vm.notificationController)
 
         }.edgesIgnoringSafeArea(.all)
     }
@@ -82,6 +82,7 @@ struct RootView: View {
 
 struct ModalView: View {
     @EnvironmentObject var vm: RootViewModel
+    @ObservedObject var controller: NotificationController
 
     var body: some View {
         ZStack(alignment: .center) {
@@ -105,6 +106,19 @@ struct ModalView: View {
                 GeometryReader { _ in
                     TagsChooser(controller: self.vm.tagsChooserController)
                 }.background(Color.F.black.opacity(0.25))
+            }
+
+            if !controller.msg.isEmpty {
+                Text(controller.msg)
+                    .lineLimit(1)
+                    .font(Font.custom(.mono, size: 16))
+                    .frame(width: 300, height: 40)
+                    .foregroundColor(Color.F.white)
+                    .padding(.horizontal, 15)
+                    .background(Color.F.dark)
+                    .cornerRadius(2)
+                    .shadow(color: Color.F.black05, radius: 3, x: 0, y: 3)
+                    .opacity(controller.isShown ? 1 : 0)
             }
         }
     }

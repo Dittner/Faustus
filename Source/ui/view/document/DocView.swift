@@ -264,7 +264,7 @@ struct BookListView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionView(isExpanded: $isExpanded, title: title, isEditing: self.state.isEditing, action: controller.addBook, onExpand: {value in BookListView.isExpanded = value
+            SectionView(isExpanded: $isExpanded, title: title, isEditing: self.state.isEditing, action: controller.addBook, onExpand: { value in BookListView.isExpanded = value
             })
 
             if isExpanded {
@@ -302,7 +302,7 @@ struct TagLinksView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionView(isExpanded: $isExpanded, title: "TAGS", isEditing: self.state.isEditing, action: controller.chooseTags, onExpand: {value in TagLinksView.isExpanded = value
+            SectionView(isExpanded: $isExpanded, title: "TAGS", isEditing: self.state.isEditing, action: controller.chooseTags, onExpand: { value in TagLinksView.isExpanded = value
             })
 
             if isExpanded {
@@ -338,7 +338,7 @@ struct LinkListView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            SectionView(isExpanded: $isExpanded, title: "LINKS", isEditing: self.state.isEditing, onExpand: {value in LinkListView.isExpanded = value
+            SectionView(isExpanded: $isExpanded, title: "LINKS", isEditing: self.state.isEditing, onExpand: { value in LinkListView.isExpanded = value
             })
 
             if isExpanded {
@@ -374,7 +374,7 @@ struct QuoteListView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            SectionView(isExpanded: $isExpanded, title: "ZITATE", isEditing: self.state.isEditing, action: controller.createQuote, onExpand: {value in QuoteListView.isExpanded = value
+            SectionView(isExpanded: $isExpanded, title: "ZITATE", isEditing: self.state.isEditing, action: controller.createQuote, onExpand: { value in QuoteListView.isExpanded = value
             })
 
             if isExpanded {
@@ -409,7 +409,7 @@ struct QuoteCell: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .lastTextBaseline, spacing: 0) {
+            HStack(alignment: .top, spacing: 0) {
                 Text("S.")
                     .font(Font.custom(.pragmaticaBold, size: 21))
                     .foregroundColor(Color.F.black)
@@ -426,10 +426,12 @@ struct QuoteCell: View {
                     .frame(width: 70)
 
                 Spacer()
-                
+
                 if isEditing {
                     Button("", action: { self.onRemoveAction?() })
-                        .buttonStyle(IconButtonStyle(iconName: "smallClose", iconColor: Color.F.white, bgColor: Color.F.black, width: 20, height: 20, radius: 10))
+                        .buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.quoteBG, width: 25, height: 25))
+                        .offset(y: -5)
+                        .opacity(isEditing ? 1 : 0)
                 }
             }.frame(height: 40)
 
@@ -439,11 +441,19 @@ struct QuoteCell: View {
                 .padding(.horizontal, -4)
                 .padding(.trailing, 20)
                 .frame(height: TextArea.textHeightFrom(text: quote.text, width: 925, font: QuoteCell.textFont, isShown: true))
+                .onTapGesture(count: 2) {
+                    if !self.isEditing {
+                        notify(msg: "in die Zwischenablage kopiert")
+                        let pasteBoard = NSPasteboard.general
+                        pasteBoard.clearContents()
+                        pasteBoard.setString(self.quote.text, forType: .string)
+                    }
+                }
 
         }.saturation(0)
             .colorScheme(.light)
             .padding(.leading, 40)
-            .padding(.vertical, 5)
+            .padding(.vertical, 0)
             .background(quote.isValid ? Color.F.quoteBG : Color.F.red.opacity(0.05))
     }
 }
@@ -452,13 +462,16 @@ struct SelectableText: View {
     @State private var hover = false
     let text: String
     let color: Color
-
+    var action: (() -> Void)?
     var body: some View {
         Text(text)
             .underline(hover, color: color)
             .lineLimit(1)
             .foregroundColor(color)
             .onHover { value in self.hover = value }
+            .onTapGesture {
+                self.action?()
+            }
     }
 }
 
@@ -485,7 +498,7 @@ struct EditableText: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            TextInput(title: title, text: $text, textColor: textColor, font: font, alignment: alignment, isFocused: isFocused, isSecure: false, format: format, isEditable: true, onEnterAction: nil)
+            TextInput(title: title, text: $text, textColor: textColor, font: font, alignment: alignment, isFocused: isFocused, isSecure: false, format: format, isEditable: isEditing, onEnterAction: nil)
                 .saturation(0)
                 .padding(.horizontal, 0)
                 .allowsHitTesting(isEditing)

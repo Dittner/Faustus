@@ -23,6 +23,10 @@ enum ModalViewCategory: String {
     case tagsChooser
 }
 
+func notify(msg:String) {
+    RootViewModel.shared?.notificationController.msg = msg
+}
+
 final class RootViewModel: ViewModel {
     @Published var screen: AppScreen = .login
     @Published var keyLinesShown: Bool = false
@@ -33,6 +37,7 @@ final class RootViewModel: ViewModel {
     var authorChooserController: AuthorChooserController = AuthorChooserController()
     var parentTagChooserController: ParentTagChooserController = ParentTagChooserController()
     var tagsChooserController: TagsChooserController = TagsChooserController()
+    var notificationController: NotificationController = NotificationController()
 
     static var shared: RootViewModel?
     private var disposeBag: Set<AnyCancellable> = []

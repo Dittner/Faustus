@@ -10,54 +10,30 @@ import Combine
 import SwiftUI
 
 struct InfoPanel: View {
-    class Notifier: ObservableObject {
-        @Published var info = ""
-    }
-
     @EnvironmentObject var modalViewObservable: ModalViewObservable
-    @ObservedObject private var notifier: Notifier
+    @ObservedObject private var controller: InfoController
     @ObservedObject var state: ConspectusState
     @State private var isExpanded: Bool = InfoPanel.isExpanded
     static var isExpanded: Bool = false
-    let asTag: Tag?
 
     private let font = NSFont(name: .pragmaticaLight, size: 21)
     private let title: String
-    private var disposeBag: Set<AnyCancellable> = []
 
-    init(conspectus: Conspectus, title: String = "INFO") {
-        asTag = conspectus as? Tag
-        state = conspectus.state
+    init(controller: InfoController, title: String = "INFO") {
+        self.controller = controller
+        state = controller.owner.state
         self.title = title
-        notifier = Notifier()
-
-        if let author = conspectus as? Author {
-            notifier.info = author.content.info
-            notifier.$info
-                .sink { value in
-                    author.content.info = value
-                }
-                .store(in: &disposeBag)
-        } else if let tag = conspectus as? Tag {
-            notifier.info = tag.content.info
-            notifier.$info
-                .sink { value in
-                    tag.content.info = value
-                }
-                .store(in: &disposeBag)
-        }
-
         isExpanded = InfoPanel.isExpanded
-        print("InfoPanel init, id: \(conspectus.id)")
+        print("InfoPanel init, id: \(controller.owner.id), hasPrentTag: \(controller.parentTag != nil)")
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionView(isExpanded: $isExpanded, title: title, onExpand: {value in InfoPanel.isExpanded = value
+            SectionView(isExpanded: $isExpanded, title: title, onExpand: { value in InfoPanel.isExpanded = value
             })
 
             if self.isExpanded {
-                if self.asTag != nil && self.asTag!.content.parentTag != nil {
+                if self.controller.parentTag != nil {
                     Spacer().frame(height: 5)
 
                     HStack(alignment: .lastTextBaseline, spacing: 5) {
@@ -67,25 +43,33 @@ struct InfoPanel: View {
                             .padding(.leading, 40)
                             .frame(height: 30, alignment: .leading)
 
-                        ConspectusLink(conspectus: self.asTag!.content.parentTag!, isEditing: self.state.isEditing, action: { action in
+                        ConspectusLink(conspectus: self.controller.parentTag!, isEditing: self.state.isEditing, action: { action in
                             if action == .navigate {
-                                self.asTag!.content.parentTag?.show()
+                                self.controller.parentTag?.show()
                             } else if action == .remove {
-                                self.asTag!.content.parentTag = nil
+                                self.controller.removeParentTag()
                             }
                         })
                     }
 
                     Spacer().frame(height: 5)
                 }
-                TextArea(text: $notifier.info, textColor: NSColor.F.black, font: font, isEditable: state.isEditing && !modalViewObservable.isShown)
+                TextArea(text: $controller.info, textColor: NSColor.F.black, font: font, isEditable: state.isEditing && !modalViewObservable.isShown)
                     .layoutPriority(-1)
                     .saturation(0)
                     .colorScheme(.light)
                     .padding(.leading, 35)
                     .padding(.trailing, 20)
-                    .background(state.isEditing ? Color.F.inputBG : Color.F.white)
-                    .frame(height: TextArea.textHeightFrom(text: notifier.info, width: 925, font: font, isShown: isExpanded))
+                    .background(state.isEditing ? Color.F.whiteBG : Color.F.white)
+                    .frame(height: TextArea.textHeightFrom(text: controller.info, width: 925, font: font, isShown: isExpanded))
+                    .onTapGesture(count: 2) {
+                        if !self.controller.owner.state.isEditing {
+                            notify(msg: "in die Zwischenablage kopiert")
+                            let pasteBoard = NSPasteboard.general
+                            pasteBoard.clearContents()
+                            pasteBoard.setString(self.controller.info, forType: .string)
+                        }
+                    }
             }
         }.onDisappear { InfoPanel.isExpanded = self.isExpanded }
     }
@@ -112,7 +96,7 @@ struct BookInfoPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            SectionView(isExpanded: $isExpanded, title: title, onExpand: {value in InfoPanel.isExpanded = value
+            SectionView(isExpanded: $isExpanded, title: title, onExpand: { value in InfoPanel.isExpanded = value
             })
 
             if self.isExpanded {
@@ -134,7 +118,7 @@ struct BookInfoPanel: View {
                         .foregroundColor(Color.F.black)
                         .padding(.trailing, 5)
                         .frame(width: 295, height: 30, alignment: .trailing)
-                        .background(Color.F.inputBG)
+                        .background(Color.F.whiteBG)
 
                     TextArea(text: $book.content.info, textColor: NSColor.F.black, font: font, isEditable: state.isEditing && !modalViewObservable.isShown)
                         .layoutPriority(-1)
@@ -143,8 +127,16 @@ struct BookInfoPanel: View {
                         .offset(x: 0, y: -1)
                         .padding(.leading, 3)
                         .padding(.trailing, 5)
-                        .background(state.isEditing ? Color.F.inputBG : Color.F.white)
+                        .background(state.isEditing ? Color.F.whiteBG : Color.F.white)
                         .frame(height: TextArea.textHeightFrom(text: book.content.info, width: 670, font: font, isShown: isExpanded))
+                        .onTapGesture(count: 2) {
+                            if !self.book.state.isEditing {
+                                notify(msg: "in die Zwischenablage kopiert")
+                                let pasteBoard = NSPasteboard.general
+                                pasteBoard.clearContents()
+                                pasteBoard.setString(self.book.content.info, forType: .string)
+                            }
+                        }
                 }
             }
         }.onDisappear { InfoPanel.isExpanded = self.isExpanded }
@@ -167,7 +159,7 @@ struct FormInput: View {
                     .foregroundColor(Color.F.black)
                     .padding(.trailing, 5)
                     .frame(width: self.titleWidth - 5, height: 30, alignment: .trailing)
-                    .background(Color.F.inputBG)
+                    .background(Color.F.whiteBG)
 
                 TextInput(title: "", text: self.$text, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 18), alignment: .left, isFocused: self.isFocused, isSecure: false, format: nil, isEditable: self.isEditing, onEnterAction: self.onEnter)
                     .saturation(0)

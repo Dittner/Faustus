@@ -143,8 +143,7 @@ struct CreateButtonStyle: ButtonStyle {
 struct GreenButtonStyle: ButtonStyle {
     func makeBody(configuration: Self.Configuration) -> some View {
         return ZStack(alignment: .center) {
-            RoundedRectangle(cornerRadius: 2)
-                .foregroundColor(configuration.isPressed ? Color.F.green.opacity(0.8) : Color.F.green)
+            Color.F.green.opacity(configuration.isPressed ? 0.8 : 1)
 
             Image("ok")
                 .renderingMode(.template)
@@ -156,8 +155,7 @@ struct GreenButtonStyle: ButtonStyle {
 struct RedButtonStyle: ButtonStyle {
     func makeBody(configuration: Self.Configuration) -> some View {
         return ZStack(alignment: .center) {
-            RoundedRectangle(cornerRadius: 2)
-                .foregroundColor(configuration.isPressed ? Color.F.red.opacity(0.8) : Color.F.red)
+            Color.F.red.opacity(configuration.isPressed ? 0.8 : 1)
 
             Image("close")
                 .renderingMode(.template)

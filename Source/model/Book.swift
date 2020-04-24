@@ -21,6 +21,18 @@ class BookContent: ObservableObject {
     @Published var info: String = "Keine Inhaltsangabe"
     @Published var authorText: String = ""
     @Published var author: Conspectus?
+
+    func getAuthorFullName() -> String {
+        if !authorText.isEmpty {
+            return authorText
+        } else if let author = author as? Author {
+            return author.content.surname + " " + author.content.initials
+        } else if let user = author as? User {
+            return user.content.surname + " " + user.content.initials
+        } else {
+            return "Buch ohne Name des Authors"
+        }
+    }
 }
 
 class BookColl: ObservableObject {
@@ -80,18 +92,15 @@ class QuoteColl: ObservableObject {
     func removeQuote(_ quoteToRemove: Quote) {
         for (ind, quote) in quotes.enumerated() {
             if quote == quoteToRemove {
-                let g = quotes.remove(at: ind)
-                // q.linkColl.removeAllLinks()
-
-                _ = owner.store(forced: true)
-
+                let q = quotes.remove(at: ind)
+                q.linkColl.removeAllLinks()
                 break
             }
         }
     }
 
     func createQuote() {
-        quotes.insert(Quote(book: owner), at: 0)
+        quotes.insert(Quote(owner: owner), at: 0)
     }
 }
 
@@ -100,14 +109,6 @@ class Book: Conspectus, ObservableObject {
     @ObservedObject var quoteColl: QuoteColl = QuoteColl()
 
     override var genus: ConspectusGenus { return .book }
-
-    override var description: String {
-        return "\(content.title) \(content.authorText) \(content.writtenDate)"
-    }
-
-    override var hashName: String {
-        return "book" + content.title + content.writtenDate
-    }
 
     private var disposeBag: Set<AnyCancellable> = []
     override func didInit() {
@@ -132,18 +133,28 @@ class Book: Conspectus, ObservableObject {
 
     override func validate() -> ValidationStatus {
         let conspectusValidation = super.validate()
-        if conspectusValidation != .ok { return conspectusValidation }
-        if content.title.isEmpty { return .emptyBookTitle }
-        if content.writtenDate.isEmpty { return .emptyWrittenYear }
-        if content.authorText.isEmpty && content.author == nil { return .emptyBookAuthor }
-        if quoteColl.quotes.count > 0 {
+        if conspectusValidation != .ok {
+            state.validationStatus = conspectusValidation
+        } else if content.title.isEmpty {
+            state.validationStatus = .emptyBookTitle
+        } else if content.writtenDate.isEmpty {
+            state.validationStatus = .emptyWrittenYear
+        } else if content.authorText.isEmpty && content.author == nil {
+            state.validationStatus = .emptyBookAuthor
+        } else if quoteColl.quotes.count > 0 {
+            var status: ValidationStatus = .ok
             for q in quoteColl.quotes {
-                if !q.isValid {
-                    return .invalidQuote
+                status = q.validate()
+                if status != .ok {
+                    state.validationStatus = status
+                    break
                 }
             }
+        } else {
+            state.validationStatus = .ok
         }
-        return .ok
+
+        return state.validationStatus
     }
 
     override func serialize() -> [String: Any] {
@@ -172,8 +183,8 @@ class Book: Conspectus, ObservableObject {
         return dict
     }
 
-    override func deserialize(_ bibliography: Bibliography) {
-        super.deserialize(bibliography)
+    override func deserialize() {
+        super.deserialize()
         if let dict = fileData {
             content.title = dict["title"] as? String ?? ""
             content.subTitle = dict["subTitle"] as? String ?? ""
@@ -185,16 +196,25 @@ class Book: Conspectus, ObservableObject {
             content.place = dict["place"] as? String ?? ""
             content.info = dict["info"] as? String ?? ""
             content.authorText = dict["authorText"] as? String ?? ""
-            if let authorID = dict["authorID"] as? UID {
-                content.author = bibliography.read(authorID) as? Author
-            }
+
+            description = "\(content.title), \(content.authorText), \(content.writtenDate)"
+            hashName = "book" + content.title + content.writtenDate
 
             if let quotes = dict["quotes"] as? [[String: Any]] {
                 var res: [Quote] = []
                 for quoteData in quotes {
-                    res.append(Quote(book: self).deserialize(quoteData))
+                    res.append(Quote(owner: self, fileData: quoteData))
                 }
                 quoteColl.quotes = res.sorted { $0 < $1 }
+            }
+        }
+    }
+
+    override func deserializeLinkedFiles() {
+        super.deserializeLinkedFiles()
+        if let dict = fileData {
+            if let authorID = dict["authorID"] as? UID {
+                content.author = bibliography.read(authorID)
             }
         }
 

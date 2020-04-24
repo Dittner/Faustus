@@ -19,6 +19,7 @@ final class LoginViewModel: ViewModel {
     init() {
         logInfo(tag: .APP, msg: "LoginViewModel init")
         user = model.user
+        print("user name = \(model.user.content.name)")
     }
 
     func login() {
@@ -29,6 +30,7 @@ final class LoginViewModel: ViewModel {
             appDelegate.window?.makeFirstResponder(nil)
             print("LogedIn")
             user.content.isLoggedIn = true
+            model.loadUserFiles()
             model.state = .loading
 
         } else {

@@ -12,20 +12,16 @@ import SwiftUI
 class LinkListController: ViewModel {
     @Published var linkColl: LinkColl!
     @Published var filteredLinks: [Conspectus] = []
+    var owner:Conspectus!
 
-    func update(with linkColl: LinkColl) {
-        self.linkColl = linkColl
+    func update(_ conspectus: Conspectus) {
+        owner = conspectus
+        linkColl = conspectus.linkColl
         filteredLinks = linkColl.links.filter { !($0 is Tag) }
     }
 
     var chooseBooksPublisher: AnyCancellable?
     func addLink() {
-//        chooseBooksPublisher?.cancel()
-//        chooseBooksPublisher = rootVM.chooseBooks(selectedBooks: booksColl.books)
-//            .sink { result in
-//                print("chooseBooks has result")
-//                self.booksColl.updateBooks(result)
-//            }
         filteredLinks = linkColl.links.filter { !($0 is Tag) }
     }
 

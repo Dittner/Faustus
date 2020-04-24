@@ -13,9 +13,11 @@ class QuoteListController: ViewModel {
     @Published var book: Book!
     @Published var quotes: [Quote] = []
 
-    func update(with book: Book) {
-        self.book = book
-        quotes = book.quoteColl.quotes
+    func update(_ conspectus: Conspectus) {
+        if let b = conspectus as? Book {
+            book = b
+            quotes = b.quoteColl.quotes
+        }
     }
 
     var chooseBooksPublisher: AnyCancellable?

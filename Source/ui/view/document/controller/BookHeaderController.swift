@@ -1,25 +1,22 @@
 //
-//  AuthorChooserController.swift
+//  HeaderController.swift
 //  Faustus
 //
-//  Created by Alexander Dittner on 13.04.2020.
+//  Created by Alexander Dittner on 19.04.2020.
 //  Copyright © 2020 Alexander Dittner. All rights reserved.
 //
 
-import SwiftUI
 import Combine
+import SwiftUI
 
-class AuthorChooserController: ObservableObject, ChooserController {
-    enum ChooserResult {
-        case selected(_ result: Author)
-        case canceled
-    }
-
-    @Published var selectedAuthor: Author?
+class BookHeaderController: ViewModel, ChooserController {
+    @Published var book: Book!
+    @Published var isChoosing: Bool = false
     @Published var allAuthors: [Author] = []
     @Published var filteredAuthors: [Author] = []
     @Published var filterText: String = ""
-    @Published var result: ChooserResult = .canceled
+
+    @Published var selectedConspectus: Conspectus?
 
     private var disposeBag: Set<AnyCancellable> = []
 
@@ -35,21 +32,36 @@ class AuthorChooserController: ObservableObject, ChooserController {
             .store(in: &disposeBag)
     }
 
-    func show(_ bibliography: Bibliography) {
-        selectedAuthor = nil
-        allAuthors = bibliography.getValues()
+    func update(_ conspectus: Conspectus) {
+        if let b = conspectus as? Book {
+            book = b
+            isChoosing = false
+        }
+    }
+
+    var chooseAuthorPublisher: AnyCancellable?
+    func chooseAuthor() {
+        isChoosing = true
+
+        allAuthors = model.bibliography.getValues()
             .filter { $0 is Author && !$0.state.isRemoved }
             .map { $0 as! Author }
             .sorted { $0.content.surname > $1.content.surname }
-
-        print("Authors total = \(allAuthors.count)")
     }
 
     func cancel() {
-        result = .canceled
+        isChoosing = false
+        selectedConspectus = nil
     }
 
     func apply() {
-        result = selectedAuthor != nil ? .selected(selectedAuthor!) : .canceled
+        if let author = selectedConspectus as? Author {
+            author.booksColl.addBook(book)
+        } else if let user = selectedConspectus as? User {
+            user.booksColl.addBook(book)
+        }
+
+        isChoosing = false
+        selectedConspectus = nil
     }
 }

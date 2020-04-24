@@ -11,33 +11,41 @@ import SwiftUI
 
 final class DocViewModel: ViewModel {
     @Published var selectedConspectus: Conspectus
+    @Published var selectedConspectusState: ConspectusState
+
+    let bookHeaderController = BookHeaderController()
+    let tagHeaderController = TagHeaderController()
+
+    let infoController = InfoController()
 
     let bookListController = BookListController()
     let tagTreeController = TagTreeController()
     let linkListController = LinkListController()
     let quoteListController = QuoteListController()
+    let quoteLinkChooser = QuoteLinkChooser()
 
     private var disposeBag: Set<AnyCancellable> = []
 
     init() {
         selectedConspectus = AppModel.shared.user
+        selectedConspectusState = AppModel.shared.user.state
 
         logInfo(tag: .APP, msg: "DocViewModel init")
         model.$selectedConspectus
+            .filter { $0 != nil }
+            .map { $0! }
             .removeDuplicates()
             .sink { newValue in
-                if newValue is BooksOwner {
-                    self.bookListController.update(with: (newValue as! BooksOwner).booksColl)
-                }
-                
-                if newValue is Book {
-                    self.quoteListController.update(with: newValue as! Book)
-                }
-
-                self.tagTreeController.update(newValue, self.model.bibliography)
-                self.linkListController.update(with: newValue.linkColl)
+                self.bookHeaderController.update(newValue)
+                self.tagHeaderController.update(newValue)
+                self.infoController.update(newValue)
+                self.bookListController.update(newValue)
+                self.quoteListController.update(newValue)
+                self.tagTreeController.update(newValue)
+                self.linkListController.update(newValue)
 
                 self.selectedConspectus = newValue
+                self.selectedConspectusState = newValue.state
             }
             .store(in: &disposeBag)
 
@@ -55,22 +63,6 @@ final class DocViewModel: ViewModel {
             }.store(in: &disposeBag)
     }
 
-    func close() {
-        model.closeSelectedConspectus()
-    }
-
-    var chooseAuthorPublisher: AnyCancellable?
-    func chooseAuthor() {
-        if let book = selectedConspectus as? Book {
-            chooseAuthorPublisher?.cancel()
-            chooseAuthorPublisher = rootVM.chooseAuthor()
-                .sink { author in
-                    print("chooseAuthor has result")
-                    author?.booksColl.addBook(book)
-                }
-        }
-    }
-
     var confirmPublisher: AnyCancellable?
     func confirmDelete() {
         confirmPublisher?.cancel()
@@ -83,19 +75,11 @@ final class DocViewModel: ViewModel {
             }
     }
 
-    var chooseParentTagPublisher: AnyCancellable?
-    func chooseParentTag() {
-        if let ownerTag = selectedConspectus as? Tag {
-            chooseParentTagPublisher?.cancel()
-            chooseParentTagPublisher = rootVM.chooseParentTag(owner: ownerTag)
-                .sink { tag in
-                    print("chooseParentTag has result")
-                    ownerTag.content.parentTag = tag
-                }
-        }
-    }
-
     func removeSelectedConspectus() {
         model.removeSelectedConspectus()
+    }
+
+    func close() {
+        model.closeSelectedConspectus()
     }
 }

@@ -20,14 +20,6 @@ class Tag: Conspectus, ObservableObject {
 
     override var genus: ConspectusGenus { return .tag }
 
-    override var description: String {
-        return content.name
-    }
-
-    override var hashName: String {
-        return "tag" + content.name
-    }
-
     private var disposeBag: Set<AnyCancellable> = []
     override func didInit() {
         for prop in [content.$name, content.$info] {
@@ -49,9 +41,14 @@ class Tag: Conspectus, ObservableObject {
 
     override func validate() -> ValidationStatus {
         let conspectusValidation = super.validate()
-        if conspectusValidation != .ok { return conspectusValidation }
-        if content.name.isEmpty { return .emptyName }
-        return .ok
+        if conspectusValidation != .ok {
+            state.validationStatus = conspectusValidation
+        } else if content.name.isEmpty {
+            state.validationStatus = .emptyName
+        } else {
+            state.validationStatus = .ok
+        }
+        return state.validationStatus
     }
 
     override func serialize() -> [String: Any] {
@@ -66,11 +63,20 @@ class Tag: Conspectus, ObservableObject {
         return dict
     }
 
-    override func deserialize(_ bibliography: Bibliography) {
-        super.deserialize(bibliography)
+    override func deserialize() {
+        super.deserialize()
         if let dict = fileData {
             content.name = dict["name"] as? String ?? ""
             content.info = dict["info"] as? String ?? ""
+
+            description = content.name
+            hashName = "tag" + content.name
+        }
+    }
+
+    override func deserializeLinkedFiles() {
+        super.deserializeLinkedFiles()
+        if let dict = fileData {
             if let parentTagID = dict["parentTagID"] as? UID {
                 content.parentTag = bibliography.read(parentTagID) as? Tag
             }

@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct LoginView: View {
-    @ObservedObject var vm = LoginViewModel()
+    @EnvironmentObject var vm: LoginViewModel
     @EnvironmentObject var textFocus: TextFocus
 
     var body: some View {

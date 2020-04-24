@@ -21,7 +21,7 @@ struct DocView: View {
             //
 
             if vm.selectedConspectus is User {
-                UserHeader(user: vm.selectedConspectus as! User, onClosed: vm.close)
+                UserHeader(user: vm.selectedConspectus as! User)
 
                 StatusPanel(conspectus: vm.selectedConspectus)
                     .zIndex(1)
@@ -43,7 +43,7 @@ struct DocView: View {
             //
 
             else if vm.selectedConspectus is Author {
-                AuthorHeader(author: vm.selectedConspectus as! Author, onClosed: vm.close)
+                AuthorHeader(author: vm.selectedConspectus as! Author)
 
                 StatusPanel(conspectus: vm.selectedConspectus)
                     .zIndex(1)
@@ -51,7 +51,7 @@ struct DocView: View {
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 15) {
                         StoreStatePanel(conspectus: vm.selectedConspectus)
-                        InfoPanel(conspectus: vm.selectedConspectus)
+                        InfoPanel(controller: vm.infoController)
                         TagLinksView(controller: vm.tagTreeController)
                         BookListView(controller: vm.bookListController)
                         LinkListView(controller: vm.linkListController)
@@ -68,7 +68,7 @@ struct DocView: View {
             //
 
             else if vm.selectedConspectus is Book {
-                BookHeader(book: vm.selectedConspectus as! Book, onClosed: vm.close)
+                BookHeader(book: vm.selectedConspectus as! Book, controller: vm.bookHeaderController)
 
                 StatusPanel(conspectus: vm.selectedConspectus)
                     .zIndex(1)
@@ -79,7 +79,7 @@ struct DocView: View {
                         BookInfoPanel(book: vm.selectedConspectus as! Book)
                         TagLinksView(controller: vm.tagTreeController)
                         LinkListView(controller: vm.linkListController)
-                        QuoteListView(controller: vm.quoteListController)
+                        QuoteListView(quoteListController: vm.quoteListController, chooser: vm.quoteLinkChooser)
 
                     }.padding(.leading, 15)
                 }
@@ -94,7 +94,7 @@ struct DocView: View {
             //
 
             else if vm.selectedConspectus is Tag {
-                TagHeader(tag: vm.selectedConspectus as! Tag, onClosed: vm.close)
+                TagHeader(tag: vm.selectedConspectus as! Tag, controller: vm.tagHeaderController)
 
                 StatusPanel(conspectus: vm.selectedConspectus)
                     .zIndex(1)
@@ -102,7 +102,7 @@ struct DocView: View {
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 15) {
                         StoreStatePanel(conspectus: vm.selectedConspectus)
-                        InfoPanel(conspectus: vm.selectedConspectus)
+                        InfoPanel(controller: vm.infoController)
                         LinkListView(controller: vm.linkListController)
 
                     }.padding(.leading, 15)
@@ -113,8 +113,25 @@ struct DocView: View {
                     .frame(height: -validationInfoBoardHeight)
             }
         }
-        .background(Color.F.white)
+        .background(DocViewBG(conspectus: vm.selectedConspectus))
         .fillParent()
+    }
+}
+
+struct DocViewBG: View {
+    @ObservedObject var state: ConspectusState
+
+    init(conspectus: Conspectus) {
+        state = conspectus.state
+    }
+
+    var body: some View {
+        VStack(alignment: .center, spacing: 0) {
+            Color(state.isRemoved ? NSColor.F.red : NSColor.F.black)
+                .frame(height: 100)
+
+            Color.F.white
+        }
     }
 }
 
@@ -184,6 +201,7 @@ struct StoreStatePanel: View {
                     .padding(.top, 0)
                     .onTapGesture {
                         self.state.isRemoved = false
+                        self.state.isEditing = true
                     }
             }
 
@@ -235,6 +253,7 @@ struct SectionView: View {
                         .renderingMode(.template)
                         .foregroundColor(self.isExpanded ? Color.F.white : Color.F.black)
                         .rotationEffect(Angle(degrees: self.isExpanded ? 0 : -90))
+                        .allowsHitTesting(false)
                 }.buttonStyle(PlainButtonStyle())
                     .frame(width: 20, height: 20)
                     .offset(x: geometry.size.width / 2 - 10)
@@ -264,22 +283,26 @@ struct BookListView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionView(isExpanded: $isExpanded, title: title, isEditing: self.state.isEditing, action: controller.addBook, onExpand: { value in BookListView.isExpanded = value
+            SectionView(isExpanded: $isExpanded, title: title, isEditing: self.state.isEditing, action: controller.chooseBooks, onExpand: { value in BookListView.isExpanded = value
             })
 
-            if isExpanded {
-                ForEach(booksColl.books, id: \.id) { book in
-                    ConspectusLink(conspectus: book, isEditing: self.state.isEditing, action: { result in
-                        switch result {
-                        case .remove:
-                            self.controller.removeBook(book)
-                        case .navigate:
-                            book.show()
-                        }
-                    })
-                }.padding(.leading, 40)
-                    .padding(.trailing, 0)
-                    .padding(.top, 0)
+            if isExpanded || controller.isChoosing {
+                if controller.isChoosing {
+                    BooksChooser(controller: controller)
+                } else {
+                    ForEach(booksColl.books, id: \.id) { book in
+                        ConspectusLink(conspectus: book, isEditing: self.state.isEditing, action: { result in
+                            switch result {
+                            case .remove:
+                                self.controller.removeBook(book)
+                            case .navigate:
+                                book.show()
+                            }
+                        })
+                    }.padding(.leading, 40)
+                        .padding(.trailing, 0)
+                        .padding(.top, 0)
+                }
             }
         }
     }
@@ -305,18 +328,22 @@ struct TagLinksView: View {
             SectionView(isExpanded: $isExpanded, title: "TAGS", isEditing: self.state.isEditing, action: controller.chooseTags, onExpand: { value in TagLinksView.isExpanded = value
             })
 
-            if isExpanded {
-                ForEach(controller.tagNodes, id: \.tag.id) { node in
-                    ConspectusLink(conspectus: node.tag, isEditing: self.state.isEditing, action: { result in
-                        if result == .navigate {
-                            node.tag.show()
-                        } else if result == .remove {
-                            self.controller.removeTag(node.tag)
-                        }
-                    }).offset(x: CGFloat(node.level * 40), y: 0)
+            if isExpanded || controller.isChoosing {
+                if controller.isChoosing {
+                    TagsChooser(controller: self.controller)
+                } else {
+                    ForEach(controller.ownerTagNodes, id: \.tag.id) { node in
+                        ConspectusLink(conspectus: node.tag, isEditing: self.state.isEditing, action: { result in
+                            if result == .navigate {
+                                node.tag.show()
+                            } else if result == .remove {
+                                self.controller.removeTag(node.tag)
+                            }
+                        }).offset(x: CGFloat(node.level * 40), y: 0)
 
-                }.padding(.leading, 40)
-                    .padding(.trailing, 0)
+                    }.padding(.leading, 40)
+                        .padding(.trailing, 0)
+                }
             }
         }.onDisappear { TagLinksView.isExpanded = self.isExpanded }
     }
@@ -327,12 +354,12 @@ struct LinkListView: View {
     @ObservedObject var state: ConspectusState
 
     @State private var isExpanded: Bool = LinkListView.isExpanded
-    static var isExpanded: Bool = false
+    static var isExpanded: Bool = true
     private var disposeBag: Set<AnyCancellable> = []
 
     init(controller: LinkListController) {
         self.controller = controller
-        state = controller.linkColl.owner.state
+        state = controller.owner.state
         isExpanded = LinkListView.isExpanded
     }
 
@@ -343,7 +370,7 @@ struct LinkListView: View {
 
             if isExpanded {
                 ForEach(controller.filteredLinks, id: \.id) { c in
-                    ConspectusLink(conspectus: c, isEditing: self.state.isEditing, showDetails: true, action: { result in
+                    ConspectusLink(conspectus: c, isEditing: self.state.isEditing, showDetails: true, showLinkIcon: true, leading: 40, action: { result in
                         if result == .navigate {
                             c.show()
                         } else if result == .remove {
@@ -359,29 +386,29 @@ struct LinkListView: View {
 }
 
 struct QuoteListView: View {
-    @ObservedObject var controller: QuoteListController
+    @ObservedObject var quoteListController: QuoteListController
+    @ObservedObject var chooser: QuoteLinkChooser
     @ObservedObject var state: ConspectusState
 
     @State private var isExpanded: Bool = QuoteListView.isExpanded
     static var isExpanded: Bool = true
 
-    init(controller: QuoteListController) {
-        self.controller = controller
-        state = controller.book.state
+    init(quoteListController: QuoteListController, chooser: QuoteLinkChooser) {
+        self.quoteListController = quoteListController
+        self.chooser = chooser
+        state = quoteListController.book.state
         isExpanded = QuoteListView.isExpanded
         print("QuoteListView init")
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            SectionView(isExpanded: $isExpanded, title: "ZITATE", isEditing: self.state.isEditing, action: controller.createQuote, onExpand: { value in QuoteListView.isExpanded = value
+            SectionView(isExpanded: $isExpanded, title: "ZITATE", isEditing: self.state.isEditing, action: quoteListController.createQuote, onExpand: { value in QuoteListView.isExpanded = value
             })
 
             if isExpanded {
-                ForEach(controller.quotes, id: \.id) { q in
-                    QuoteCell(quote: q, isEditing: self.state.isEditing, onRemove: {
-                        self.controller.removeQuote(q)
-                    })
+                ForEach(quoteListController.quotes, id: \.id) { q in
+                    QuoteCell(quote: q, isEditing: self.state.isEditing, chooser: self.chooser, quoteListController: self.quoteListController)
                 }.padding(.leading, 0)
                     .padding(.trailing, 0)
             }
@@ -391,15 +418,20 @@ struct QuoteListView: View {
 
 struct QuoteCell: View {
     @ObservedObject var quote: Quote
+    @ObservedObject var quoteLinkColl: LinkColl
+    @ObservedObject var chooser: QuoteLinkChooser
+    @ObservedObject var quoteListController: QuoteListController
     private static let pagesFont: NSFont = NSFont(name: .pragmaticaBold, size: 21)
     private static let textFont: NSFont = NSFont(name: .pragmaticaLight, size: 21)
-    private let isEditing: Bool
-    let onRemoveAction: (() -> Void)?
 
-    init(quote: Quote, isEditing: Bool, onRemove: (() -> Void)?) {
+    private let isEditing: Bool
+
+    init(quote: Quote, isEditing: Bool, chooser: QuoteLinkChooser, quoteListController: QuoteListController) {
         self.quote = quote
+        quoteLinkColl = quote.linkColl
         self.isEditing = isEditing
-        onRemoveAction = onRemove
+        self.chooser = chooser
+        self.quoteListController = quoteListController
         print("QuoteCell quote id = \(quote.id)")
     }
 
@@ -415,6 +447,7 @@ struct QuoteCell: View {
                     .foregroundColor(Color.F.black)
 
                 EditableText("", text: $quote.startPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .right, isEditing: isEditing, format: "[1-9][0-9]{0,4}")
+                    .saturation(0)
                     .frame(width: pageInputWidthFrom(text: quote.startPage, isEditing: isEditing))
 
                 Text("–")
@@ -423,14 +456,20 @@ struct QuoteCell: View {
                     .opacity($quote.endPage.wrappedValue.count == 0 && !isEditing ? 0 : 1)
 
                 EditableText("", text: $quote.endPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .left, isEditing: isEditing, format: "[1-9][0-9]{0,4}")
+                    .saturation(0)
                     .frame(width: 70)
 
                 Spacer()
 
                 if isEditing {
-                    Button("", action: { self.onRemoveAction?() })
-                        .buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.quoteBG, width: 25, height: 25))
-                        .offset(y: -5)
+                    Button("", action: { self.chooser.chooseLink(q: self.quote) })
+                        .buttonStyle(IconButtonStyle(iconName: "addLink", iconColor: Color.F.black, bgColor: quote.isValid ? Color.F.whiteBG : Color.F.redBG, width: 30, height: 25))
+                        .offset(y: -10)
+                        .opacity(isEditing ? 1 : 0)
+
+                    Button("", action: { self.quoteListController.removeQuote(self.quote) })
+                        .buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: quote.isValid ? Color.F.whiteBG : Color.F.redBG, width: 30, height: 25))
+                        .offset(y: -10)
                         .opacity(isEditing ? 1 : 0)
                 }
             }.frame(height: 40)
@@ -438,8 +477,10 @@ struct QuoteCell: View {
             TextArea(text: $quote.text, textColor: NSColor.F.black, font: QuoteCell.textFont, isEditable: self.isEditing)
                 .layoutPriority(-1)
                 .lineSpacing(5)
+                .padding(.vertical, 0)
                 .padding(.horizontal, -4)
-                .padding(.trailing, 20)
+                .offset(y: -5)
+                .saturation(0)
                 .frame(height: TextArea.textHeightFrom(text: quote.text, width: 925, font: QuoteCell.textFont, isShown: true))
                 .onTapGesture(count: 2) {
                     if !self.isEditing {
@@ -450,11 +491,28 @@ struct QuoteCell: View {
                     }
                 }
 
-        }.saturation(0)
-            .colorScheme(.light)
-            .padding(.leading, 40)
-            .padding(.vertical, 0)
-            .background(quote.isValid ? Color.F.quoteBG : Color.F.red.opacity(0.05))
+            if quoteLinkColl.links.count > 0 {
+                ForEach(quoteLinkColl.links, id: \.id) { c in
+                    ConspectusLink(conspectus: c, isEditing: self.isEditing, showDetails: true, showLinkIcon: true, showSeparator: true, leading: 0, action: { result in
+                        if result == .navigate {
+                            c.show()
+                        } else if result == .remove {
+                            self.quote.linkColl.removeLink(from: c)
+                        }
+                    })
+
+                }.padding(.leading, 0)
+                    .padding(.trailing, 0)
+            }
+
+            if chooser.owner == quote && isEditing {
+                LinkChooser(chooser: chooser)
+            }
+        }
+        .colorScheme(.light)
+        .padding(.leading, 40)
+        .padding(.vertical, 10)
+        .background(quote.isValid ? Color.F.whiteBG : Color.F.redBG)
     }
 }
 
@@ -469,9 +527,6 @@ struct SelectableText: View {
             .lineLimit(1)
             .foregroundColor(color)
             .onHover { value in self.hover = value }
-            .onTapGesture {
-                self.action?()
-            }
     }
 }
 

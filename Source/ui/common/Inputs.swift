@@ -31,6 +31,8 @@ enum FocusID: Int {
     case bookInfoPublisher
     case bookInfoPlace
     case modalBookChooserSearch
+    case authorChooserSearch
+    case linkChooserSearch
 }
 
 class TextFocus: ObservableObject {

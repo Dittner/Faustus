@@ -55,14 +55,6 @@ class Author: Conspectus, BooksOwner, ObservableObject {
 
     override var genus: ConspectusGenus { return .author }
 
-    override var description: String {
-        return "\(content.name) \(content.surname) \(content.birthYear)"
-    }
-
-    override var hashName: String {
-        return "author" + content.name + content.surname + content.birthYear
-    }
-
     private var disposeBag: Set<AnyCancellable> = []
     override func didInit() {
         booksColl.owner = self
@@ -79,10 +71,18 @@ class Author: Conspectus, BooksOwner, ObservableObject {
 
     override func validate() -> ValidationStatus {
         let conspectusValidation = super.validate()
-        if conspectusValidation != .ok { return conspectusValidation } else if content.surname == "" { return .emptyName }
-        if content.birthYear == "" { return .emptyBirthYear }
-        if content.deathYear != "", let death = Int(content.deathYear), let birth = Int(content.birthYear), death - birth > 120 { return .lifeIsTooLong }
-        return .ok
+        if conspectusValidation != .ok {
+            state.validationStatus = conspectusValidation
+        } else if content.surname == "" {
+            state.validationStatus = .emptyName
+        } else if content.birthYear.isEmpty {
+            state.validationStatus = .emptyBirthYear
+        } else if !content.deathYear.isEmpty, let death = Int(content.deathYear), let birth = Int(content.birthYear), death - birth > 120 {
+            state.validationStatus = .lifeIsTooLong
+        } else {
+            state.validationStatus = .ok
+        }
+        return state.validationStatus
     }
 
     override func serialize() -> [String: Any] {
@@ -96,14 +96,23 @@ class Author: Conspectus, BooksOwner, ObservableObject {
         return dict
     }
 
-    override func deserialize(_ bibliography: Bibliography) {
-        super.deserialize(bibliography)
+    override func deserialize() {
+        super.deserialize()
         if let dict = fileData {
             content.name = dict["name"] as? String ?? ""
             content.surname = dict["surname"] as? String ?? ""
             content.birthYear = dict["birthYear"] as? String ?? ""
             content.deathYear = dict["deathYear"] as? String ?? ""
             content.info = dict["info"] as? String ?? ""
+
+            description = "\(content.name) \(content.surname) \(content.birthYear)"
+            hashName = "author" + content.name + content.surname + content.birthYear
+        }
+    }
+
+    override func deserializeLinkedFiles() {
+        super.deserializeLinkedFiles()
+        if let dict = fileData {
             if let booksIDs = dict["books"] as? [UID] {
                 booksColl.books = booksIDs.map { bibliography.read($0) as? Book }.compactMap { $0 }
             }

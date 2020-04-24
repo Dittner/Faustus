@@ -24,7 +24,7 @@ class DateTimeUtils {
 
     private static let defaultDateFormatter: DateFormatter = {
         var formatter = DateFormatter()
-        formatter.dateFormat = "dd.MM.yyyy"
+        formatter.dateFormat = "yyyy.MM.dd"
         formatter.locale = Locale(identifier: "de_DE")
         return formatter
     }()

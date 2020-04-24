@@ -17,6 +17,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         Logger.run()
+        AppModel.shared.loadUser()
         AppModel.shared.$state
             .debounce(for: 0.1, scheduler: RunLoop.main)
             .dropFirst()
@@ -36,6 +37,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             .environmentObject(TextFocus())
             .environmentObject(ModalViewObservable())
             .environmentObject(RootViewModel())
+            .environmentObject(LoginViewModel())
             .environmentObject(SearchViewModel())
             .environmentObject(HistoryViewModel())
             .environmentObject(DocViewModel()))

@@ -31,17 +31,20 @@ enum ConspectusGenus: String {
     case author
     case book
     case tag
+    case quote
 
-    func create() -> Conspectus {
+    func toIconName() -> String {
         switch self {
         case .user:
-            return User(location: .user)
+            return "user"
         case .author:
-            return Author(location: .authors)
+            return "author"
         case .book:
-            return Book(location: .books)
+            return "book"
         case .tag:
-            return Tag(location: .tags)
+            return "tag"
+        case .quote:
+            return "quote"
         }
     }
 }
@@ -54,6 +57,7 @@ class ConspectusState: ObservableObject {
     @Published private(set) var hasChanges: Bool = true
     @Published var isRemoved: Bool = false
     var isNew: Bool = false
+    var changedTime: Double = 0
 
     private var disposeBag: Set<AnyCancellable> = []
 
@@ -74,7 +78,6 @@ class ConspectusState: ObservableObject {
             .dropFirst()
             .removeDuplicates()
             .sink { _ in
-                self.changedDate = DateTimeUtils.localize(Date())
                 self.hasChanges = true
             }
             .store(in: &disposeBag)
@@ -87,7 +90,7 @@ class LinkColl: ObservableObject {
 
     func removeLink(from c: Conspectus) {
         for (ind, link) in links.enumerated() {
-            if link == c {
+            if link.id == c.id {
                 links.remove(at: ind)
                 c.linkColl.removeLink(from: owner)
 
@@ -98,39 +101,43 @@ class LinkColl: ObservableObject {
                     }
                 }
 
-                owner.state.markAsChanged()
-                _ = owner.store()
+                _ = owner.store(forced: true)
 
                 break
             }
         }
     }
 
+    func removeAllLinks() {
+        if links.count > 0 {
+            let deletingLinks = links
+            links = []
+
+            for link in deletingLinks {
+                link.linkColl.removeLink(from: owner)
+            }
+            _ = owner.store(forced: true)
+        }
+    }
+
     func addLink(to c: Conspectus) {
-        if !links.contains(c) {
+        if links.first(where: { $0.id == c.id }) == nil {
             links.append(c)
             c.linkColl.addLink(to: owner)
-            owner.state.markAsChanged()
-            _ = owner.store()
+            _ = owner.store(forced: true)
         }
     }
 }
 
 class Conspectus: Equatable {
     let id: UID
-    let fileUrl: URL
+    var fileUrl: URL?
     var fileData: [String: Any]?
 
     var uniqueNameBeforeChanges: String = ""
-    var description: String {
-        // Abstract property
-        return nil!
-    }
+    var description: String = "empty description"
 
-    var hashName: String {
-        // Abstract property
-        return nil!
-    }
+    var hashName: String = "empty hash name"
 
     var genus: ConspectusGenus {
         // Abstract property
@@ -139,6 +146,7 @@ class Conspectus: Equatable {
 
     let state: ConspectusState
     let linkColl: LinkColl
+    let bibliography: Bibliography
 
     private var disposeBag: Set<AnyCancellable> = []
 
@@ -152,10 +160,13 @@ class Conspectus: Equatable {
             fileUrl = url
             fileData = dict
             state = ConspectusState()
+            bibliography = AppModel.shared.bibliography
             linkColl = LinkColl()
             linkColl.owner = self
             state.isNew = false
             state.isEditing = false
+            deserialize()
+            bibliography.write(self)
         } else {
             return nil
         }
@@ -165,19 +176,46 @@ class Conspectus: Equatable {
 
     init(location: StorageDirectory) {
         id = UID()
-        fileData = nil
         state = ConspectusState()
 
         state.isNew = true
         state.isEditing = true
 
-        state.createdDate = DateTimeUtils.localize(Date())
-        state.changedDate = DateTimeUtils.localize(Date())
+        let now = Date()
+        state.createdDate = DateTimeUtils.localize(now)
+        state.changedDate = DateTimeUtils.localize(now)
+        state.changedTime = now.timeIntervalSince1970
 
         fileUrl = DocumentsStorage.projectURL.appendingPathComponent(location.rawValue + "/" + id.description + ".faustus")
 
+        bibliography = AppModel.shared.bibliography
+        linkColl = LinkColl()
+
+        linkColl.owner = self
+        
+        bibliography.write(self)
+        didInit()
+    }
+
+    init(fileData: [String: Any]?) {
+        if let dict = fileData, let uid = dict["id"] as? UID {
+            id = uid
+        } else {
+            id = UID()
+        }
+
+        state = ConspectusState()
+        state.isNew = false
+        state.isEditing = false
+
+        self.fileData = fileData
+        
+        bibliography = AppModel.shared.bibliography
         linkColl = LinkColl()
         linkColl.owner = self
+        
+        deserialize()
+        bibliography.write(self)
         didInit()
     }
 
@@ -193,6 +231,8 @@ class Conspectus: Equatable {
             return .books
         case .tag:
             return .tags
+        case .quote:
+            return .books
         }
     }
 
@@ -233,33 +273,41 @@ class Conspectus: Equatable {
     }
 
     func serialize() -> [String: Any] {
-        state.changedDate = DateTimeUtils.localize(Date())
+        let now = Date()
+        state.changedDate = DateTimeUtils.localize(now)
+        state.changedTime = now.timeIntervalSince1970
 
         var dict: [String: Any] = [:]
         dict["id"] = id
         dict["hashName"] = hashName
         dict["createdDate"] = state.createdDate
+        dict["changedTime"] = state.changedTime
         dict["changedDate"] = state.changedDate
         dict["isRemoved"] = state.isRemoved
         dict["links"] = linkColl.links.map { $0.id }
         return dict
     }
 
-    func deserialize(_ bibliography: Bibliography) {
+    func deserialize() {
         if let dict = fileData {
             state.createdDate = dict["createdDate"] as? String ?? DateTimeUtils.localize(Date())
             state.changedDate = dict["changedDate"] as? String ?? DateTimeUtils.localize(Date())
+            state.changedTime = dict["changedTime"] as? Double ?? 0
             state.isRemoved = dict["isRemoved"] as? Bool ?? false
+        }
+    }
 
+    func deserializeLinkedFiles() {
+        if let dict = fileData {
             if let linksIDs = dict["links"] as? [UID] {
                 linkColl.links = linksIDs.map { bibliography.read($0) }.compactMap { $0 }
             }
         }
-
         state.markAsNotChanged()
     }
 
     private func write(dict: [String: Any]) -> Bool {
+        guard let fileUrl = fileUrl else { return false }
         do {
             let data = try JSONSerialization.data(withJSONObject: dict, options: .fragmentsAllowed)
             try data.write(to: fileUrl)
@@ -281,11 +329,14 @@ class Conspectus: Equatable {
         state.isRemoved = true
     }
 
-    func didDestroy(_ conspectus: Conspectus) {
-        linkColl.removeLink(from: conspectus)
+    func destroy() {
+        if let fileUrl = fileUrl {
+            DocumentsStorage.deleteFile(from: fileUrl)
+        }
+        bibliography.remove(self)
     }
 
-    func destroy() {
-        DocumentsStorage.deleteFile(from: fileUrl)
+    func didDestroy(_ conspectus: Conspectus) {
+        linkColl.removeLink(from: conspectus)
     }
 }

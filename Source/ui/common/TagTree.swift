@@ -1,47 +1,12 @@
 //
-//  TagChooserController.swift
+//  TagTree.swift
 //  Faustus
 //
-//  Created by Alexander Dittner on 13.04.2020.
+//  Created by Alexander Dittner on 19.04.2020.
 //  Copyright © 2020 Alexander Dittner. All rights reserved.
 //
 
-import Combine
 import SwiftUI
-
-class ParentTagChooserController: ObservableObject, ChooserController {
-    enum ChooserResult {
-        case selected(_ result: Tag)
-        case canceled
-    }
-
-    @Published var owner: Tag!
-    @Published var tagTree: TagTree!
-    @Published var selectedTag: Tag?
-    @Published var result: ChooserResult = .canceled
-
-    private var disposeBag: Set<AnyCancellable> = []
-
-    func show(_ owner: Tag, _ bibliography: Bibliography) {
-        self.owner = owner
-        selectedTag = owner.content.parentTag
-
-        let tags = bibliography.getValues()
-            .filter { $0 is Tag && !$0.state.isRemoved }
-            .map { $0 as! Tag }
-            .sorted { $0.content.name < $1.content.name }
-        
-        tagTree = TagTree(tags)
-    }
-
-    func cancel() {
-        result = .canceled
-    }
-
-    func apply() {
-        result = selectedTag != nil ? .selected(selectedTag!) : .canceled
-    }
-}
 
 class TagTreeNode {
     var tag: Tag!

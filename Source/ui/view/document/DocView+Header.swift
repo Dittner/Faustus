@@ -11,15 +11,14 @@ import Foundation
 import SwiftUI
 
 struct UserHeader: View {
+    @EnvironmentObject var vm: DocViewModel
     @EnvironmentObject var textFocus: TextFocus
     @ObservedObject var state: ConspectusState
     @ObservedObject var user: User
-    let onClosedAction: () -> Void
 
-    init(user: User, onClosed: @escaping () -> Void) {
+    init(user: User) {
         self.user = user
         state = user.state
-        onClosedAction = onClosed
 
         print("UserHeader init, user has changes: \(state.hasChanges)")
     }
@@ -27,9 +26,8 @@ struct UserHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .lastTextBaseline, spacing: 10) {
-                Button("") {
-                    self.onClosedAction()
-                }.buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.white))
+                Button("", action: vm.close)
+                    .buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.white))
 
                 Spacer().frame(width: 10)
 
@@ -49,27 +47,26 @@ struct UserHeader: View {
             HStack(alignment: .lastTextBaseline, spacing: 0) {
                 Button("") {
                     _ = self.user.store()
-                    }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: Color.F.black))
-                .opacity(state.hasChanges ? 1 : 0)
+                }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: Color.F.black))
+                    .opacity(state.hasChanges ? 1 : 0)
 
                 Spacer()
             }
             .padding(.horizontal, 15)
             .frame(height: 50)
-        }.background(Color.F.black)
+        }
     }
 }
 
 struct AuthorHeader: View {
+    @EnvironmentObject var vm: DocViewModel
     @EnvironmentObject var textFocus: TextFocus
     @ObservedObject var author: Author
     @ObservedObject var state: ConspectusState
-    let onClosedAction: () -> Void
 
-    init(author: Author, onClosed: @escaping () -> Void) {
+    init(author: Author) {
         self.author = author
         state = author.state
-        onClosedAction = onClosed
 
         print("AuthorHeader init, author: \(author.id), has changes: \(state.hasChanges)")
     }
@@ -84,9 +81,8 @@ struct AuthorHeader: View {
                 .opacity(state.isRemoved ? 1 : 0)
 
             HStack(alignment: .lastTextBaseline, spacing: 10) {
-                Button("") {
-                    self.onClosedAction()
-                }.buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.white))
+                Button("", action: vm.close)
+                    .buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.white))
 
                 Spacer().frame(width: 10)
 
@@ -108,7 +104,7 @@ struct AuthorHeader: View {
                 Button("") {
                     _ = self.author.store()
                 }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: state.isRemoved ? Color.F.red : Color.F.black))
-                .opacity(state.hasChanges ? 1 : 0)
+                    .opacity(state.hasChanges ? 1 : 0)
 
                 Spacer()
 
@@ -121,6 +117,7 @@ struct AuthorHeader: View {
                     .foregroundColor(Color.F.white)
                     .frame(width: 10, alignment: .center)
                     .opacity($author.content.deathYear.wrappedValue.count == 0 ? 0.25 : 1)
+                
 
                 TextInput(title: "gestorben", text: $author.content.deathYear, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerAuthorDeathYear, isSecure: false, format: "-?[0-9]{0,4}", isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorName })
                     .saturation(0)
@@ -132,8 +129,7 @@ struct AuthorHeader: View {
             }
             .padding(.horizontal, 15)
             .frame(height: 50)
-
-        }.background(state.isRemoved ? Color.F.red : Color.F.black)
+        }
     }
 }
 
@@ -143,13 +139,13 @@ struct BookHeader: View {
     @ObservedObject var book: Book
     @ObservedObject var bookContent: BookContent
     @ObservedObject var state: ConspectusState
-    let onClosedAction: () -> Void
+    @ObservedObject var controller: BookHeaderController
 
-    init(book: Book, onClosed: @escaping () -> Void) {
+    init(book: Book, controller: BookHeaderController) {
         self.book = book
+        self.controller = controller
         state = book.state
         bookContent = book.content
-        onClosedAction = onClosed
 
         print("BookHeader init, book: \(book.id), has changes: \(state.hasChanges)")
     }
@@ -164,9 +160,8 @@ struct BookHeader: View {
                 .opacity(state.isRemoved ? 1 : 0)
 
             HStack(alignment: .lastTextBaseline, spacing: 10) {
-                Button("") {
-                    self.onClosedAction()
-                }.buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.white))
+                Button("", action: vm.close)
+                    .buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.white))
 
                 Spacer().frame(width: 10)
 
@@ -184,8 +179,8 @@ struct BookHeader: View {
             HStack(alignment: .lastTextBaseline, spacing: 0) {
                 Button("") {
                     _ = self.book.store()
-                    }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: state.isRemoved ? Color.F.red : Color.F.black))
-                .opacity(state.hasChanges ? 1 : 0)
+                }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: state.isRemoved ? Color.F.red : Color.F.black))
+                    .opacity(state.hasChanges ? 1 : 0)
 
                 Spacer().frame(width: 250)
 
@@ -197,7 +192,7 @@ struct BookHeader: View {
                     .font(Font.custom(.pragmaticaExtraLight, size: 16))
                     .foregroundColor(Color.F.white)
                     .frame(width: 10, alignment: .center)
-                    .opacity(book.content.authorText.isEmpty ? 0.25 : 1)
+                    .opacity(book.content.authorText.isEmpty && book.content.author == nil ? 0.25 : 1)
 
                 if bookContent.author == nil {
                     TextInput(title: "Author", text: $book.content.authorText, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerBookAuthor, isSecure: false, format: nil, isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerBookTitle })
@@ -219,14 +214,18 @@ struct BookHeader: View {
                     .padding(.leading, 0)
                     .padding(.top, 0)
                     .onTapGesture {
-                        self.vm.chooseAuthor()
+                        self.controller.chooseAuthor()
                     }
                     .frame(width: 180, alignment: .trailing)
                     .opacity(state.isEditing && bookContent.author == nil ? 1 : 0)
             }
             .padding(.horizontal, 15)
             .frame(height: 50)
-        }.background(state.isRemoved ? Color.F.red : Color.F.black)
+
+            if controller.isChoosing {
+                AuthorChooser(controller: controller).padding(.horizontal, 15)
+            }
+        }
     }
 }
 
@@ -236,14 +235,13 @@ struct TagHeader: View {
     @ObservedObject var tag: Tag
     @ObservedObject var state: ConspectusState
     @ObservedObject var tagContent: TagContent
-    
-    let onClosedAction: () -> Void
+    @ObservedObject var controller: TagHeaderController
 
-    init(tag: Tag, onClosed: @escaping () -> Void) {
+    init(tag: Tag, controller: TagHeaderController) {
         self.tag = tag
-        self.tagContent = tag.content
+        self.controller = controller
+        tagContent = tag.content
         state = tag.state
-        onClosedAction = onClosed
 
         print("TagHeader init, tag has changes: \(state.hasChanges)")
     }
@@ -258,9 +256,8 @@ struct TagHeader: View {
                 .opacity(state.isRemoved ? 1 : 0)
 
             HStack(alignment: .lastTextBaseline, spacing: 10) {
-                Button("") {
-                    self.onClosedAction()
-                }.buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.white))
+                Button("", action: vm.close)
+                    .buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.white))
 
                 Spacer().frame(width: 10)
 
@@ -278,8 +275,8 @@ struct TagHeader: View {
             HStack(alignment: .lastTextBaseline, spacing: 0) {
                 Button("") {
                     _ = self.tag.store()
-                    }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: state.isRemoved ? Color.F.red : Color.F.black))
-                .opacity(state.hasChanges ? 1 : 0)
+                }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: state.isRemoved ? Color.F.red : Color.F.black))
+                    .opacity(state.hasChanges ? 1 : 0)
 
                 Spacer()
 
@@ -288,13 +285,17 @@ struct TagHeader: View {
                     .padding(.leading, 0)
                     .padding(.top, 0)
                     .onTapGesture {
-                        self.vm.chooseParentTag()
+                        self.controller.chooseParentTag()
                     }
                     .frame(width: 180, alignment: .trailing)
                     .opacity(state.isEditing && tagContent.parentTag == nil ? 1 : 0)
             }
             .padding(.horizontal, 15)
             .frame(height: 50)
-        }.background(state.isRemoved ? Color.F.red : Color.F.black)
+
+            if controller.isChoosing {
+                ParentTagChooser(controller: controller).padding(.horizontal, 15)
+            }
+        }
     }
 }

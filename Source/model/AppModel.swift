@@ -21,11 +21,11 @@ class AppModel: ObservableObject {
     static var shared = AppModel()
 
     @Published var state: AppModelState = .auth
-    @Published private(set) var selectedConspectus: Conspectus
+    @Published private(set) var selectedConspectus: Conspectus!
     @Published private(set) var recentOpened: [Conspectus] = []
     @ObservedObject var bibliography: Bibliography
 
-    private(set) var user: User
+    private(set) var user: User!
     private var disposeBag: Set<AnyCancellable> = []
 
     init() {
@@ -35,8 +35,9 @@ class AppModel: ObservableObject {
         if !DocumentsStorage.existDir(.tags) { DocumentsStorage.createDir(.tags) }
 
         bibliography = Bibliography()
+    }
 
-        // loadUser
+    func loadUser() {
         let userFileUrls = DocumentsStorage.getContentOf(dir: .user, filesWithExtension: "faustus")
         if userFileUrls.count > 0, let userFromFile = User(from: userFileUrls[0]) {
             logInfo(tag: .IO, msg: "the user profile has been read")
@@ -47,8 +48,9 @@ class AppModel: ObservableObject {
             user = User(location: .user)
         }
         selectedConspectus = user
-        bibliography.write(user)
+    }
 
+    func loadUserFiles() {
         loadAuthors()
         loadBooks()
         loadTags()
@@ -64,9 +66,7 @@ class AppModel: ObservableObject {
         logInfo(tag: .IO, msg: "Author files = \(authorFileUrls.count)")
         if authorFileUrls.count > 0 {
             for fileUrl in authorFileUrls {
-                if let a = Author(from: fileUrl) {
-                    bibliography.write(a)
-                } else {
+                if Author(from: fileUrl) == nil {
                     logErr(tag: .IO, msg: "Could't read a file with url: \(fileUrl.description)")
                 }
             }
@@ -78,9 +78,7 @@ class AppModel: ObservableObject {
         logInfo(tag: .IO, msg: "Books files = \(bookFileUrls.count)")
         if bookFileUrls.count > 0 {
             for fileUrl in bookFileUrls {
-                if let b = Book(from: fileUrl) {
-                    bibliography.write(b)
-                } else {
+                if Book(from: fileUrl) == nil {
                     logErr(tag: .IO, msg: "Could't read a file with url: \(fileUrl.description)")
                 }
             }
@@ -92,9 +90,7 @@ class AppModel: ObservableObject {
         logInfo(tag: .IO, msg: "Tags files = \(tagFileUrls.count)")
         if tagFileUrls.count > 0 {
             for fileUrl in tagFileUrls {
-                if let t = Tag(from: fileUrl) {
-                    bibliography.write(t)
-                } else {
+                if Tag(from: fileUrl) == nil {
                     logErr(tag: .IO, msg: "Could't read a file with url: \(fileUrl.description)")
                 }
             }
@@ -104,7 +100,7 @@ class AppModel: ObservableObject {
     private func deserialize() {
         logInfo(tag: .IO, msg: "Deserialization of all conspectus-files")
         for c in bibliography.getValues() {
-            c.deserialize(bibliography)
+            c.deserializeLinkedFiles()
         }
     }
 
@@ -145,9 +141,18 @@ class AppModel: ObservableObject {
     func createConspectus(_ genus: ConspectusGenus) {
         if selectedConspectus.validate() == .ok {
             selectedConspectus.store()
-            let c = genus.create()
-            selectedConspectus = c
-            bibliography.write(c)
+            switch genus {
+            case .user:
+                selectedConspectus = User(location: .user)
+            case .author:
+                selectedConspectus = Author(location: .authors)
+            case .book:
+                selectedConspectus = Book(location: .books)
+            case .tag:
+                selectedConspectus = Tag(location: .tags)
+            default:
+                return
+            }
         }
     }
 

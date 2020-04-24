@@ -46,7 +46,7 @@ struct SearchView: View {
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 1) {
                         ForEach(vm.result, id: \.id) { conspectus in
-                            ConspectusRow(action: { _ in self.vm.select(conspectus: conspectus) }, conspectus: conspectus).frame(height: 50)
+                            ConspectusRow(action: { _ in self.vm.select(conspectus: conspectus) }, conspectus: conspectus)
                         }
                     }
                 }
@@ -59,53 +59,25 @@ struct SearchView: View {
 
 struct FilterTabBar: View {
     @Binding var selectedFilter: SearchFilter
+    var iconColor: Color = Color.F.gray
+    var bgColor: Color = Color.F.dark
+    var selectedIconColor: Color = Color.F.dark
+    var selectBgColor: Color = Color.F.gray
+
+    var enabledFilters: [SearchFilter] = [.authors, .books, .tags, .quotes, .removed]
 
     var body: some View {
         HStack(alignment: .center, spacing: 1) {
-            Image("author")
-                .renderingMode(.template)
-                .frame(width: 50, height: 30)
-                .foregroundColor(self.selectedFilter == .authors ? Color.F.dark : Color.F.gray)
-                .background(self.selectedFilter == .authors ? Color.F.gray : Color.F.dark)
-                .onTapGesture {
-                    self.selectedFilter = .authors
-                }
-
-            Image("book")
-                .renderingMode(.template)
-                .frame(width: 50, height: 30)
-                .foregroundColor(self.selectedFilter == .books ? Color.F.dark : Color.F.gray)
-                .background(self.selectedFilter == .books ? Color.F.gray : Color.F.dark)
-                .onTapGesture {
-                    self.selectedFilter = .books
-                }
-
-            Image("tag")
-                .renderingMode(.template)
-                .frame(width: 50, height: 30)
-                .foregroundColor(self.selectedFilter == .tags ? Color.F.dark : Color.F.gray)
-                .background(self.selectedFilter == .tags ? Color.F.gray : Color.F.dark)
-                .onTapGesture {
-                    self.selectedFilter = .tags
-                }
-
-            Image("quote")
-                .renderingMode(.template)
-                .frame(width: 50, height: 30)
-                .foregroundColor(self.selectedFilter == .quotes ? Color.F.dark : Color.F.gray)
-                .background(self.selectedFilter == .quotes ? Color.F.gray : Color.F.dark)
-                .onTapGesture {
-                    self.selectedFilter = .quotes
-                }
-
-            Image("remove")
-                .renderingMode(.template)
-                .frame(width: 50, height: 30)
-                .foregroundColor(self.selectedFilter == .removed ? Color.F.dark : Color.F.gray)
-                .background(self.selectedFilter == .removed ? Color.F.gray : Color.F.dark)
-                .onTapGesture {
-                    self.selectedFilter = .removed
-                }
+            ForEach(enabledFilters, id: \.self) { filter in
+                Image(filter.toIcon())
+                    .renderingMode(.template)
+                    .frame(width: 50, height: 30)
+                    .foregroundColor(self.selectedFilter == filter ? self.selectedIconColor : self.iconColor)
+                    .background(self.selectedFilter == filter ? self.selectBgColor : self.bgColor)
+                    .onTapGesture {
+                        self.selectedFilter = filter
+                    }
+            }
         }
     }
 }

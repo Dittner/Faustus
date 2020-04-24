@@ -14,6 +14,7 @@ enum SearchFilter {
     case books
     case tags
     case quotes
+    case comments
     case removed
 
     func toGenus() -> ConspectusGenus? {
@@ -25,9 +26,28 @@ enum SearchFilter {
         case .tags:
             return .tag
         case .quotes:
-            return .book
+            return .quote
         case .removed:
             return nil
+        case .comments:
+            return nil
+        }
+    }
+    
+    func toIcon() -> String {
+        switch self {
+        case .authors:
+            return "author"
+        case .books:
+            return "book"
+        case .tags:
+            return "tag"
+        case .quotes:
+            return "quote"
+        case .removed:
+            return "remove"
+        case .comments:
+            return "comment"
         }
     }
 }
@@ -72,9 +92,9 @@ final class SearchViewModel: ViewModel {
                     }
                 }
 
-                if filter == .removed {
+                if filter == .removed || filter == .quotes {
                     return conspectusList.sorted {
-                        $0.state.changedDate < $1.state.changedDate
+                        $0.state.changedTime > $1.state.changedTime
                     }
                 }
 
@@ -85,6 +105,10 @@ final class SearchViewModel: ViewModel {
     }
 
     func select(conspectus: Conspectus) {
-        model.select(conspectus)
+        if let q = conspectus as? Quote {
+            model.select(q.book)
+        } else {
+            model.select(conspectus)
+        }
     }
 }

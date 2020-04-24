@@ -48,14 +48,6 @@ class User: Conspectus, BooksOwner, ObservableObject {
         return ("Faustus" + content.pwd).sha512()!
     }
 
-    override var description: String {
-        return "\(content.name) \(content.surname)"
-    }
-
-    override var hashName: String {
-        return "user" + content.name + content.surname
-    }
-
     private var disposeBag: Set<AnyCancellable> = []
     override func didInit() {
         booksColl.owner = self
@@ -72,27 +64,44 @@ class User: Conspectus, BooksOwner, ObservableObject {
 
     override func validate() -> ValidationStatus {
         let conspectusValidation = super.validate()
-        if conspectusValidation != .ok { return conspectusValidation }
-        if content.name.isEmpty || content.surname.isEmpty { return .emptyName }
-        if content.pwd.isEmpty { return .emptyPassword }
-        if !content.encryptedPwd.isEmpty && content.encryptedPwd != encryptPwd() { return .invalidUserPwd }
-        return .ok
+        if conspectusValidation != .ok {
+            state.validationStatus = conspectusValidation
+        } else if content.name.isEmpty || content.surname.isEmpty {
+            state.validationStatus = .emptyName
+        } else if content.pwd.isEmpty {
+            state.validationStatus = .emptyPassword
+        } else if !content.encryptedPwd.isEmpty && content.encryptedPwd != encryptPwd() {
+            state.validationStatus = .invalidUserPwd
+        } else {
+            state.validationStatus = .ok
+        }
+        return state.validationStatus
     }
 
     override func serialize() -> [String: Any] {
         var dict = super.serialize()
         dict["name"] = content.name
         dict["surname"] = content.surname
+        dict["encryptedPwd"] = encryptPwd()
         dict["books"] = booksColl.books.map { $0.id }
         return dict
     }
 
-    override func deserialize(_ bibliography: Bibliography) {
-        super.deserialize(bibliography)
+    override func deserialize() {
+        super.deserialize()
         if let dict = fileData {
             content.name = dict["name"] as? String ?? ""
             content.surname = dict["surname"] as? String ?? ""
             content.encryptedPwd = dict["encryptedPwd"] as? String ?? ""
+
+            description = "\(content.name) \(content.surname)"
+            hashName = "user" + content.name + content.surname
+        }
+    }
+
+    override func deserializeLinkedFiles() {
+        super.deserializeLinkedFiles()
+        if let dict = fileData {
             if let booksID = dict["books"] as? [UID] {
                 booksColl.books = booksID.map { bibliography.read($0) as? Book }.compactMap { $0 }
             }

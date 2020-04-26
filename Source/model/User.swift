@@ -61,6 +61,14 @@ class User: Conspectus, BooksOwner, ObservableObject {
                 .store(in: &disposeBag)
         }
     }
+    
+    override func getDescription() -> String {
+        return "\(content.name) \(content.surname)"
+    }
+    
+    override func getHashName() -> String {
+        return "user" + content.name + content.surname
+    }
 
     override func validate() -> ValidationStatus {
         let conspectusValidation = super.validate()
@@ -93,9 +101,6 @@ class User: Conspectus, BooksOwner, ObservableObject {
             content.name = dict["name"] as? String ?? ""
             content.surname = dict["surname"] as? String ?? ""
             content.encryptedPwd = dict["encryptedPwd"] as? String ?? ""
-
-            description = "\(content.name) \(content.surname)"
-            hashName = "user" + content.name + content.surname
         }
     }
 
@@ -108,12 +113,5 @@ class User: Conspectus, BooksOwner, ObservableObject {
         }
 
         state.markAsNotChanged()
-    }
-
-    override func didDestroy(_ conspectus: Conspectus) {
-        super.didDestroy(conspectus)
-        if let book = conspectus as? Book {
-            booksColl.removeBook(book)
-        }
     }
 }

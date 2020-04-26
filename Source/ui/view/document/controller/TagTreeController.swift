@@ -9,7 +9,7 @@
 import Combine
 import SwiftUI
 
-class TagTreeController: ViewModel, ChooserController {
+class TagTreeController: ViewModel {
     @Published var owner: Conspectus!
     @Published var ownerTags: [Tag] = []
     var tagTree:TagTree = TagTree([])
@@ -17,7 +17,6 @@ class TagTreeController: ViewModel, ChooserController {
     func update(_ conspectus: Conspectus) {
         if !(conspectus is Tag || conspectus is User) {
             self.owner = conspectus
-            isChoosing = false
 
             let tags = model.bibliography.getValues()
                 .filter { $0 is Tag && !$0.state.isRemoved }
@@ -25,7 +24,6 @@ class TagTreeController: ViewModel, ChooserController {
                 .sorted { $0 < $1 }
 
             tagTree = TagTree(tags)
-            allTags = tagTree.flatTree()
             ownerTags = tagTree.flatTree { self.owner.linkColl.links.contains($0) }
         }
     }
@@ -34,70 +32,5 @@ class TagTreeController: ViewModel, ChooserController {
         owner.linkColl.removeLink(from: t)
         self.ownerTags = tagTree.flatTree { self.owner.linkColl.links.contains($0) }
     }
-    
-    //choosing
-    
-    @Published var selectedTags: [Tag] = []
-    @Published var isChoosing: Bool = false
-    @Published var allTags: [Tag] = []
-    private var disposeBag: Set<AnyCancellable> = []
-    var chooseTagsPublisher: AnyCancellable?
-    func chooseTags() {
-        isChoosing = true
-        selectedTags = owner.linkColl.links.map { $0 as? Tag }.compactMap { $0 }
-    }
-    
-    func selectDeselect(_ tag: Tag) {
-        var res = selectedTags
 
-        if selectedTags.contains(tag) {
-            deselect(tag, &res)
-        } else {
-            select(tag, &res)
-        }
-
-        selectedTags = res
-    }
-
-    private func deselect(_ t: Tag, _ src: inout [Tag]) {
-        for (ind, tag) in src.enumerated() {
-            if t == tag {
-                src.remove(at: ind)
-                let children = src.filter { $0.content.parentTag == t }
-                for childTag in children {
-                    deselect(childTag, &src)
-                }
-            }
-        }
-    }
-
-    private func select(_ t: Tag, _ src: inout [Tag]) {
-        src.append(t)
-        if let parentTag = t.content.parentTag, !src.contains(parentTag) {
-            select(parentTag, &src)
-        }
-    }
-
-    func cancel() {
-        isChoosing = false
-    }
-
-    func apply() {
-        let initialTags = owner.linkColl.links.map { $0 as? Tag }.compactMap { $0 }
-        
-        for t in selectedTags {
-            if !initialTags.contains(t) {
-                self.owner.linkColl.addLink(to: t)
-            }
-        }
-
-        for t in initialTags {
-            if !selectedTags.contains(t) {
-                self.owner.linkColl.removeLink(from: t)
-            }
-        }
-        
-        ownerTags = tagTree.flatTree { self.owner.linkColl.links.contains($0) }
-        isChoosing = false
-    }
 }

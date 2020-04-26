@@ -15,7 +15,7 @@ class TagContent: ObservableObject {
     @Published var info: String = "Keine"
     @Published fileprivate(set) var parentTag: Tag?
     @Published fileprivate(set) var children: [Tag] = []
-    
+
     func getLevel() -> Int {
         return parentTag == nil ? 0 : parentTag!.content.getLevel() + 1
     }
@@ -31,10 +31,27 @@ class TagContent: ObservableObject {
                 newParent.content.children.append(owner)
                 newParent.content.children = newParent.content.children.sorted { $0 < $1 }
                 newParent.store(forced: true)
+
+                if owner.linkColl.links.count > 0 {
+                    var allParentTags: [Tag] = []
+                    collectParentTags(of: newParent, &allParentTags)
+                    for link in owner.linkColl.links {
+                        for t in allParentTags {
+                            link.linkColl.addLink(to: t)
+                        }
+                    }
+                }
             }
 
             parentTag = tag
             owner.store(forced: true)
+        }
+    }
+
+    private func collectParentTags(of t: Tag, _ res: inout [Tag]) {
+        res.append(t)
+        if let parentTag = t.content.parentTag, !res.contains(parentTag) {
+            collectParentTags(of: parentTag, &res)
         }
     }
 }
@@ -43,7 +60,7 @@ class Tag: Conspectus, ObservableObject, Comparable {
     static func < (lhs: Tag, rhs: Tag) -> Bool {
         lhs.content.name < rhs.content.name
     }
-    
+
     @ObservedObject var content: TagContent = TagContent()
 
     override var genus: ConspectusGenus { return .tag }
@@ -60,6 +77,14 @@ class Tag: Conspectus, ObservableObject, Comparable {
                 }
                 .store(in: &disposeBag)
         }
+    }
+
+    override func getDescription() -> String {
+        return content.name
+    }
+
+    override func getHashName() -> String {
+        return "tag" + content.name
     }
 
     override func validate() -> ValidationStatus {
@@ -93,9 +118,6 @@ class Tag: Conspectus, ObservableObject, Comparable {
         if let dict = fileData {
             content.name = dict["name"] as? String ?? ""
             content.info = dict["info"] as? String ?? ""
-
-            description = content.name
-            hashName = "tag" + content.name
         }
     }
 
@@ -114,10 +136,14 @@ class Tag: Conspectus, ObservableObject, Comparable {
         state.markAsNotChanged()
     }
 
-    override func didDestroy(_ conspectus: Conspectus) {
-        super.didDestroy(conspectus)
-        if let parent = content.parentTag, parent.id == conspectus.id, let tag = conspectus as? Tag {
-            content.parentTag = tag.content.parentTag == nil ? nil : tag.content.parentTag
+    override func destroy() {
+        state.isDestroyed = true
+        
+        for child in content.children {
+            child.content.updateParent(with: content.parentTag)
         }
+
+        super.destroy()
+        content.updateParent(with: nil)
     }
 }

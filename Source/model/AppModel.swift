@@ -167,12 +167,6 @@ class AppModel: ObservableObject {
             selectedConspectus = recentOpened[0]
         } else if selectedConspectus.state.isRemoved {
             logInfo(tag: .APP, msg: "Destroy conspectus, id: \(selectedConspectus.id)")
-            for conspectus in bibliography.getValues() {
-                conspectus.didDestroy(selectedConspectus)
-                if conspectus.state.hasChanges {
-                    _ = conspectus.store()
-                }
-            }
             bibliography.remove(selectedConspectus)
             recentOpened.removeFirst()
             selectedConspectus.destroy()

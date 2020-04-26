@@ -164,7 +164,6 @@ struct ConspectusRow: View {
                         .foregroundColor(self.genusColor)
                         .allowsHitTesting(false)
                         .frame(width: 20, height: 2)
-                        .offset(x: -18)
                         .padding(.bottom, self.notifier.subTitle.isEmpty ? 13 : 8)
 
                     Text(self.notifier.title)
@@ -196,16 +195,17 @@ struct ConspectusRow: View {
                     .foregroundColor(self.textColor)
                     .allowsHitTesting(false)
                     .scaleEffect(0.8)
+                    .frame(width: 25)
                     .opacity(self.state.isRemoved ? 1 : 0)
 
                 Image("check")
                     .renderingMode(.template)
                     .foregroundColor(self.textColor)
                     .allowsHitTesting(false)
-                    .scaleEffect(1)
+                    .frame(width: 20)
                     .opacity(self.notifier.isSelected ? 1 : 0)
 
-            }.padding(.trailing, 5)
+            }.padding(.trailing, 0)
 
         }.buttonStyle(RowBgButtonStyle(isSelectable: isSelectable, isOn: $notifier.isSelected))
     }

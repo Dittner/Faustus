@@ -19,7 +19,7 @@ struct InfoPanel: View {
     private let font = NSFont(name: .pragmaticaLight, size: 21)
     private let title: String
 
-    init(controller: InfoController, title: String = "INFO") {
+    init(_ controller: InfoController, title: String = "INFO") {
         self.controller = controller
         state = controller.owner.state
         self.title = title

@@ -120,7 +120,7 @@ struct DeleteConfirmation: View {
                 .foregroundColor(Color.F.white)
                 .frame(width: 300, height: 100)
 
-            ModalViewFooter(controller: controller)
+            ChooserFooter(controller: controller)
         }
         .frame(width: 300, height: 150)
         .background(Color.F.dark)

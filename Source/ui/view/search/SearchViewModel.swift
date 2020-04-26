@@ -71,7 +71,7 @@ final class SearchViewModel: ViewModel {
                 }
             }
             .map { filter, filterText, conspectusList -> (SearchFilter, [Conspectus]) in
-                filterText.isEmpty ? (filter, conspectusList) : (filter, conspectusList.filter { $0.description.hasSubstring(filterText) })
+                filterText.isEmpty ? (filter, conspectusList) : (filter, conspectusList.filter { $0.getDescription().hasSubstring(filterText) })
             }
             .map { filter, conspectusList in
                 if filter == .authors {

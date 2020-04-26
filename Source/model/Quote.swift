@@ -45,6 +45,14 @@ class Quote: Conspectus, ObservableObject, Comparable {
             .assign(to: \.isValid, on: self)
             .store(in: &disposeBag)
     }
+    
+    override func getDescription() -> String {
+        return  "quote of book \(book.getDescription()), page \(startPage)"
+    }
+    
+    override func getHashName() -> String {
+        return "quote" + startPage
+    }
 
     override func validate() -> ValidationStatus {
         if startPage.isEmpty {
@@ -71,9 +79,6 @@ class Quote: Conspectus, ObservableObject, Comparable {
             text = dict["text"] as? String ?? ""
             startPage = dict["startPage"] as? String ?? ""
             endPage = dict["endPage"] as? String ?? ""
-
-            description = "quote of book \(book.description), page \(startPage)"
-            hashName = "quote" + startPage
         }
 
         state.markAsNotChanged()
@@ -84,11 +89,8 @@ class Quote: Conspectus, ObservableObject, Comparable {
     }
 
     override func remove() {
+        bibliography.remove(self)
         linkColl.removeAllLinks()
-    }
-
-    override func didDestroy(_ conspectus: Conspectus) {
-        linkColl.removeLink(from: conspectus)
     }
 
     override func store(forced: Bool = false) {

@@ -57,6 +57,7 @@ class ConspectusState: ObservableObject {
     @Published private(set) var hasChanges: Bool = true
     @Published var isRemoved: Bool = false
     var isNew: Bool = false
+    var isDestroyed: Bool = false
     var changedTime: Double = 0
 
     private var disposeBag: Set<AnyCancellable> = []
@@ -135,13 +136,9 @@ class Conspectus: Equatable {
     var fileData: [String: Any]?
 
     var uniqueNameBeforeChanges: String = ""
-    var description: String = "empty description"
-
-    var hashName: String = "empty hash name"
 
     var genus: ConspectusGenus {
-        // Abstract property
-        return nil!
+        /* abstract */ return nil!
     }
 
     let state: ConspectusState
@@ -192,7 +189,7 @@ class Conspectus: Equatable {
         linkColl = LinkColl()
 
         linkColl.owner = self
-        
+
         bibliography.write(self)
         didInit()
     }
@@ -209,11 +206,11 @@ class Conspectus: Equatable {
         state.isEditing = false
 
         self.fileData = fileData
-        
+
         bibliography = AppModel.shared.bibliography
         linkColl = LinkColl()
         linkColl.owner = self
-        
+
         deserialize()
         bibliography.write(self)
         didInit()
@@ -236,9 +233,18 @@ class Conspectus: Equatable {
         }
     }
 
+    func getDescription() -> String {
+        /* abstract */ return nil!
+    }
+
+    func getHashName() -> String {
+        /* abstract */ return nil!
+    }
+
     var storeDebouncer: Debouncer = Debouncer(seconds: 0.25)
 
     func store(forced: Bool = false) {
+        guard !state.isDestroyed else { return }
         if forced {
             state.markAsChanged()
         } else if !state.hasChanges {
@@ -279,7 +285,6 @@ class Conspectus: Equatable {
 
         var dict: [String: Any] = [:]
         dict["id"] = id
-        dict["hashName"] = hashName
         dict["createdDate"] = state.createdDate
         dict["changedTime"] = state.changedTime
         dict["changedDate"] = state.changedDate
@@ -330,13 +335,11 @@ class Conspectus: Equatable {
     }
 
     func destroy() {
+        state.isDestroyed = true
         if let fileUrl = fileUrl {
             DocumentsStorage.deleteFile(from: fileUrl)
         }
+        linkColl.removeAllLinks()
         bibliography.remove(self)
-    }
-
-    func didDestroy(_ conspectus: Conspectus) {
-        linkColl.removeLink(from: conspectus)
     }
 }

@@ -139,11 +139,11 @@ struct BookHeader: View {
     @ObservedObject var book: Book
     @ObservedObject var bookContent: BookContent
     @ObservedObject var state: ConspectusState
-    @ObservedObject var controller: BookHeaderController
+    @ObservedObject var chooser: ConspectusChooser
 
-    init(book: Book, controller: BookHeaderController) {
+    init(book: Book, chooser: ConspectusChooser) {
         self.book = book
-        self.controller = controller
+        self.chooser = chooser
         state = book.state
         bookContent = book.content
 
@@ -214,17 +214,13 @@ struct BookHeader: View {
                     .padding(.leading, 0)
                     .padding(.top, 0)
                     .onTapGesture {
-                        self.controller.chooseAuthor()
+                        self.chooser.chooseAuthor(self.book)
                     }
                     .frame(width: 180, alignment: .trailing)
                     .opacity(state.isEditing && bookContent.author == nil ? 1 : 0)
             }
             .padding(.horizontal, 15)
             .frame(height: 50)
-
-            if controller.isChoosing {
-                AuthorChooser(controller: controller).padding(.horizontal, 15)
-            }
         }
     }
 }
@@ -235,11 +231,11 @@ struct TagHeader: View {
     @ObservedObject var tag: Tag
     @ObservedObject var state: ConspectusState
     @ObservedObject var tagContent: TagContent
-    @ObservedObject var controller: TagHeaderController
+    @ObservedObject var chooser: ConspectusChooser
 
-    init(tag: Tag, controller: TagHeaderController) {
+    init(tag: Tag, chooser: ConspectusChooser) {
         self.tag = tag
-        self.controller = controller
+        self.chooser = chooser
         tagContent = tag.content
         state = tag.state
 
@@ -285,17 +281,13 @@ struct TagHeader: View {
                     .padding(.leading, 0)
                     .padding(.top, 0)
                     .onTapGesture {
-                        self.controller.chooseParentTag()
+                        self.chooser.chooseParentTag(self.tag)
                     }
                     .frame(width: 180, alignment: .trailing)
                     .opacity(state.isEditing && tagContent.parentTag == nil ? 1 : 0)
             }
             .padding(.horizontal, 15)
             .frame(height: 50)
-
-            if controller.isChoosing {
-                ParentTagChooser(controller: controller).padding(.horizontal, 15)
-            }
         }
     }
 }

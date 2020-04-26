@@ -12,7 +12,7 @@ import SwiftUI
 struct DocView: View {
     @EnvironmentObject var vm: DocViewModel
 
-    private let validationInfoBoardHeight: CGFloat = 30
+    private let statusPanelHeight: CGFloat = 30
 
     var body: some View {
         VStack(alignment: .center, spacing: 0) {
@@ -23,19 +23,19 @@ struct DocView: View {
             if vm.selectedConspectus is User {
                 UserHeader(user: vm.selectedConspectus as! User)
 
-                StatusPanel(conspectus: vm.selectedConspectus)
+                StatusPanel(vm.selectedConspectus, chooser: vm.chooser)
                     .zIndex(1)
 
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 15) {
-                        StoreStatePanel(conspectus: vm.selectedConspectus)
-                        BookListView(controller: vm.bookListController, title: "AUFSÄTZE")
+                        StoreStatePanel(vm.selectedConspectus)
+                        BookListView(vm.selectedConspectus, chooser: vm.chooser, title: "AUFSÄTZE")
                     }.padding(.leading, 15)
                 }
-                .offset(x: 0, y: -validationInfoBoardHeight)
+                .offset(x: 0, y: -statusPanelHeight)
 
                 Spacer()
-                    .frame(height: -validationInfoBoardHeight)
+                    .frame(height: -statusPanelHeight)
             }
 
             //
@@ -45,22 +45,22 @@ struct DocView: View {
             else if vm.selectedConspectus is Author {
                 AuthorHeader(author: vm.selectedConspectus as! Author)
 
-                StatusPanel(conspectus: vm.selectedConspectus)
+                StatusPanel(vm.selectedConspectus, chooser: vm.chooser)
                     .zIndex(1)
 
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 15) {
-                        StoreStatePanel(conspectus: vm.selectedConspectus)
-                        InfoPanel(controller: vm.infoController)
-                        TagLinksView(controller: vm.tagTreeController)
-                        BookListView(controller: vm.bookListController)
-                        LinkListView(controller: vm.linkListController)
+                        StoreStatePanel(vm.selectedConspectus)
+                        InfoPanel(vm.infoController)
+                        TagLinksView(vm.tagTreeController, chooser: vm.chooser)
+                        BookListView(vm.selectedConspectus, chooser: vm.chooser)
+                        LinkListView(vm.linkListController)
                     }.padding(.leading, 15)
                 }
-                .offset(x: 0, y: -validationInfoBoardHeight)
+                .offset(x: 0, y: -statusPanelHeight)
 
                 Spacer()
-                    .frame(height: -validationInfoBoardHeight)
+                    .frame(height: -statusPanelHeight)
             }
 
             //
@@ -68,25 +68,25 @@ struct DocView: View {
             //
 
             else if vm.selectedConspectus is Book {
-                BookHeader(book: vm.selectedConspectus as! Book, controller: vm.bookHeaderController)
+                BookHeader(book: vm.selectedConspectus as! Book, chooser: vm.chooser)
 
-                StatusPanel(conspectus: vm.selectedConspectus)
+                StatusPanel(vm.selectedConspectus, chooser: vm.chooser)
                     .zIndex(1)
 
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 15) {
-                        StoreStatePanel(conspectus: vm.selectedConspectus)
+                        StoreStatePanel(vm.selectedConspectus)
                         BookInfoPanel(book: vm.selectedConspectus as! Book)
-                        TagLinksView(controller: vm.tagTreeController)
-                        LinkListView(controller: vm.linkListController)
-                        QuoteListView(quoteListController: vm.quoteListController, chooser: vm.quoteLinkChooser)
+                        TagLinksView(vm.tagTreeController, chooser: vm.chooser)
+                        LinkListView(vm.linkListController)
+                        QuoteListView(vm.quoteListController, chooser: vm.chooser)
 
                     }.padding(.leading, 15)
                 }
-                .offset(x: 0, y: -validationInfoBoardHeight)
+                .offset(x: 0, y: -statusPanelHeight)
 
                 Spacer()
-                    .frame(height: -validationInfoBoardHeight)
+                    .frame(height: -statusPanelHeight)
             }
 
             //
@@ -94,23 +94,23 @@ struct DocView: View {
             //
 
             else if vm.selectedConspectus is Tag {
-                TagHeader(tag: vm.selectedConspectus as! Tag, controller: vm.tagHeaderController)
+                TagHeader(tag: vm.selectedConspectus as! Tag, chooser: vm.chooser)
 
-                StatusPanel(conspectus: vm.selectedConspectus)
+                StatusPanel(vm.selectedConspectus, chooser: vm.chooser)
                     .zIndex(1)
 
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 15) {
-                        StoreStatePanel(conspectus: vm.selectedConspectus)
-                        InfoPanel(controller: vm.infoController)
-                        LinkListView(controller: vm.linkListController)
+                        StoreStatePanel(vm.selectedConspectus)
+                        InfoPanel(vm.infoController)
+                        LinkListView(vm.linkListController)
 
                     }.padding(.leading, 15)
                 }
-                .offset(x: 0, y: -validationInfoBoardHeight)
+                .offset(x: 0, y: -statusPanelHeight)
 
                 Spacer()
-                    .frame(height: -validationInfoBoardHeight)
+                    .frame(height: -statusPanelHeight)
             }
         }
         .background(DocViewBG(conspectus: vm.selectedConspectus))
@@ -138,9 +138,11 @@ struct DocViewBG: View {
 struct StatusPanel: View {
     let conspectus: Conspectus
     @ObservedObject var state: ConspectusState
+    @ObservedObject var chooser: ConspectusChooser
 
-    init(conspectus: Conspectus) {
+    init(_ conspectus: Conspectus, chooser: ConspectusChooser) {
         self.conspectus = conspectus
+        self.chooser = chooser
         state = conspectus.state
         print("ValidationInfoBoard init, id: \(conspectus.id)")
     }
@@ -152,7 +154,7 @@ struct StatusPanel: View {
                     .frame(width: 30, height: 10)
                     .offset(y: 0)
 
-                Spacer()
+                Spacer().frame(height: 20)
             } else {
                 Text(state.validationStatus.rawValue)
                     .lineLimit(1)
@@ -162,7 +164,13 @@ struct StatusPanel: View {
                     .frame(width: 600, height: 30)
                     .background(Color.F.red)
             }
-        }.frame(height: 30)
+
+            if chooser.owner == conspectus && chooser.mode == .chooseAuthor {
+                ConspectusChooserView(chooser: chooser).offset(y: -30)
+            } else if chooser.owner == conspectus && chooser.mode == .chooseTags {
+                ConspectusChooserView(chooser: chooser).offset(y: -30)
+            }
+        }
     }
 }
 
@@ -171,7 +179,7 @@ struct StoreStatePanel: View {
     @ObservedObject var state: ConspectusState
     private let isUser: Bool
 
-    init(conspectus: Conspectus) {
+    init(_ conspectus: Conspectus) {
         state = conspectus.state
         isUser = conspectus is User
         print("StoreInfoBoard init, id: \(conspectus.id)")
@@ -266,7 +274,8 @@ struct SectionView: View {
 }
 
 struct BookListView: View {
-    @ObservedObject var controller: BookListController
+    let owner: Conspectus
+    @ObservedObject var chooser: ConspectusChooser
     @ObservedObject var booksColl: BookColl
     @ObservedObject var state: ConspectusState
     @State private var isExpanded: Bool = BookListView.isExpanded
@@ -274,27 +283,28 @@ struct BookListView: View {
     private let font = NSFont(name: .pragmaticaLight, size: 21)
     private let title: String
 
-    init(controller: BookListController, title: String = "BÜCHER") {
+    init(_ conspectus: Conspectus, chooser: ConspectusChooser, title: String = "BÜCHER") {
+        owner = conspectus
         self.title = title
-        self.controller = controller
-        booksColl = controller.bookColl
-        state = controller.bookColl.owner.state
+        self.chooser = chooser
+        booksColl = (conspectus as! BooksOwner).booksColl
+        state = conspectus.state
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionView(isExpanded: $isExpanded, title: title, isEditing: self.state.isEditing, action: controller.chooseBooks, onExpand: { value in BookListView.isExpanded = value
+            SectionView(isExpanded: $isExpanded, title: title, isEditing: self.state.isEditing, action: { self.chooser.chooseBooks(self.owner) }, onExpand: { value in BookListView.isExpanded = value
             })
 
-            if isExpanded || controller.isChoosing {
-                if controller.isChoosing {
-                    BooksChooser(controller: controller)
+            if isExpanded || chooser.mode == .chooseBooks {
+                if chooser.mode == .chooseBooks {
+                    ConspectusChooserView(chooser: chooser)
                 } else {
                     ForEach(booksColl.books, id: \.id) { book in
                         ConspectusLink(conspectus: book, isEditing: self.state.isEditing, action: { result in
                             switch result {
                             case .remove:
-                                self.controller.removeBook(book)
+                                self.booksColl.removeBook(book)
                             case .navigate:
                                 book.show()
                             }
@@ -309,6 +319,7 @@ struct BookListView: View {
 }
 
 struct TagLinksView: View {
+    @ObservedObject var chooser: ConspectusChooser
     @ObservedObject var controller: TagTreeController
     @ObservedObject var state: ConspectusState
 
@@ -317,7 +328,8 @@ struct TagLinksView: View {
 
     private var disposeBag: Set<AnyCancellable> = []
 
-    init(controller: TagTreeController) {
+    init(_ controller: TagTreeController, chooser: ConspectusChooser) {
+        self.chooser = chooser
         self.controller = controller
         state = controller.owner.state
         isExpanded = TagLinksView.isExpanded
@@ -325,12 +337,12 @@ struct TagLinksView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionView(isExpanded: $isExpanded, title: "TAGS", isEditing: self.state.isEditing, action: controller.chooseTags, onExpand: { value in TagLinksView.isExpanded = value
+            SectionView(isExpanded: $isExpanded, title: "TAGS", isEditing: self.state.isEditing, action: { self.chooser.chooseTags(self.controller.owner) }, onExpand: { value in TagLinksView.isExpanded = value
             })
 
-            if isExpanded || controller.isChoosing {
-                if controller.isChoosing {
-                    TagsChooser(controller: self.controller)
+            if isExpanded || chooser.mode == .chooseTags {
+                if chooser.mode == .chooseTags {
+                    ConspectusChooserView(chooser: chooser).offset(x: 40)
                 } else {
                     ForEach(controller.ownerTags, id: \.id) { tag in
                         ConspectusLink(conspectus: tag, isEditing: self.state.isEditing, action: { result in
@@ -357,7 +369,7 @@ struct LinkListView: View {
     static var isExpanded: Bool = true
     private var disposeBag: Set<AnyCancellable> = []
 
-    init(controller: LinkListController) {
+    init(_ controller: LinkListController) {
         self.controller = controller
         state = controller.owner.state
         isExpanded = LinkListView.isExpanded
@@ -387,13 +399,13 @@ struct LinkListView: View {
 
 struct QuoteListView: View {
     @ObservedObject var quoteListController: QuoteListController
-    @ObservedObject var chooser: QuoteLinkChooser
+    @ObservedObject var chooser: ConspectusChooser
     @ObservedObject var state: ConspectusState
 
     @State private var isExpanded: Bool = QuoteListView.isExpanded
     static var isExpanded: Bool = true
 
-    init(quoteListController: QuoteListController, chooser: QuoteLinkChooser) {
+    init(_ quoteListController: QuoteListController, chooser: ConspectusChooser) {
         self.quoteListController = quoteListController
         self.chooser = chooser
         state = quoteListController.book.state
@@ -419,14 +431,14 @@ struct QuoteListView: View {
 struct QuoteCell: View {
     @ObservedObject var quote: Quote
     @ObservedObject var quoteLinkColl: LinkColl
-    @ObservedObject var chooser: QuoteLinkChooser
+    @ObservedObject var chooser: ConspectusChooser
     @ObservedObject var quoteListController: QuoteListController
     static let pagesFont: NSFont = NSFont(name: .pragmaticaBold, size: 21)
     static let textFont: NSFont = NSFont(name: .pragmaticaLight, size: 21)
 
     private let isEditing: Bool
 
-    init(quote: Quote, isEditing: Bool, chooser: QuoteLinkChooser, quoteListController: QuoteListController) {
+    init(quote: Quote, isEditing: Bool, chooser: ConspectusChooser, quoteListController: QuoteListController) {
         self.quote = quote
         quoteLinkColl = quote.linkColl
         self.isEditing = isEditing
@@ -462,7 +474,7 @@ struct QuoteCell: View {
                 Spacer()
 
                 if isEditing {
-                    Button("", action: { self.chooser.chooseLink(q: self.quote) })
+                    Button("", action: { self.chooser.chooseLink(self.quote) })
                         .buttonStyle(IconButtonStyle(iconName: "addLink", iconColor: Color.F.black, bgColor: quote.isValid ? Color.F.whiteBG : Color.F.redBG, width: 30, height: 25))
                         .offset(y: -10)
                         .opacity(isEditing ? 1 : 0)
@@ -506,7 +518,7 @@ struct QuoteCell: View {
             }
 
             if chooser.owner == quote && isEditing {
-                LinkChooser(chooser: chooser)
+                ConspectusChooserView(chooser: chooser)
             }
         }
         .colorScheme(.light)

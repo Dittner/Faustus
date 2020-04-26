@@ -69,6 +69,14 @@ class Author: Conspectus, BooksOwner, ObservableObject {
         }
     }
 
+    override func getDescription() -> String {
+        return "\(content.name) \(content.surname) \(content.birthYear)"
+    }
+
+    override func getHashName() -> String {
+        return "author" + content.name + content.surname + content.birthYear
+    }
+
     override func validate() -> ValidationStatus {
         let conspectusValidation = super.validate()
         if conspectusValidation != .ok {
@@ -104,9 +112,6 @@ class Author: Conspectus, BooksOwner, ObservableObject {
             content.birthYear = dict["birthYear"] as? String ?? ""
             content.deathYear = dict["deathYear"] as? String ?? ""
             content.info = dict["info"] as? String ?? ""
-
-            description = "\(content.name) \(content.surname) \(content.birthYear)"
-            hashName = "author" + content.name + content.surname + content.birthYear
         }
     }
 
@@ -121,10 +126,8 @@ class Author: Conspectus, BooksOwner, ObservableObject {
         state.markAsNotChanged()
     }
 
-    override func didDestroy(_ conspectus: Conspectus) {
-        super.didDestroy(conspectus)
-        if let book = conspectus as? Book {
-            booksColl.removeBook(book)
-        }
+    override func destroy() {
+        super.destroy()
+        booksColl.removeAllBooks()
     }
 }

@@ -8,311 +8,218 @@
 
 import SwiftUI
 
-struct BooksChooser: View {
-    @EnvironmentObject var textFocus: TextFocus
-    @ObservedObject var controller: BookListController
-
-    func select(b: Book) {
-        controller.selectedBooks.append(b)
-    }
-
-    func deselect(b: Book) {
-        controller.selectedBooks.removeAll { $0.id == b.id }
-    }
+struct ConspectusChooserView: View {
+    @ObservedObject var chooser: ConspectusChooser
 
     var body: some View {
         VStack(alignment: .center, spacing: 0) {
-            HStack(alignment: .lastTextBaseline, spacing: 0) {
-                Image("search")
-                    .renderingMode(.template)
-                    .foregroundColor(Color.F.black)
-                    .frame(width: 50)
-
-                TextInput(title: "", text: $controller.filterText, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 21), alignment: .left, isFocused: textFocus.id == .modalBookChooserSearch, isSecure: false, format: nil, isEditable: true, onEnterAction: nil)
-                    .frame(height: 50, alignment: .leading)
-                    .padding(.horizontal, -5)
-                    .saturation(0)
-                    .colorScheme(.light)
-                    .onAppear {
-                        self.textFocus.id = .modalBookChooserSearch
-                    }
+            if chooser.selectedFilter != .tags || chooser.showFilterBar {
+                ChooserHeader(chooser: chooser).frame(width: 800)
+                Separator(color: Color.F.black, width: .infinity).padding(.horizontal, 15)
             }
+            
 
-            Separator(color: Color.F.black, width: .infinity).padding(.horizontal, 15)
-
-            if controller.filteredBooks.count > 0 {
-                ScrollView(.vertical, showsIndicators: true) {
-                    VStack(alignment: .leading, spacing: 1) {
-                        ForEach(controller.filteredBooks, id: \.id) { book in
-                            ConspectusRow(action: { event in
-                                if event == .selected {
-                                    self.select(b: book)
-                                } else {
-                                    self.deselect(b: book)
-                                }
-
-                            }, conspectus: book, selectable: true, selected: self.controller.selectedBooks.contains(book), textColor: Color.F.black)
-                        }
-                    }
-                }
-            } else {
-                Spacer()
-            }
-
-            ModalViewFooter(controller: controller)
-        }
-        .frame(width: 700, height: 400)
-        .background(Color.F.grayBG)
-        .cornerRadius(10)
-        .shadow(color: Color.F.black025, radius: 1, x: 0, y: 1)
-    }
-}
-
-struct AuthorChooser: View {
-    @EnvironmentObject var textFocus: TextFocus
-    @ObservedObject var controller: BookHeaderController
-
-    var body: some View {
-        VStack(alignment: .center, spacing: 0) {
-            HStack(alignment: .lastTextBaseline, spacing: 0) {
-                Image("search")
-                    .renderingMode(.template)
-                    .foregroundColor(Color.F.black)
-                    .frame(width: 50)
-
-                TextInput(title: "", text: $controller.filterText, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 21), alignment: .left, isFocused: textFocus.id == .authorChooserSearch, isSecure: false, format: nil, isEditable: true, onEnterAction: nil)
-                    .frame(height: 50, alignment: .leading)
-                    .padding(.horizontal, -5)
-                    .saturation(0)
-                    .colorScheme(.light)
-                    .onAppear {
-                        self.textFocus.id = .authorChooserSearch
-                    }
-            }
-
-            Separator(color: Color.F.black, width: .infinity).padding(.horizontal, 15)
-
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 1) {
-                    ConspectusRow(action: { event in
-                        if event == .selected {
-                            self.controller.selectedConspectus = self.controller.model.user
-                        }
-
-                    }, conspectus: self.controller.model.user, selectable: true, selected: self.controller.selectedConspectus == self.controller.model.user, textColor: Color.F.black)
-
-                    ForEach(controller.filteredAuthors, id: \.id) { author in
-                        ConspectusRow(action: { event in
-                            if event == .selected {
-                                self.controller.selectedConspectus = author
-                            }
-
-                        }, conspectus: author, selectable: true, selected: self.controller.selectedConspectus == author, textColor: Color.F.black)
-                    }
-                }
-            }
-
-            ModalViewFooter(controller: controller)
-        }
-        .frame(height: 400)
-        .background(Color.F.grayBG)
-        .cornerRadius(10)
-        .shadow(color: Color.F.black025, radius: 1, x: 0, y: 1)
-    }
-}
-
-struct ParentTagChooser: View {
-    @ObservedObject var controller: TagHeaderController
-    @ObservedObject var state: ConspectusState
-    @ObservedObject var owner: Tag
-
-    init(controller: TagHeaderController) {
-        self.controller = controller
-        state = controller.owner.state
-        owner = controller.owner
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if controller.tags.count > 0 {
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 1) {
-                        ForEach(controller.tags, id: \.id) { tag in
-                            TagTreeNodeLink(tag, isSelected: self.controller.selectedParentTag == tag, action: {
-                                self.controller.selectedParentTag = self.controller.selectedParentTag == tag ? nil : tag
-                            })
-                        }
-                    }.padding(.horizontal, 10)
-                        .padding(.vertical, 10)
-                        .frame(width: 970, alignment: .topLeading)
-                }.frame(width: 970, height: 350, alignment: .topLeading)
-            } else {
-                Spacer()
-            }
-
-            ModalViewFooter(controller: controller)
-        }
-        .frame(height: 400)
-        .background(Color.F.grayBG)
-        .cornerRadius(10)
-        .shadow(color: Color.F.black025, radius: 1, x: 0, y: 1)
-    }
-}
-
-struct TagsChooser: View {
-    @ObservedObject var controller: TagTreeController
-
-    init(controller: TagTreeController) {
-        self.controller = controller
-        print("TagsChooser init")
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if controller.allTags.count > 0 {
-                ScrollView(.vertical, showsIndicators: true) {
-                    VStack(alignment: .leading, spacing: 1) {
-                        ForEach(controller.allTags, id: \.id) { tag in
-                            TagTreeNodeLink(tag, isSelected: self.controller.selectedTags.contains(tag), action: {
-                                self.controller.selectDeselect(tag)
-                            })
-                        }
-                    }.padding(.horizontal, 20)
-                        .padding(.vertical, 10)
-                        .frame(width: 770, alignment: .topLeading)
-                }.frame(width: 770, height: 350, alignment: .topLeading)
-            } else {
-                Spacer()
-            }
-
-            ModalViewFooter(controller: controller)
-        }
-        .frame(width: 800, height: 400)
-        .background(Color.F.grayBG)
-        .cornerRadius(10)
-        .shadow(color: Color.F.black025, radius: 1, x: 0, y: 1)
-    }
-}
-
-struct LinkChooser: View {
-    @EnvironmentObject var textFocus: TextFocus
-    @ObservedObject var chooser: QuoteLinkChooser
-
-    var body: some View {
-        VStack(alignment: .center, spacing: 0) {
-            HStack(alignment: .center, spacing: 0) {
-                Image("search")
-                    .renderingMode(.template)
-                    .foregroundColor(Color.F.black)
-                    .frame(width: 50)
-
-                TextInput(title: "", text: $chooser.filterText, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 21), alignment: .left, isFocused: false, isSecure: false, format: nil, isEditable: true, onEnterAction: nil)
-                    .frame(width: 250, height: 50, alignment: .leading)
-                    .padding(.horizontal, -5)
-                    .saturation(0)
-                    .colorScheme(.light)
-
-                FilterTabBar(selectedFilter: $chooser.selectedFilter, iconColor: Color.F.dark, bgColor: Color.F.whiteBG, selectedIconColor: Color.F.whiteBG, selectBgColor: Color.F.dark, enabledFilters: [.authors, .books, .tags, .comments])
-                    .cornerRadius(2)
-
-                SelectableText(text: "Kommentieren", color: Color.F.black)
-                    .font(Font.custom(.mono, size: 16))
-                    .padding(.trailing, 15)
-                    .padding(.top, 0)
-                    .onTapGesture {
-                        self.chooser.choosingMode = .commenting
-                    }
-                    .frame(width: 300, alignment: .trailing)
-                    .opacity(self.chooser.choosingMode == .choosingUserBooksComments ? 1 : 0)
-            }
-
-            Separator(color: Color.F.black, width: .infinity).padding(.horizontal, 15)
-
-            if self.chooser.choosingMode == .commenting {
-                HStack(alignment: .top, spacing: 0) {
-                    Text("S.")
-                        .font(Font.custom(.pragmaticaBold, size: 21))
-                        .foregroundColor(Color.F.black)
-
-                    EditableText("", text: $chooser.userCommentStartPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .right, isEditing: true, format: "[1-9][0-9]{0,4}")
-                        .saturation(0)
-                        .frame(width: 70)
-
-                    Text("–")
-                        .font(Font.custom(.pragmaticaBold, size: 21))
-                        .foregroundColor(Color.F.black)
-                        .opacity(chooser.userCommentEndPage.count == 0 ? 0 : 1)
-
-                    EditableText("", text: $chooser.userCommentEndPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .left, isEditing: true, format: "[1-9][0-9]{0,4}")
-                        .saturation(0)
-                        .frame(width: 70)
-
-                    Spacer()
-
-                    Button("", action: self.chooser.cancelCommenting)
-                        .buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 25))
-                }.padding(.horizontal, 15)
-                    .frame(height: 40)
+            if self.chooser.selectedFilter == .comments && self.chooser.mode == .commenting {
+                UserCommentForm(chooser: chooser)
             }
 
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(alignment: .leading, spacing: 1) {
-                    if self.chooser.choosingMode == .commenting {
-                        TextArea(text: $chooser.userCommentText, textColor: NSColor.F.black, font: QuoteCell.textFont, isEditable: true)
-                            .lineSpacing(5)
-                            .colorScheme(.light)
-                            .frame(width: 780, height: TextArea.textHeightFrom(text: chooser.userCommentText, width: 780, font: QuoteCell.textFont, isShown: true, minHeight: 200))
-                            .padding(.vertical, 5)
-                            .padding(.leading, 10)
-                            .padding(.trailing, 10)
-                            .saturation(0)
-
-                    } else if self.chooser.choosingMode == .choosingUserBooksComments {
-                        ForEach(chooser.selectedUserBookComments, id: \.id) { comment in
-                            ConspectusRow(action: { event in
-                                if event == .selected {
-                                    self.chooser.selectedLink = comment
-                                }
-
-                            }, conspectus: comment, selectable: true, selected: self.chooser.selectedLink == comment, textColor: Color.F.black)
-                        }
-                    } else if chooser.selectedFilter == .comments {
-                        ForEach(chooser.userBooks, id: \.id) { userBook in
-                            ConspectusRow(action: { event in
-                                if event == .selected {
-                                    self.chooser.selectedUserBook = userBook
-                                    self.chooser.choosingMode = .choosingUserBooksComments
-                                }
-
-                            }, conspectus: userBook, selectable: true, selected: self.chooser.selectedUserBook == userBook, textColor: Color.F.black)
-                        }
-                    } else if chooser.searchResult.count > 0 {
-                        ForEach(chooser.searchResult, id: \.id) { link in
-                            ConspectusRow(action: { event in
-                                if event == .selected {
-                                    self.chooser.selectedLink = link
-                                }
-
-                            }, conspectus: link, selectable: true, selected: self.chooser.selectedLink == link, textColor: Color.F.black)
-                        }
-                    } else {
-                        Spacer()
+                    if self.chooser.selectedFilter == .authors {
+                        AuthorChooserSubView(chooser: chooser)
+                    } else if self.chooser.selectedFilter == .books {
+                        BooksChooserSubView(chooser: chooser)
+                    } else if self.chooser.selectedFilter == .tags {
+                        TagsChooserSubView(chooser: chooser)
+                    } else if self.chooser.selectedFilter == .comments {
+                        UserCommentsChooserSubView(chooser: chooser)
                     }
-                }.colorScheme(.light)
+                }
             }
             .colorScheme(.dark)
 
-            ModalViewFooter(controller: chooser)
+            ChooserFooter(controller: chooser)
         }
-        .frame(width: 800, height: 400)
+        .frame(width: 800, height: 330)
         .background(Color.F.grayBG)
         .cornerRadius(10)
         .shadow(color: Color.F.black025, radius: 1, x: 0, y: 1)
     }
 }
 
-struct ModalViewFooter: View {
-    enum ModalViewResult {
+struct ChooserHeader: View {
+    @ObservedObject var chooser: ConspectusChooser
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 0) {
+            Image("search")
+                .renderingMode(.template)
+                .foregroundColor(Color.F.black)
+                .frame(width: 50)
+
+            TextInput(title: "", text: $chooser.filterText, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 21), alignment: .left, isFocused: false, isSecure: false, format: nil, isEditable: true, onEnterAction: nil)
+                .frame(width: 250, height: 50, alignment: .leading)
+                .padding(.horizontal, -5)
+                .saturation(0)
+                .colorScheme(.light)
+            
+            if chooser.showFilterBar {
+                FilterTabBar(selectedFilter: $chooser.selectedFilter, iconColor: Color.F.dark, bgColor: Color.F.whiteBG, selectedIconColor: Color.F.whiteBG, selectBgColor: Color.F.dark, enabledFilters: [.authors, .books, .tags, .comments])
+                    .cornerRadius(2)
+            }
+            
+
+            SelectableText(text: "Kommentieren", color: Color.F.black)
+                .font(Font.custom(.mono, size: 16))
+                .padding(.trailing, 15)
+                .padding(.top, 0)
+                .onTapGesture {
+                    self.chooser.mode = .commenting
+                }
+                .frame(width: 300, alignment: .trailing)
+                .opacity(self.chooser.mode == .chooseLinkAmongUserBooksComment ? 1 : 0)
+        }
+    }
+}
+
+struct UserCommentForm: View {
+    @ObservedObject var chooser: ConspectusChooser
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 0) {
+            Text("S.")
+                .font(Font.custom(.pragmaticaBold, size: 21))
+                .foregroundColor(Color.F.black)
+
+            EditableText("", text: $chooser.userCommentStartPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .right, isEditing: true, format: "[1-9][0-9]{0,4}")
+                .saturation(0)
+                .frame(width: 70)
+
+            Text("–")
+                .font(Font.custom(.pragmaticaBold, size: 21))
+                .foregroundColor(Color.F.black)
+                .opacity(chooser.userCommentEndPage.count == 0 ? 0 : 1)
+
+            EditableText("", text: $chooser.userCommentEndPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .left, isEditing: true, format: "[1-9][0-9]{0,4}")
+                .saturation(0)
+                .frame(width: 70)
+
+            Spacer()
+
+            Button("", action: self.chooser.cancelCommenting)
+                .buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 25))
+        }.padding(.horizontal, 15)
+            .frame(height: 40)
+    }
+}
+
+struct AuthorChooserSubView: View {
+    @ObservedObject var chooser: ConspectusChooser
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            ConspectusRow(action: { event in
+                if event == .selected {
+                    self.chooser.selectedAuthor = self.chooser.model.user
+                }
+
+            }, conspectus: self.chooser.model.user, selectable: true, selected: self.chooser.selectedAuthor == self.chooser.model.user, textColor: Color.F.black)
+
+            ForEach(chooser.searchResult, id: \.id) { author in
+                ConspectusRow(action: { event in
+                    if event == .selected {
+                        self.chooser.selectedAuthor = author
+                    }
+
+                }, conspectus: author, selectable: true, selected: self.chooser.selectedAuthor == author, textColor: Color.F.black)
+            }
+        }
+    }
+}
+
+struct BooksChooserSubView: View {
+    @ObservedObject var chooser: ConspectusChooser
+
+    var body: some View {
+        ForEach(chooser.searchResult, id: \.id) { book in
+            ConspectusRow(action: { event in
+                if event == .selected {
+                    self.chooser.selectedBooks.append(book as! Book)
+                } else {
+                    self.chooser.selectedBooks.removeAll { $0.id == book.id }
+                }
+
+            }, conspectus: book, selectable: true, selected: self.chooser.selectedBooks.contains(book as! Book), textColor: Color.F.black)
+        }
+    }
+}
+
+struct TagsChooserSubView: View {
+    @ObservedObject var chooser: ConspectusChooser
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            if chooser.selectOnlyParentTag {
+                ForEach(chooser.filteredTags, id: \.id) { tag in
+                    TagTreeNodeLink(tag, isSelected: self.chooser.selectedParentTag == tag, action: {
+                        self.chooser.selectedParentTag = self.chooser.selectedParentTag == tag ? nil : tag
+                    })
+                }
+            } else {
+                ForEach(chooser.allTags, id: \.id) { tag in
+                    TagTreeNodeLink(tag, isSelected: self.chooser.selectedTags.contains(tag), action: {
+                        self.chooser.selectDeselect(tag)
+                    })
+                }
+            }
+        }
+        .padding(.horizontal, 15)
+    }
+}
+
+struct UserCommentsChooserSubView: View {
+    @ObservedObject var chooser: ConspectusChooser
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if self.chooser.mode == .commenting {
+                TextArea(text: $chooser.userCommentText, textColor: NSColor.F.black, font: QuoteCell.textFont, isEditable: true)
+                    .lineSpacing(5)
+                    .colorScheme(.light)
+                    .frame(width: 780, height: TextArea.textHeightFrom(text: chooser.userCommentText, width: 780, font: QuoteCell.textFont, isShown: true, minHeight: 50))
+                    .padding(.vertical, 5)
+                    .padding(.leading, 10)
+                    .padding(.trailing, 10)
+                    .saturation(0)
+
+            } else if self.chooser.mode == .chooseLinkAmongUserBooksComment {
+                ForEach(chooser.userBookComments, id: \.id) { comment in
+                    ConspectusRow(action: { event in
+                        if event == .selected {
+                            self.chooser.selectedUserBookComment = comment
+                        }
+
+                    }, conspectus: comment, selectable: true, selected: self.chooser.selectedUserBookComment == comment, textColor: Color.F.black)
+                }
+            } else if chooser.mode == .chooseLinkAmongUserBooks {
+                ForEach(chooser.userBooks, id: \.id) { userBook in
+                    ConspectusRow(action: { event in
+                        if event == .selected {
+                            self.chooser.selectedUserBook = userBook
+                            self.chooser.mode = .chooseLinkAmongUserBooksComment
+                        }
+
+                    }, conspectus: userBook, selectable: true, selected: self.chooser.selectedUserBook == userBook, textColor: Color.F.black)
+                }
+            } else {
+                Spacer()
+            }
+        }
+    }
+}
+
+struct ChooserFooter: View {
+    enum ChooserResult {
         case apply
         case cancel
     }
@@ -378,6 +285,8 @@ struct TagTreeNodeLink: View {
                 .onTapGesture {
                     self.onTapAction?()
                 }
+            
+            Spacer()
         }
     }
 }

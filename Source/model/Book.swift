@@ -72,6 +72,17 @@ class BookColl: ObservableObject {
         }
     }
 
+    func removeAllBooks() {
+        if books.count > 0 {
+            for book in books {
+                book.content.author = nil
+                _ = book.store()
+            }
+            books = []
+            _ = owner.store(forced: true)
+        }
+    }
+
     func addBook(_ b: Book) {
         if !books.contains(b) {
             books.append(b)
@@ -79,8 +90,7 @@ class BookColl: ObservableObject {
                 b.content.author = owner
                 _ = b.store()
             }
-            owner.state.markAsChanged()
-            _ = owner.store()
+            _ = owner.store(forced: true)
         }
     }
 }
@@ -96,6 +106,16 @@ class QuoteColl: ObservableObject {
                 q.linkColl.removeAllLinks()
                 break
             }
+        }
+    }
+
+    func removeAllQuotes() {
+        if quotes.count > 0 {
+            for q in quotes {
+                q.remove()
+            }
+            quotes = []
+            _ = owner.store(forced: true)
         }
     }
 
@@ -129,6 +149,14 @@ class Book: Conspectus, ObservableObject {
                 self.state.markAsChanged()
             }
             .store(in: &disposeBag)
+    }
+    
+    override func getDescription() -> String {
+        return "\(content.title), \(content.authorText), \(content.writtenDate)"
+    }
+    
+    override func getHashName() -> String {
+        return "book" + content.title + content.writtenDate
     }
 
     override func validate() -> ValidationStatus {
@@ -197,9 +225,6 @@ class Book: Conspectus, ObservableObject {
             content.info = dict["info"] as? String ?? ""
             content.authorText = dict["authorText"] as? String ?? ""
 
-            description = "\(content.title), \(content.authorText), \(content.writtenDate)"
-            hashName = "book" + content.title + content.writtenDate
-
             if let quotes = dict["quotes"] as? [[String: Any]] {
                 var res: [Quote] = []
                 for quoteData in quotes {
@@ -221,11 +246,11 @@ class Book: Conspectus, ObservableObject {
         state.markAsNotChanged()
     }
 
-    override func didDestroy(_ conspectus: Conspectus) {
-        super.didDestroy(conspectus)
-        if let author = content.author, author.id == conspectus.id {
-            content.author = nil
-            _ = store()
+    override func destroy() {
+        super.destroy()
+        if let author = content.author as? BooksOwner {
+            author.booksColl.removeBook(self)
         }
+        quoteColl.removeAllQuotes()
     }
 }

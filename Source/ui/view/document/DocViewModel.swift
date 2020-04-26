@@ -13,16 +13,12 @@ final class DocViewModel: ViewModel {
     @Published var selectedConspectus: Conspectus
     @Published var selectedConspectusState: ConspectusState
 
-    let bookHeaderController = BookHeaderController()
-    let tagHeaderController = TagHeaderController()
-
     let infoController = InfoController()
 
-    let bookListController = BookListController()
     let tagTreeController = TagTreeController()
     let linkListController = LinkListController()
     let quoteListController = QuoteListController()
-    let quoteLinkChooser = QuoteLinkChooser()
+    let chooser = ConspectusChooser()
 
     private var disposeBag: Set<AnyCancellable> = []
 
@@ -36,10 +32,8 @@ final class DocViewModel: ViewModel {
             .map { $0! }
             .removeDuplicates()
             .sink { newValue in
-                self.bookHeaderController.update(newValue)
-                self.tagHeaderController.update(newValue)
+                self.chooser.cancel()
                 self.infoController.update(newValue)
-                self.bookListController.update(newValue)
                 self.quoteListController.update(newValue)
                 self.tagTreeController.update(newValue)
                 self.linkListController.update(newValue)

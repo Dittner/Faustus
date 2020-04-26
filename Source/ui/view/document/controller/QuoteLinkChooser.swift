@@ -23,7 +23,9 @@ class QuoteLinkChooser: ViewModel, ChooserController {
     @Published var userBooks: [Book] = []
     @Published var selectedUserBook: Book?
     @Published var selectedUserBookComments: [Quote] = []
-    @Published var userCommentText: String = ""
+    @Published var userCommentText: String = "Ihr Kommentar"
+    @Published var userCommentStartPage: String = ""
+    @Published var userCommentEndPage: String = ""
     @Published var selectedFilter: SearchFilter = .authors
     @Published var searchResult: [Conspectus] = []
     @Published var filterText: String = ""
@@ -82,9 +84,21 @@ class QuoteLinkChooser: ViewModel, ChooserController {
         $selectedUserBook
             .filter { $0 != nil }
             .map { book in
-                book!.quoteColl.quotes.sorted {$0 > $1}
+                book!.quoteColl.quotes.sorted { $0 > $1 }
             }
             .assign(to: \.selectedUserBookComments, on: self)
+            .store(in: &disposeBag)
+
+        $selectedFilter
+            .removeDuplicates()
+            .sink { filter in
+                if filter == .comments {
+                    self.choosingMode = .choosingUserBooks
+                    self.selectedUserBook = nil
+                } else {
+                    self.choosingMode = .choosingConspectus
+                }
+            }
             .store(in: &disposeBag)
     }
 
@@ -93,15 +107,21 @@ class QuoteLinkChooser: ViewModel, ChooserController {
         clear()
         owner = q
     }
-    
+
     private func clear() {
         owner = nil
         choosingMode = .choosingConspectus
         selectedLink = nil
         selectedUserBook = nil
-        userCommentText = ""
+        userCommentText = "Ihr Kommentar"
         filterText = ""
         selectedFilter = .authors
+    }
+
+    func cancelCommenting() {
+        selectedFilter = .comments
+        self.selectedUserBook = nil
+        choosingMode = .choosingUserBooksComments
     }
 
     func cancel() {
@@ -109,9 +129,23 @@ class QuoteLinkChooser: ViewModel, ChooserController {
     }
 
     func apply() {
-        if let link = selectedLink {
-            owner.linkColl.addLink(to: link)
+        if choosingMode == .commenting {
+            let q = Quote(owner: selectedUserBook!)
+            q.text = userCommentText
+            q.startPage = userCommentStartPage
+            q.endPage = userCommentEndPage
+            let status = q.validate()
+            if status == .ok {
+                selectedUserBook!.quoteColl.quotes.insert(q, at: 0)
+                owner.linkColl.addLink(to: q)
+                clear()
+            } else {
+                owner.book.state.validationStatus = status
+            }
         }
-        clear()
+        else if let link = selectedLink {
+            owner.linkColl.addLink(to: link)
+            clear()
+        }
     }
 }

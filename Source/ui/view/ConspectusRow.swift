@@ -17,7 +17,6 @@ enum ConspectusRowAction {
 
 struct ConspectusRow: View {
     let action: (ConspectusRowAction) -> Void
-    let rowHeight:CGFloat
 
     class Notifier: ObservableObject {
         @Published var title: String = ""
@@ -45,7 +44,6 @@ struct ConspectusRow: View {
         iconName = conspectus.genus.toIconName()
 
         if let author = conspectus as? Author {
-            rowHeight = 50
             genusColor = Color.F.author
             Publishers.CombineLatest(author.content.$surname, author.content.$initials)
                 .map { surname, initials in
@@ -59,7 +57,6 @@ struct ConspectusRow: View {
                 .store(in: &disposeBag)
 
         } else if let user = conspectus as? User {
-            rowHeight = 50
             genusColor = Color.F.black
             Publishers.CombineLatest(user.content.$surname, user.content.$initials)
                 .map { surname, initials in
@@ -68,7 +65,6 @@ struct ConspectusRow: View {
                 .assign(to: \.title, on: notifier)
                 .store(in: &disposeBag)
         } else if let book = conspectus as? Book {
-            rowHeight = 50
             genusColor = Color.F.book
 
             book.content.$title
@@ -102,133 +98,134 @@ struct ConspectusRow: View {
                 .assign(to: \.hasLinks, on: notifier)
                 .store(in: &disposeBag)
         } else if let tag = conspectus as? Tag {
-            rowHeight = 50
             genusColor = Color.F.tag
 
             tag.content.$name
                 .assign(to: \.title, on: notifier)
                 .store(in: &disposeBag)
         } else if let quote = conspectus as? Quote {
-            rowHeight = 100
             genusColor = Color.F.gray
-            
+
             Publishers.CombineLatest3(quote.book.content.$title, quote.$startPage, quote.$endPage)
-            .map { title, startPage, endPage in
-                let res:String = title.isEmpty ? "" : title + ", "
-                if startPage.isEmpty {
-                    return res
-                } else if endPage.isEmpty {
-                    return res + "s." + startPage
-                } else {
-                    return res + "ss." + startPage + "–" + endPage
+                .map { title, startPage, endPage in
+                    let res: String = title.isEmpty ? "" : title + ", "
+                    if startPage.isEmpty {
+                        return res
+                    } else if endPage.isEmpty {
+                        return res + "s." + startPage
+                    } else {
+                        return res + "ss." + startPage + "–" + endPage
+                    }
                 }
-            }
-            .assign(to: \.title, on: notifier)
-            .store(in: &disposeBag)
+                .assign(to: \.title, on: notifier)
+                .store(in: &disposeBag)
 
             quote.$text
                 .assign(to: \.subTitle, on: notifier)
                 .store(in: &disposeBag)
 
         } else {
-            rowHeight = 50
             genusColor = Color.F.gray
         }
 
-        if selectable {
-            notifier.isSelected = selected
-            notifier.$isSelected
-                .dropFirst()
-                .sink { value in
+        notifier.isSelected = selected
+        notifier.$isSelected
+            .dropFirst()
+            .sink { value in
+                if selectable {
                     action(value ? .selected : .deselected)
+                } else {
+                    action(.tapped)
                 }
-                .store(in: &disposeBag)
-        }
+            }
+            .store(in: &disposeBag)
     }
 
     var body: some View {
-        return GeometryReader { geometry in
-            ZStack(alignment: .topLeading) {
-                if self.isSelectable {
-                    Toggle("", isOn: self.$notifier.isSelected)
-                        .toggleStyle(RowBgToggleStyle(selectionColor: self.genusColor))
-                        .frame(width: geometry.size.width, height: self.rowHeight)
-                } else {
-                    Button("", action: { self.action(.tapped) }).buttonStyle(RowBgButtonStyle())
-                        .frame(width: geometry.size.width, height: self.rowHeight)
-                }
-
+        Button(action: { self.action(.tapped) }) {
+            HStack(alignment: .center, spacing: 0) {
                 Rectangle()
                     .foregroundColor(self.genusColor)
                     .allowsHitTesting(false)
-                    .frame(width: 20, height: 2)
-                    .offset(x: geometry.size.width / 2 - 10, y: 0)
+                    .frame(width: 4, height: 50)
+                    .opacity(isSelectable && notifier.isSelected ? 1 : 0)
+                    .padding(.top, -2)
 
                 Image(self.iconName)
                     .renderingMode(.template)
+                    .foregroundColor(self.textColor)
                     .allowsHitTesting(false)
-                    .frame(width: 50, height: 50)
+                    .frame(width: 46, height: 50)
                     .opacity(0.6)
                     .scaleEffect(0.8)
-                    .offset(x: 0, y: 0)
 
-                Text(self.notifier.title)
-                    .allowsHitTesting(false)
-                    .lineLimit(1)
-                    .multilineTextAlignment(.center)
-                    .font(Font.custom(.pragmatica, size: 16))
-                    .frame(minWidth: 100, idealWidth: 500, maxWidth: .infinity, minHeight: 30, idealHeight: 50, maxHeight: 50, alignment: .topLeading)
-                    .offset(x: 50, y: self.notifier.subTitle.isEmpty ? 15 : 8)
-                    .frame(width: geometry.size.width - 50, height: 50)
-
-                Text("\(self.notifier.subTitle)")
-                    .allowsHitTesting(false)
-                    .font(Font.custom(self.notifier.hasLinks ? .pragmaticaExtraLightItalics : .pragmaticaExtraLight, size: 14))
-                    .lineLimit(4)
-                    .offset(x: 50, y: 28)
-                    .frame(width: geometry.size.width - 50, alignment: .leading)
-
-                if self.state.isRemoved {
-                    Image("remove")
-                        .renderingMode(.template)
+                VStack(alignment: .center, spacing: 0) {
+                    Rectangle()
+                        .foregroundColor(self.genusColor)
                         .allowsHitTesting(false)
-                        .scaleEffect(0.8)
-                        .offset(x: geometry.size.width - 20, y: 15)
-                } else if self.notifier.isSelected {
-                    Image("check")
-                        .renderingMode(.template)
-                        .allowsHitTesting(false)
-                        .scaleEffect(1)
-                        .offset(x: geometry.size.width - 20, y: 15)
-                }
+                        .frame(width: 20, height: 2)
+                        .offset(x: -18)
+                        .padding(.bottom, self.notifier.subTitle.isEmpty ? 13 : 8)
 
-                Separator(color: self.textColor.opacity(0.1), width: .infinity).offset(y: self.rowHeight - 1)
-            }
-            .foregroundColor(self.textColor)
-        }.frame(height: rowHeight)
+                    Text(self.notifier.title)
+                        .allowsHitTesting(false)
+                        .lineLimit(1)
+                        .layoutPriority(1)
+                        .font(Font.custom(.pragmatica, size: 16))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    if !self.notifier.subTitle.isEmpty {
+                        Text("\(self.notifier.subTitle)")
+                            .allowsHitTesting(false)
+                            .font(Font.custom(self.notifier.hasLinks ? .pragmaticaExtraLightItalics : .pragmaticaExtraLight, size: 14))
+                            .lineLimit(10)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.bottom, 8)
+
+                    } else {
+                        Spacer()
+                    }
+
+                    Separator(color: self.textColor.opacity(0.1), width: .infinity)
+                        .padding(.horizontal, -50)
+
+                }.foregroundColor(self.textColor)
+
+                Image("remove")
+                    .renderingMode(.template)
+                    .foregroundColor(self.textColor)
+                    .allowsHitTesting(false)
+                    .scaleEffect(0.8)
+                    .opacity(self.state.isRemoved ? 1 : 0)
+
+                Image("check")
+                    .renderingMode(.template)
+                    .foregroundColor(self.textColor)
+                    .allowsHitTesting(false)
+                    .scaleEffect(1)
+                    .opacity(self.notifier.isSelected ? 1 : 0)
+
+            }.padding(.trailing, 5)
+
+        }.buttonStyle(RowBgButtonStyle(isSelectable: isSelectable, isOn: $notifier.isSelected))
     }
 }
 
 struct RowBgButtonStyle: ButtonStyle {
-    func makeBody(configuration: Self.Configuration) -> some View {
-        Color(configuration.isPressed ? NSColor.F.black01 : NSColor.F.clear)
-    }
-}
+    var isSelectable: Bool
+    var isOn: Binding<Bool>
 
-struct RowBgToggleStyle: ToggleStyle {
-    let selectionColor: Color
     func makeBody(configuration: Self.Configuration) -> some View {
-        HStack(alignment: .center, spacing: 0) {
-            if configuration.isOn {
-                selectionColor.frame(width: 4)
-            }
-
-            Color.F.clear
-                .onTapGesture {
-                    withAnimation {
-                        configuration.$isOn.wrappedValue.toggle()
+        configuration.label
+            .background(Color(configuration.isPressed && !isSelectable ? NSColor.F.black01 : NSColor.F.clear))
+            .onTapGesture {
+                withAnimation {
+                    if self.isSelectable {
+                        self.isOn.wrappedValue.toggle()
+                    } else {
+                        self.isOn.wrappedValue = false
                     }
                 }
-        }
+            }
     }
 }

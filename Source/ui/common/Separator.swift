@@ -21,6 +21,6 @@ struct Separator: View {
     var body: some View {
         Rectangle()
             .fill(color)
-            .frame(minWidth: 0.1, maxWidth: width, minHeight: 0.1, maxHeight: height)
+            .frame(minWidth: 0.5, maxWidth: width, minHeight: 0.5, maxHeight: height)
     }
 }

@@ -45,7 +45,7 @@ class InfoController: ObservableObject {
 
     func removeParentTag() {
         if let tag = owner as? Tag {
-            tag.content.parentTag = nil
+            tag.content.updateParent(with: nil)
         }
     }
 }

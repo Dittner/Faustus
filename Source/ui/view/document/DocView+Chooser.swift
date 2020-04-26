@@ -52,7 +52,6 @@ struct BooksChooser: View {
                                 }
 
                             }, conspectus: book, selectable: true, selected: self.controller.selectedBooks.contains(book), textColor: Color.F.black)
-                                .frame(height: 50)
                         }
                     }
                 }
@@ -62,7 +61,7 @@ struct BooksChooser: View {
 
             ModalViewFooter(controller: controller)
         }
-        .frame(height: 400)
+        .frame(width: 700, height: 400)
         .background(Color.F.grayBG)
         .cornerRadius(10)
         .shadow(color: Color.F.black025, radius: 1, x: 0, y: 1)
@@ -101,7 +100,6 @@ struct AuthorChooser: View {
                         }
 
                     }, conspectus: self.controller.model.user, selectable: true, selected: self.controller.selectedConspectus == self.controller.model.user, textColor: Color.F.black)
-                        .frame(height: 50)
 
                     ForEach(controller.filteredAuthors, id: \.id) { author in
                         ConspectusRow(action: { event in
@@ -110,7 +108,6 @@ struct AuthorChooser: View {
                             }
 
                         }, conspectus: author, selectable: true, selected: self.controller.selectedConspectus == author, textColor: Color.F.black)
-                            .frame(height: 50)
                     }
                 }
             }
@@ -137,12 +134,12 @@ struct ParentTagChooser: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if controller.tagNodes.count > 0 {
+            if controller.tags.count > 0 {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 1) {
-                        ForEach(controller.tagNodes, id: \.tag.id) { node in
-                            TagTreeNodeLink(node: node, isSelected: self.controller.selectedParentTag == node.tag, action: {
-                                self.controller.selectedParentTag = self.controller.selectedParentTag == node.tag ? nil : node.tag
+                        ForEach(controller.tags, id: \.id) { tag in
+                            TagTreeNodeLink(tag, isSelected: self.controller.selectedParentTag == tag, action: {
+                                self.controller.selectedParentTag = self.controller.selectedParentTag == tag ? nil : tag
                             })
                         }
                     }.padding(.horizontal, 10)
@@ -172,28 +169,28 @@ struct TagsChooser: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if controller.allTagNodes.count > 0 {
+            if controller.allTags.count > 0 {
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 1) {
-                        ForEach(controller.allTagNodes, id: \.tag.id) { node in
-                            TagTreeNodeLink(node: node, isSelected: self.controller.selectedTags.contains(node.tag), action: {
-                                self.controller.selectDeselect(node.tag)
+                        ForEach(controller.allTags, id: \.id) { tag in
+                            TagTreeNodeLink(tag, isSelected: self.controller.selectedTags.contains(tag), action: {
+                                self.controller.selectDeselect(tag)
                             })
                         }
                     }.padding(.horizontal, 20)
                         .padding(.vertical, 10)
-                        .frame(width: 970, alignment: .topLeading)
-                }.frame(width: 970, height: 350, alignment: .topLeading)
+                        .frame(width: 770, alignment: .topLeading)
+                }.frame(width: 770, height: 350, alignment: .topLeading)
             } else {
                 Spacer()
             }
 
             ModalViewFooter(controller: controller)
-
-        }.frame(height: 400)
-            .background(Color.F.grayBG)
-            .cornerRadius(10)
-            .shadow(color: Color.F.black025, radius: 1, x: 0, y: 1)
+        }
+        .frame(width: 800, height: 400)
+        .background(Color.F.grayBG)
+        .cornerRadius(10)
+        .shadow(color: Color.F.black025, radius: 1, x: 0, y: 1)
     }
 }
 
@@ -231,23 +228,44 @@ struct LinkChooser: View {
 
             Separator(color: Color.F.black, width: .infinity).padding(.horizontal, 15)
 
+            if self.chooser.choosingMode == .commenting {
+                HStack(alignment: .top, spacing: 0) {
+                    Text("S.")
+                        .font(Font.custom(.pragmaticaBold, size: 21))
+                        .foregroundColor(Color.F.black)
+
+                    EditableText("", text: $chooser.userCommentStartPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .right, isEditing: true, format: "[1-9][0-9]{0,4}")
+                        .saturation(0)
+                        .frame(width: 70)
+
+                    Text("–")
+                        .font(Font.custom(.pragmaticaBold, size: 21))
+                        .foregroundColor(Color.F.black)
+                        .opacity(chooser.userCommentEndPage.count == 0 ? 0 : 1)
+
+                    EditableText("", text: $chooser.userCommentEndPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .left, isEditing: true, format: "[1-9][0-9]{0,4}")
+                        .saturation(0)
+                        .frame(width: 70)
+
+                    Spacer()
+
+                    Button("", action: self.chooser.cancelCommenting)
+                        .buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 25))
+                }.padding(.horizontal, 15)
+                    .frame(height: 40)
+            }
+
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(alignment: .leading, spacing: 1) {
                     if self.chooser.choosingMode == .commenting {
-                        Text(self.chooser.selectedUserBook!.content.title)
-                            .lineLimit(1)
-                            .frame(height: 30)
-                            .foregroundColor(Color.F.black)
-                            .font(Font.custom(.pragmaticaSemiBold, size: 21))
-
-                        TextArea(text: $chooser.userCommentText, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 21), isEditable: true)
-                            .layoutPriority(-1)
-                            .saturation(0)
+                        TextArea(text: $chooser.userCommentText, textColor: NSColor.F.black, font: QuoteCell.textFont, isEditable: true)
+                            .lineSpacing(5)
                             .colorScheme(.light)
-                            .padding(.leading, 35)
-                            .padding(.trailing, 20)
-                            .background(Color.F.whiteBG)
-                            .frame(height: 250)
+                            .frame(width: 780, height: TextArea.textHeightFrom(text: chooser.userCommentText, width: 780, font: QuoteCell.textFont, isShown: true, minHeight: 200))
+                            .padding(.vertical, 5)
+                            .padding(.leading, 10)
+                            .padding(.trailing, 10)
+                            .saturation(0)
 
                     } else if self.chooser.choosingMode == .choosingUserBooksComments {
                         ForEach(chooser.selectedUserBookComments, id: \.id) { comment in
@@ -280,7 +298,7 @@ struct LinkChooser: View {
                     } else {
                         Spacer()
                     }
-                }
+                }.colorScheme(.light)
             }
             .colorScheme(.dark)
 
@@ -325,7 +343,6 @@ struct ModalViewFooter: View {
 struct TagTreeNodeLink: View {
     @ObservedObject var tag: Tag
     @ObservedObject var state: ConspectusState
-    private let node: TagTreeNode
     let isSelected: Bool
     let levelOffset: CGFloat
     let levelWidth: Int = 40
@@ -334,15 +351,14 @@ struct TagTreeNodeLink: View {
     let textColor: Color
     let font: Font
 
-    init(node: TagTreeNode, isSelected: Bool, action: (() -> Void)?) {
-        self.node = node
-        tag = node.tag
-        state = node.tag.state
+    init(_ tag: Tag, isSelected: Bool, action: (() -> Void)?) {
+        self.tag = tag
+        state = tag.state
 
         self.isSelected = isSelected
-        textColor = node.tag.state.isRemoved ? Color.F.red : Color.F.black
+        textColor = tag.state.isRemoved ? Color.F.red : Color.F.black
         font = Font.custom(.pragmatica, size: 16)
-        levelOffset = CGFloat(node.level * levelWidth)
+        levelOffset = CGFloat(tag.content.getLevel() * levelWidth)
         onTapAction = action
     }
 
@@ -367,7 +383,6 @@ struct TagTreeNodeLink: View {
 }
 
 struct TreeNodeLines: Shape {
-    let node: TagTreeNode
     let levelWidth: Int
     func path(in rect: CGRect) -> Path {
         var path = Path()

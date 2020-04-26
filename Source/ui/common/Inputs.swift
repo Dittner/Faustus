@@ -126,14 +126,14 @@ struct TextInput: NSViewRepresentable {
 
 
 struct TextArea: NSViewRepresentable {
-    static func textHeightFrom(text: String, width: CGFloat, font: NSFont, isShown: Bool) -> CGFloat {
+    static func textHeightFrom(text: String, width: CGFloat, font: NSFont, isShown: Bool, minHeight:CGFloat = 30) -> CGFloat {
         guard isShown else { return 0 }
 
         TextInput.tf.stringValue = text
         TextInput.tf.font = font
         TextInput.tf.lineBreakMode = .byWordWrapping
         // 0.4 + 1.25 – multiple of TextArea line hight
-        return max(30, TextInput.tf.sizeThatFits(CGSize(width: width, height: .infinity)).height) * 1.29
+        return max(minHeight, TextInput.tf.sizeThatFits(CGSize(width: width, height: .infinity)).height * 1.29) 
     }
 
     @Binding var text: String
@@ -152,6 +152,7 @@ struct TextArea: NSViewRepresentable {
         tv.delegate = context.coordinator
         tv.textColor = textColor
         tv.font = font
+        
         tv.isEditable = isEditable
         tv.isSelectable = isEditable
         tv.allowsUndo = true
@@ -166,6 +167,7 @@ struct TextArea: NSViewRepresentable {
         context.coordinator.parent = self
         textArea.isEditable = isEditable
         textArea.isSelectable = isEditable
+        
         if textArea.string != text {
             textArea.string = text
         }

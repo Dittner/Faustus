@@ -146,10 +146,10 @@ class Book: Conspectus, ObservableObject {
             for q in quoteColl.quotes {
                 status = q.validate()
                 if status != .ok {
-                    state.validationStatus = status
                     break
                 }
             }
+            state.validationStatus = status
         } else {
             state.validationStatus = .ok
         }

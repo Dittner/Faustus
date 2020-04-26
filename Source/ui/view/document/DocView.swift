@@ -332,14 +332,14 @@ struct TagLinksView: View {
                 if controller.isChoosing {
                     TagsChooser(controller: self.controller)
                 } else {
-                    ForEach(controller.ownerTagNodes, id: \.tag.id) { node in
-                        ConspectusLink(conspectus: node.tag, isEditing: self.state.isEditing, action: { result in
+                    ForEach(controller.ownerTags, id: \.id) { tag in
+                        ConspectusLink(conspectus: tag, isEditing: self.state.isEditing, action: { result in
                             if result == .navigate {
-                                node.tag.show()
+                                tag.show()
                             } else if result == .remove {
-                                self.controller.removeTag(node.tag)
+                                self.controller.removeTag(tag)
                             }
-                        }).offset(x: CGFloat(node.level * 40), y: 0)
+                        }).offset(x: CGFloat(tag.content.getLevel() * 40), y: 0)
 
                     }.padding(.leading, 40)
                         .padding(.trailing, 0)
@@ -421,8 +421,8 @@ struct QuoteCell: View {
     @ObservedObject var quoteLinkColl: LinkColl
     @ObservedObject var chooser: QuoteLinkChooser
     @ObservedObject var quoteListController: QuoteListController
-    private static let pagesFont: NSFont = NSFont(name: .pragmaticaBold, size: 21)
-    private static let textFont: NSFont = NSFont(name: .pragmaticaLight, size: 21)
+    static let pagesFont: NSFont = NSFont(name: .pragmaticaBold, size: 21)
+    static let textFont: NSFont = NSFont(name: .pragmaticaLight, size: 21)
 
     private let isEditing: Bool
 

@@ -11,7 +11,7 @@ import SwiftUI
 
 class TagTreeController: ViewModel, ChooserController {
     @Published var owner: Conspectus!
-    @Published var ownerTagNodes: [TagTreeNode] = []
+    @Published var ownerTags: [Tag] = []
     var tagTree:TagTree = TagTree([])
 
     func update(_ conspectus: Conspectus) {
@@ -22,24 +22,24 @@ class TagTreeController: ViewModel, ChooserController {
             let tags = model.bibliography.getValues()
                 .filter { $0 is Tag && !$0.state.isRemoved }
                 .map { $0 as! Tag }
-                .sorted { $0.content.name < $1.content.name }
+                .sorted { $0 < $1 }
 
             tagTree = TagTree(tags)
-            allTagNodes = tagTree.nodeList
-            ownerTagNodes = tagTree.compactTree { self.owner.linkColl.links.contains($0.tag) }
+            allTags = tagTree.flatTree()
+            ownerTags = tagTree.flatTree { self.owner.linkColl.links.contains($0) }
         }
     }
     
     func removeTag(_ t:Tag) {
         owner.linkColl.removeLink(from: t)
-        self.ownerTagNodes = self.tagTree.compactTree { self.owner.linkColl.links.contains($0.tag) }
+        self.ownerTags = tagTree.flatTree { self.owner.linkColl.links.contains($0) }
     }
     
     //choosing
     
     @Published var selectedTags: [Tag] = []
     @Published var isChoosing: Bool = false
-    @Published var allTagNodes: [TagTreeNode] = []
+    @Published var allTags: [Tag] = []
     private var disposeBag: Set<AnyCancellable> = []
     var chooseTagsPublisher: AnyCancellable?
     func chooseTags() {
@@ -97,7 +97,7 @@ class TagTreeController: ViewModel, ChooserController {
             }
         }
         
-        ownerTagNodes = tagTree.compactTree { self.owner.linkColl.links.contains($0.tag) }
+        ownerTags = tagTree.flatTree { self.owner.linkColl.links.contains($0) }
         isChoosing = false
     }
 }

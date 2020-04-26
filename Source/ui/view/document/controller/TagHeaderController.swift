@@ -14,7 +14,7 @@ class TagHeaderController: ViewModel, ChooserController {
     @Published var owner: Tag!
     @Published var selectedParentTag: Tag?
     @Published var isChoosing: Bool = false
-    @Published var tagNodes: [TagTreeNode] = []
+    @Published var tags: [Tag] = []
 
     func update(_ conspectus: Conspectus) {
         if let tag = conspectus as? Tag {
@@ -27,13 +27,13 @@ class TagHeaderController: ViewModel, ChooserController {
         isChoosing = true
         selectedParentTag = owner.content.parentTag
 
-        let tags = model.bibliography.getValues()
+        let allTags = model.bibliography.getValues()
             .filter { $0 is Tag && !$0.state.isRemoved }
             .map { $0 as! Tag }
-            .sorted { $0.content.name < $1.content.name }
+            .sorted { $0 < $1 }
 
-        let tagTree = TagTree(tags)
-        tagNodes = tagTree.compactTree { $0.tag.id != self.owner.id }
+        let tagTree = TagTree(allTags)
+        tags = tagTree.flatTree { $0.id != self.owner.id }
     }
 
     func cancel() {
@@ -42,6 +42,6 @@ class TagHeaderController: ViewModel, ChooserController {
 
     func apply() {
         isChoosing = false
-        owner.content.parentTag = selectedParentTag
+        owner.content.updateParent(with: selectedParentTag)
     }
 }

@@ -10,18 +10,48 @@ import Combine
 import SwiftUI
 
 class TagContent: ObservableObject {
+    var owner: Tag!
     @Published var name: String = ""
     @Published var info: String = "Keine"
-    @Published var parentTag: Tag?
+    @Published fileprivate(set) var parentTag: Tag?
+    @Published fileprivate(set) var children: [Tag] = []
+    
+    func getLevel() -> Int {
+        return parentTag == nil ? 0 : parentTag!.content.getLevel() + 1
+    }
+
+    func updateParent(with tag: Tag?) {
+        if parentTag != tag {
+            if let parent = parentTag {
+                parent.content.children.removeAll { $0 == owner }
+                parent.store(forced: true)
+            }
+
+            if let newParent = tag {
+                newParent.content.children.append(owner)
+                newParent.content.children = newParent.content.children.sorted { $0 < $1 }
+                newParent.store(forced: true)
+            }
+
+            parentTag = tag
+            owner.store(forced: true)
+        }
+    }
 }
 
-class Tag: Conspectus, ObservableObject {
+class Tag: Conspectus, ObservableObject, Comparable {
+    static func < (lhs: Tag, rhs: Tag) -> Bool {
+        lhs.content.name < rhs.content.name
+    }
+    
     @ObservedObject var content: TagContent = TagContent()
 
     override var genus: ConspectusGenus { return .tag }
 
     private var disposeBag: Set<AnyCancellable> = []
     override func didInit() {
+        content.owner = self
+
         for prop in [content.$name, content.$info] {
             prop
                 .removeDuplicates()
@@ -30,13 +60,6 @@ class Tag: Conspectus, ObservableObject {
                 }
                 .store(in: &disposeBag)
         }
-
-        content.$parentTag
-            .removeDuplicates()
-            .sink { _ in
-                self.state.markAsChanged()
-            }
-            .store(in: &disposeBag)
     }
 
     override func validate() -> ValidationStatus {
@@ -60,6 +83,8 @@ class Tag: Conspectus, ObservableObject {
             dict["parentTagID"] = superTag.id
         }
 
+        dict["childrenIDs"] = content.children.map { $0.id }
+
         return dict
     }
 
@@ -79,6 +104,10 @@ class Tag: Conspectus, ObservableObject {
         if let dict = fileData {
             if let parentTagID = dict["parentTagID"] as? UID {
                 content.parentTag = bibliography.read(parentTagID) as? Tag
+            }
+
+            if let childrenIDs = dict["childrenIDs"] as? [UID] {
+                content.children = childrenIDs.map { bibliography.read($0) as? Tag }.compactMap { $0 }
             }
         }
 

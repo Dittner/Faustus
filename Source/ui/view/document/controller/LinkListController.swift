@@ -12,21 +12,18 @@ import SwiftUI
 class LinkListController: ViewModel {
     @Published var linkColl: LinkColl!
     @Published var filteredLinks: [Conspectus] = []
-    var owner:Conspectus!
+    var owner: Conspectus!
 
     func update(_ conspectus: Conspectus) {
         owner = conspectus
         linkColl = conspectus.linkColl
-        filteredLinks = linkColl.links.filter { !($0 is Tag) }
-    }
-
-    var chooseBooksPublisher: AnyCancellable?
-    func addLink() {
-        filteredLinks = linkColl.links.filter { !($0 is Tag) }
+        filteredLinks = linkColl.links
+            .filter { $0.genus != .tag }
+            .sorted { $0 < $1 }
     }
 
     func removeLink(_ c: Conspectus) {
         linkColl.removeLink(from: c)
-        filteredLinks = linkColl.links.filter { !($0 is Tag) }
+        filteredLinks = linkColl.links.filter { $0.genus != .tag }
     }
 }

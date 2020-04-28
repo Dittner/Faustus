@@ -74,7 +74,7 @@ extension NSColor {
                            book: NSColor(rgb: 0xAD3D6B, alpha: 1),
                            tag: NSColor(rgb: 0xC19C49, alpha: 1),
                            quote: NSColor(rgb: 0x000000, alpha: 1),
-                           whiteBG: NSColor(rgb: 0xF7F7F7, alpha: 1),
+                           whiteBG: NSColor(rgb: 0xF5F5F5, alpha: 1),
                            redBG: NSColor(rgb: 0xF4EFF1, alpha: 1),
                            grayBG: NSColor(rgb: 0xEAEAEA, alpha: 1),
                            red: NSColor(rgb: 0xBA003A, alpha: 1),

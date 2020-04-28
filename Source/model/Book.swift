@@ -59,14 +59,13 @@ class BookColl: ObservableObject {
     }
 
     func removeBook(_ bookToRemove: Book) {
+        bookToRemove.content.author = nil
+        _ = bookToRemove.store()
+        
         for (ind, book) in books.enumerated() {
             if book == bookToRemove {
-                let b = books.remove(at: ind)
-                b.content.author = nil
-                _ = b.store()
-
+                _ = books.remove(at: ind)
                 _ = owner.store(forced: true)
-
                 break
             }
         }
@@ -145,7 +144,14 @@ class Book: Conspectus, ObservableObject {
 
         content.$author
             .removeDuplicates()
-            .sink { _ in
+            .sink { author in
+                if self.content.authorText.isEmpty {
+                    if let a = author as? Author {
+                        self.content.authorText = "\(a.content.surname) \(a.content.name)"
+                    } else if let u = author as? User {
+                        self.content.authorText = "\(u.content.surname) \(u.content.name)"
+                    }
+                }
                 self.state.markAsChanged()
             }
             .store(in: &disposeBag)

@@ -199,14 +199,15 @@ struct BookHeader: View {
                         .saturation(0)
                         .frame(width: 300)
                 } else {
-                    ConspectusLink(conspectus: bookContent.author!, isEditing: self.state.isEditing, fontSize: 16, height: 20, isLightMode: false, action: { result in
+                    ConspectusLink(conspectus: bookContent.author!, isEditing: self.state.isEditing, isLightMode: false, withDetails: false, action: { result in
                         switch result {
                         case .remove:
-                            (self.bookContent.author! as! BooksOwner).booksColl.removeBook(self.book)
+                            (self.bookContent.author as! BooksOwner).booksColl.removeBook(self.book)
                         case .navigate:
                             self.bookContent.author!.show()
                         }
-                    }).frame(width: 300)
+                    })
+                    Spacer()
                 }
 
                 SelectableText(text: "+Author", color: Color.F.white)

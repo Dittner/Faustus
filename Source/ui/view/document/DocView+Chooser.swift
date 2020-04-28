@@ -66,6 +66,8 @@ struct ChooserHeader: View {
             if chooser.showFilterBar {
                 FilterTabBar(selectedFilter: $chooser.selectedFilter, iconColor: Color.F.dark, bgColor: Color.F.whiteBG, selectedIconColor: Color.F.whiteBG, selectBgColor: Color.F.dark, enabledFilters: [.authors, .books, .tags, .comments])
                     .cornerRadius(2)
+            } else {
+                Spacer()
             }
             
 
@@ -253,7 +255,7 @@ struct TagTreeNodeLink: View {
     let isSelected: Bool
     let levelOffset: CGFloat
     let levelWidth: Int = 40
-    let height: CGFloat = 25
+    let height: CGFloat = 30
     let onTapAction: (() -> Void)?
     let textColor: Color
     let font: Font
@@ -280,8 +282,9 @@ struct TagTreeNodeLink: View {
                 .frame(height: height)
                 .font(font)
                 .foregroundColor(textColor)
-                .padding(.horizontal, 5)
-                .background(self.isSelected ? Color.F.tag : Color.F.clear)
+                .padding(.horizontal, 8)
+                .background(self.isSelected ? Color.F.tag.opacity(0.3) : Color.F.clear)
+                .cornerRadius(4)
                 .onTapGesture {
                     self.onTapAction?()
                 }

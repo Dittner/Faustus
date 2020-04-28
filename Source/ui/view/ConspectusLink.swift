@@ -20,24 +20,19 @@ struct ConspectusLink: View {
     let name: String
     let details: String
     let isEditing: Bool
-    let font: Font
+    let titleFont: Font
+    let detailsFont: Font
     let textColor: Color
     let btnIconColor: Color
-    let height: CGFloat
-    let showDetails: Bool
-    let showLinkIcon: Bool
-    let showSeparator: Bool
-    let leading: CGFloat
+    let withDetails: Bool
     let onLinkAction: ((ConspectusLinkAction) -> Void)?
 
-    init(conspectus: Conspectus, isEditing: Bool, fontSize: CGFloat = 21, height: CGFloat = 30, isLightMode: Bool = true, level: Int = 0,
-         showDetails: Bool = false, showLinkIcon: Bool = false, showSeparator: Bool = false, leading: CGFloat = 0, action: ((ConspectusLinkAction) -> Void)?) {
+    init(conspectus: Conspectus, isEditing: Bool, isLightMode: Bool = true, level: Int = 0,
+         withDetails: Bool = true, action: ((ConspectusLinkAction) -> Void)?) {
         self.conspectus = conspectus
         state = conspectus.state
-        self.showLinkIcon = showLinkIcon
-        self.showSeparator = showSeparator
-        self.leading = leading
-        
+        self.withDetails = withDetails
+
         switch conspectus.genus {
         case .author:
             name = "\((conspectus as! Author).content.surname) \((conspectus as! Author).content.initials)"
@@ -48,7 +43,7 @@ struct ConspectusLink: View {
         case .book:
             let bookInfo = (conspectus as! Book).content
             let authorInfo = bookInfo.getAuthorFullName()
-            
+
             if !authorInfo.isEmpty {
                 name = "\(bookInfo.title), \(authorInfo), \(bookInfo.writtenDate)"
             } else {
@@ -62,13 +57,13 @@ struct ConspectusLink: View {
         case .quote:
             let bookInfo = (conspectus as! Quote).book.content
             let authorInfo = bookInfo.getAuthorFullName()
-            
+
             if !authorInfo.isEmpty {
                 name = "\(bookInfo.title), \(authorInfo), \(bookInfo.writtenDate), s.\((conspectus as! Quote).startPage)"
             } else {
                 name = "\(bookInfo.title), \(bookInfo.writtenDate), s.\((conspectus as! Quote).startPage)"
             }
-            
+
             details = (conspectus as! Quote).text
         }
 
@@ -76,9 +71,8 @@ struct ConspectusLink: View {
 
         textColor = isLightMode ? Color.F.black : Color.F.white
         btnIconColor = isLightMode ? Color.F.white : Color.F.black
-        self.height = height
-        self.showDetails = showDetails
-        font = Font.custom(showDetails ? .pragmaticaSemiBold : isEditing ? .pragmaticaLight : .pragmaticaLightItalics, size: fontSize)
+        titleFont = Font.custom(withDetails ? .mono : .pragmaticaLightItalics, size: 16)
+        detailsFont = Font.custom((conspectus as? Quote)?.book.content.author?.genus == .user ? .pragmaticaLightItalics : .pragmaticaLight, size: 16)
 
         onLinkAction = action
     }
@@ -86,28 +80,17 @@ struct ConspectusLink: View {
     @State private var hover = false
 
     var body: some View {
-        HStack(alignment: .top, spacing: 5) {
-            if showSeparator {
-                Separator(color: Color.F.black, width: 3, height: .infinity)
-                    .padding(.leading, 2)
-                    .padding(.trailing, 15)
-                    .padding(.vertical, -10)
-            }
-
-            if showLinkIcon {
-                Image("link")
-                    .renderingMode(.template)
-                    .foregroundColor(Color(conspectus.genus))
-                    .allowsHitTesting(false)
-                    .offset(y: 8)
-            }
-            VStack(alignment: .leading, spacing: 10) {
-                Text(" \(name)")
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: 0) {
+                Text("\(name)")
                     .underline(self.hover && !isEditing, color: self.state.isRemoved ? Color.F.red : textColor)
                     .lineLimit(1)
-                    .frame(height: height)
                     .foregroundColor(state.isRemoved ? Color.F.red : textColor)
-                    .font(self.font)
+                    .font(self.titleFont)
+                    .padding(.horizontal, 8)
+                    .frame(height: withDetails ? 30 : 20, alignment: .center)
+                    .background(Color(conspectus.genus).opacity(0.2))
+                    .cornerRadius(4)
                     .onHover { value in self.hover = value }
                     .onTapGesture {
                         if !self.isEditing {
@@ -115,30 +98,25 @@ struct ConspectusLink: View {
                         }
                     }
 
-                if showDetails && !details.isEmpty {
-                    Text(details)
-                        .padding(.trailing, 0)
-                        .padding(.leading, -29)
-                        .foregroundColor(textColor)
-                        .font(Font.custom(.pragmaticaLight, size: 21))
+                Button("", action: { self.onLinkAction?(.remove) })
+                    .buttonStyle(IconButtonStyle(iconName: "smallClose", iconColor: btnIconColor, bgColor: Color(conspectus.genus), width: 20, height: 20, radius: 10))
+                    .opacity(isEditing ? 1 : 0)
+                    .layoutPriority(1)
+                    .offset(x: -10, y: -5)
+
+                if withDetails && !details.isEmpty {
+                    Spacer()
                 }
             }
 
-            if showDetails {
-                Spacer()
+            if withDetails && !details.isEmpty {
+                Text(details)
+                    .foregroundColor(textColor)
+                    .font(self.detailsFont)
+                    .padding(.horizontal, 8)
+                    .padding(.top, 5)
+                    .padding(.bottom, 10)
             }
-
-            Button("", action: { self.onLinkAction?(.remove) })
-                .buttonStyle(IconButtonStyle(iconName: "smallClose", iconColor: btnIconColor, bgColor: textColor, width: 20, height: 20, radius: 10))
-                .opacity(isEditing ? 1 : 0)
-                .offset(y: (height - 20) / 2)
-
-            if !showDetails {
-                Spacer()
-            }
-
-        }.padding(.vertical, showDetails ? 10 : 0)
-            .padding(.leading, leading)
-            .background(showDetails ? Color.F.whiteBG : Color.clear)
+        }.background(withDetails && !details.isEmpty ? Color.F.whiteBG : Color.F.clear)
     }
 }

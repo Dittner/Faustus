@@ -10,11 +10,7 @@ import Combine
 import Foundation
 import SwiftUI
 
-class Quote: Conspectus, ObservableObject, Comparable {
-    static func < (lhs: Quote, rhs: Quote) -> Bool {
-        Int(lhs.startPage) ?? 0 < Int(rhs.startPage) ?? 0
-    }
-
+class Quote: Conspectus, ObservableObject {
     let book: Book
     @Published var text: String = "Neues Zitat"
     @Published var startPage: String = ""

@@ -11,26 +11,37 @@ import SwiftUI
 
 class TagTreeController: ViewModel {
     @Published var owner: Conspectus!
+    @Published var ownerLinks: [Conspectus] = []
     @Published var ownerTags: [Tag] = []
-    var tagTree:TagTree = TagTree([])
+    var tagTree: TagTree = TagTree([])
+    var ownerLinksPublisher: AnyCancellable?
+
+    init() {
+        ownerLinksPublisher = $owner
+            .compactMap { $0 }
+            .flatMap { owner in
+                owner.linkColl.$links
+            }
+            .debounce(for: 0.2, scheduler: RunLoop.main)
+            .map { links in
+                let tags = self.model.bibliography.getValues()
+                    .filter { $0 is Tag && !$0.state.isRemoved }
+                    .sorted { $0 < $1 }
+                    .map { $0 as! Tag }
+
+                return TagTree(tags).flatTree { links.contains($0) }
+            }
+            .assign(to: \.ownerTags, on: self)
+    }
 
     func update(_ conspectus: Conspectus) {
         if !(conspectus is Tag || conspectus is User) {
-            self.owner = conspectus
-
-            let tags = model.bibliography.getValues()
-                .filter { $0 is Tag && !$0.state.isRemoved }
-                .map { $0 as! Tag }
-                .sorted { $0 < $1 }
-
-            tagTree = TagTree(tags)
-            ownerTags = tagTree.flatTree { self.owner.linkColl.links.contains($0) }
+            owner = conspectus
+            ownerLinks = owner.linkColl.links
         }
     }
-    
-    func removeTag(_ t:Tag) {
-        owner.linkColl.removeLink(from: t)
-        self.ownerTags = tagTree.flatTree { self.owner.linkColl.links.contains($0) }
-    }
 
+    func removeTag(_ t: Tag) {
+        owner.linkColl.removeLink(from: t)
+    }
 }

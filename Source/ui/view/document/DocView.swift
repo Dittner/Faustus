@@ -167,7 +167,7 @@ struct StatusPanel: View {
 
             if chooser.owner == conspectus && chooser.mode == .chooseAuthor {
                 ConspectusChooserView(chooser: chooser).offset(y: -30)
-            } else if chooser.owner == conspectus && chooser.mode == .chooseTags {
+            } else if chooser.owner == conspectus && chooser.mode == .chooseTags && chooser.selectOnlyParentTag {
                 ConspectusChooserView(chooser: chooser).offset(y: -30)
             }
         }
@@ -292,7 +292,7 @@ struct BookListView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 1) {
             SectionView(isExpanded: $isExpanded, title: title, isEditing: self.state.isEditing, action: { self.chooser.chooseBooks(self.owner) }, onExpand: { value in BookListView.isExpanded = value
             })
 
@@ -336,7 +336,7 @@ struct TagLinksView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 1) {
             SectionView(isExpanded: $isExpanded, title: "TAGS", isEditing: self.state.isEditing, action: { self.chooser.chooseTags(self.controller.owner) }, onExpand: { value in TagLinksView.isExpanded = value
             })
 
@@ -376,19 +376,19 @@ struct LinkListView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 1) {
             SectionView(isExpanded: $isExpanded, title: "LINKS", isEditing: self.state.isEditing, onExpand: { value in LinkListView.isExpanded = value
             })
 
             if isExpanded {
                 ForEach(controller.filteredLinks, id: \.id) { c in
-                    ConspectusLink(conspectus: c, isEditing: self.state.isEditing, showDetails: true, showLinkIcon: true, leading: 40, action: { result in
+                    ConspectusLink(conspectus: c, isEditing: self.state.isEditing, action: { result in
                         if result == .navigate {
                             c.show()
                         } else if result == .remove {
                             self.controller.removeLink(c)
                         }
-                    })
+                    }).padding(.leading, 40)
 
                 }.padding(.leading, 0)
                     .padding(.trailing, 0)
@@ -414,7 +414,7 @@ struct QuoteListView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .center, spacing: 15) {
             SectionView(isExpanded: $isExpanded, title: "ZITATE", isEditing: self.state.isEditing, action: quoteListController.createQuote, onExpand: { value in QuoteListView.isExpanded = value
             })
 
@@ -452,7 +452,7 @@ struct QuoteCell: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 1) {
             HStack(alignment: .top, spacing: 0) {
                 Text("S.")
                     .font(Font.custom(.pragmaticaBold, size: 21))
@@ -505,7 +505,7 @@ struct QuoteCell: View {
 
             if quoteLinkColl.links.count > 0 {
                 ForEach(quoteLinkColl.links, id: \.id) { c in
-                    ConspectusLink(conspectus: c, isEditing: self.isEditing, showDetails: true, showLinkIcon: true, showSeparator: true, leading: 0, action: { result in
+                    ConspectusLink(conspectus: c, isEditing: self.isEditing, action: { result in
                         if result == .navigate {
                             c.show()
                         } else if result == .remove {

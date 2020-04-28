@@ -56,10 +56,7 @@ class TagContent: ObservableObject {
     }
 }
 
-class Tag: Conspectus, ObservableObject, Comparable {
-    static func < (lhs: Tag, rhs: Tag) -> Bool {
-        lhs.content.name < rhs.content.name
-    }
+class Tag: Conspectus, ObservableObject {
 
     @ObservedObject var content: TagContent = TagContent()
 

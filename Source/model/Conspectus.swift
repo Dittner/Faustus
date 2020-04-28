@@ -26,12 +26,16 @@ enum ValidationStatus: String {
     case invalidQuote = "Ein Zitat ist nicht gefüllt"
 }
 
-enum ConspectusGenus: String {
-    case user
+enum ConspectusGenus: Int, Comparable {
+    static func < (lhs: ConspectusGenus, rhs: ConspectusGenus) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+
+    case tag
     case author
     case book
-    case tag
     case quote
+    case user
 
     func toIconName() -> String {
         switch self {
@@ -130,7 +134,30 @@ class LinkColl: ObservableObject {
     }
 }
 
-class Conspectus: Equatable {
+class Conspectus: Comparable, Equatable {
+    static func < (lhs: Conspectus, rhs: Conspectus) -> Bool {
+        if lhs.genus == rhs.genus {
+            switch lhs.genus {
+            case .tag:
+                return (lhs as! Tag).content.name < (rhs as! Tag).content.name
+            case .author:
+                return (lhs as! Author).content.surname < (rhs as! Author).content.surname
+            case .book:
+                return (lhs as! Book).content.writtenDate > (rhs as! Book).content.writtenDate
+            case .quote:
+                if (lhs as! Quote).book == (rhs as! Quote).book {
+                    return (lhs as! Quote).startPage < (rhs as! Quote).startPage
+                } else {
+                    return (lhs as! Quote).book.content.writtenDate > (rhs as! Quote).book.content.writtenDate
+                }
+            case .user:
+                return (lhs as! User).content.name < (rhs as! User).content.name
+            }
+        } else {
+            return lhs.genus < rhs.genus
+        }
+    }
+
     let id: UID
     var fileUrl: URL?
     var fileData: [String: Any]?
@@ -305,7 +332,7 @@ class Conspectus: Equatable {
     func deserializeLinkedFiles() {
         if let dict = fileData {
             if let linksIDs = dict["links"] as? [UID] {
-                linkColl.links = linksIDs.map { bibliography.read($0) }.compactMap { $0 }
+                linkColl.links = linksIDs.map { bibliography.read($0) }.compactMap { $0 }.sorted { $0 < $1 }
             }
         }
         state.markAsNotChanged()

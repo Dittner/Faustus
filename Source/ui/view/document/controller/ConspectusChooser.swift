@@ -109,8 +109,8 @@ class ConspectusChooser: ViewModel, ChooserController {
                 } else if filter == .tags, self.filteredTags.count == 0 {
                     let allTags = self.model.bibliography.getValues()
                         .filter { $0 is Tag && !$0.state.isRemoved }
-                        .map { $0 as! Tag }
                         .sorted { $0 < $1 }
+                        .map { $0 as! Tag }
 
                     let tagTree = TagTree(allTags)
                     self.allTags = tagTree.flatTree()
@@ -156,8 +156,8 @@ class ConspectusChooser: ViewModel, ChooserController {
 
         let allTags = model.bibliography.getValues()
             .filter { $0 is Tag && !$0.state.isRemoved }
-            .map { $0 as! Tag }
             .sorted { $0 < $1 }
+            .map { $0 as! Tag }
 
         let tagTree = TagTree(allTags)
         filteredTags = tagTree.flatTree { $0.id != self.owner.id }
@@ -170,10 +170,11 @@ class ConspectusChooser: ViewModel, ChooserController {
             mode = .chooseTags
             selectedFilter = .tags
 
+            selectedTags = owner.linkColl.links.map { $0 as? Tag }.compactMap { $0 }
             let tags = model.bibliography.getValues()
                 .filter { $0 is Tag && !$0.state.isRemoved }
-                .map { $0 as! Tag }
                 .sorted { $0 < $1 }
+                .map { $0 as! Tag }
 
             tagTree = TagTree(tags)
             allTags = tagTree.flatTree()

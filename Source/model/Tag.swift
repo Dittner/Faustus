@@ -76,7 +76,7 @@ class Tag: Conspectus, ObservableObject {
         }
     }
 
-    override func getDescription() -> String {
+    override func getDescription(detailed: Bool = true) -> String {
         return content.name
     }
 

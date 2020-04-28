@@ -42,8 +42,13 @@ class Quote: Conspectus, ObservableObject {
             .store(in: &disposeBag)
     }
     
-    override func getDescription() -> String {
-        return  "quote of book \(book.getDescription()), page \(startPage)"
+    override func getDescription(detailed: Bool = true) -> String {
+        let bookInfo = book.content
+        if let authorInfo = bookInfo.getAuthorFullName() {
+            return "\(bookInfo.title), \(authorInfo), \(bookInfo.writtenDate), s.\(startPage)"
+        } else {
+            return "\(bookInfo.title), \(bookInfo.writtenDate), s.\(startPage)"
+        }
     }
     
     override func getHashName() -> String {

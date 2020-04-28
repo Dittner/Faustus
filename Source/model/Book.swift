@@ -22,16 +22,8 @@ class BookContent: ObservableObject {
     @Published var authorText: String = ""
     @Published var author: Conspectus?
 
-    func getAuthorFullName() -> String {
-        if !authorText.isEmpty {
-            return authorText
-        } else if let author = author as? Author {
-            return author.content.surname + " " + author.content.initials
-        } else if let user = author as? User {
-            return user.content.surname + " " + user.content.initials
-        } else {
-            return "Buch ohne Name des Authors"
-        }
+    func getAuthorFullName() -> String? {
+        return authorText.isEmpty ? author?.getDescription(detailed: false) : authorText
     }
 }
 
@@ -61,7 +53,7 @@ class BookColl: ObservableObject {
     func removeBook(_ bookToRemove: Book) {
         bookToRemove.content.author = nil
         _ = bookToRemove.store()
-        
+
         for (ind, book) in books.enumerated() {
             if book == bookToRemove {
                 _ = books.remove(at: ind)
@@ -156,11 +148,15 @@ class Book: Conspectus, ObservableObject {
             }
             .store(in: &disposeBag)
     }
-    
-    override func getDescription() -> String {
-        return "\(content.title), \(content.authorText), \(content.writtenDate)"
+
+    override func getDescription(detailed: Bool = true) -> String {
+        if let authorInfo = content.getAuthorFullName() {
+            return "\(content.title), \(authorInfo), \(content.writtenDate)"
+        } else {
+            return "\(content.title), \(content.writtenDate)"
+        }
     }
-    
+
     override func getHashName() -> String {
         return "book" + content.title + content.writtenDate
     }

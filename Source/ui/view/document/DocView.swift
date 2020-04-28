@@ -54,7 +54,7 @@ struct DocView: View {
                         InfoPanel(vm.infoController)
                         TagLinksView(vm.tagTreeController, chooser: vm.chooser)
                         BookListView(vm.selectedConspectus, chooser: vm.chooser)
-                        LinkListView(vm.linkListController)
+                        LinkListView(vm.selectedConspectus)
                     }.padding(.leading, 15)
                 }
                 .offset(x: 0, y: -statusPanelHeight)
@@ -78,7 +78,7 @@ struct DocView: View {
                         StoreStatePanel(vm.selectedConspectus)
                         BookInfoPanel(book: vm.selectedConspectus as! Book)
                         TagLinksView(vm.tagTreeController, chooser: vm.chooser)
-                        LinkListView(vm.linkListController)
+                        LinkListView(vm.selectedConspectus)
                         QuoteListView(vm.quoteListController, chooser: vm.chooser)
 
                     }.padding(.leading, 15)
@@ -103,7 +103,7 @@ struct DocView: View {
                     VStack(alignment: .leading, spacing: 15) {
                         StoreStatePanel(vm.selectedConspectus)
                         InfoPanel(vm.infoController)
-                        LinkListView(vm.linkListController)
+                        LinkListView(vm.selectedConspectus)
 
                     }.padding(.leading, 15)
                 }
@@ -362,16 +362,33 @@ struct TagLinksView: View {
 }
 
 struct LinkListView: View {
-    @ObservedObject var controller: LinkListController
+    @State var isExpanded: Bool = LinkListView.isExpanded
     @ObservedObject var state: ConspectusState
+    @ObservedObject var notifier: Notifier
 
-    @State private var isExpanded: Bool = LinkListView.isExpanded
+    class Notifier: ObservableObject {
+        @Published var linkColl: LinkColl!
+        @Published var filteredLinks: [Conspectus] = []
+
+        init(_ conspectus: Conspectus) {
+            linkColl = conspectus.linkColl
+            filteredLinks = linkColl.links
+                .filter { $0.genus != .tag }
+                .sorted { $0 < $1 }
+        }
+
+        func removeLink(_ c: Conspectus) {
+            linkColl.removeLink(from: c)
+            filteredLinks = linkColl.links.filter { $0.genus != .tag }
+        }
+    }
+
     static var isExpanded: Bool = true
     private var disposeBag: Set<AnyCancellable> = []
 
-    init(_ controller: LinkListController) {
-        self.controller = controller
-        state = controller.owner.state
+    init(_ conspectus: Conspectus) {
+        notifier = Notifier(conspectus)
+        state = conspectus.state
         isExpanded = LinkListView.isExpanded
     }
 
@@ -381,12 +398,12 @@ struct LinkListView: View {
             })
 
             if isExpanded {
-                ForEach(controller.filteredLinks, id: \.id) { c in
+                ForEach(notifier.filteredLinks, id: \.id) { c in
                     ConspectusLink(conspectus: c, isEditing: self.state.isEditing, action: { result in
                         if result == .navigate {
                             c.show()
                         } else if result == .remove {
-                            self.controller.removeLink(c)
+                            self.notifier.removeLink(c)
                         }
                     }).padding(.leading, 40)
 
@@ -394,6 +411,84 @@ struct LinkListView: View {
                     .padding(.trailing, 0)
             }
         }.onDisappear { LinkListView.isExpanded = self.isExpanded }
+    }
+}
+
+struct CompactLinksSubView: View {
+    @ObservedObject var state: ConspectusState
+    @ObservedObject var notifier: Notifier
+    let isEditing: Bool
+
+    class Notifier: ObservableObject {
+        @Published var linkColl: LinkColl!
+        @Published var filteredLinks: [ConspectusWrapper] = []
+
+        
+        let viewHeight: CGFloat
+
+        init(_ conspectus: Conspectus) {
+            linkColl = conspectus.linkColl
+            let links = conspectus.linkColl.links.filter { $0.genus != .quote  }
+                .sorted { $0 < $1 }
+
+            var wrappedLinks: [ConspectusWrapper] = []
+            let defLinkHeight = ConspectusLink.HEIGHT
+            let defLinkWidthPadding = ConspectusLink.PADDING
+            let defLinkCloseBtnWidth: CGFloat = 0
+            let gap: CGFloat = 8
+            var curXPos: CGFloat = 0
+            var curYPos: CGFloat = 0
+            let viewWidth: CGFloat = 920
+
+            for (ind, link) in links.enumerated() {
+                let linkWidth = 2 * defLinkWidthPadding + defLinkCloseBtnWidth + CGFloat(link.getDescription(detailed: false).count) * 9.5
+                if link is Book || linkWidth > viewWidth - curXPos - gap {
+                    curYPos = ind == 0 ? 0 : curYPos + defLinkHeight + gap
+                    wrappedLinks.append(ConspectusWrapper(conspectus: link, x: 0, y: curYPos))
+                    curXPos = linkWidth + gap
+                } else {
+                    wrappedLinks.append(ConspectusWrapper(conspectus: link, x: curXPos.rounded(), y: curYPos))
+                    curXPos = curXPos + linkWidth + gap
+                }
+            }
+
+            viewHeight = CGFloat(wrappedLinks.count > 0 ? curYPos + defLinkHeight : 0)
+
+            filteredLinks = wrappedLinks
+        }
+
+        func removeLink(_ link: ConspectusWrapper) {
+            linkColl.removeLink(from: link.conspectus)
+            filteredLinks.removeAll { $0.conspectus == link.conspectus }
+        }
+    }
+
+    struct ConspectusWrapper {
+        let conspectus: Conspectus
+        let x: CGFloat
+        let y: CGFloat
+    }
+
+    private var disposeBag: Set<AnyCancellable> = []
+
+    init(_ conspectus: Conspectus, isEditing: Bool) {
+        self.isEditing = isEditing
+        notifier = Notifier(conspectus)
+        state = conspectus.state
+    }
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            ForEach(notifier.filteredLinks, id: \.conspectus.id) { link in
+                ConspectusLink(conspectus: link.conspectus, isEditing: self.isEditing, action: { result in
+                    if result == .navigate {
+                        link.conspectus.show()
+                    } else if result == .remove {
+                        self.notifier.removeLink(link)
+                    }
+                }).offset(x: link.x, y: link.y - self.notifier.viewHeight / 2 + 15)
+            }
+        }.frame(height: notifier.viewHeight)
     }
 }
 
@@ -486,14 +581,17 @@ struct QuoteCell: View {
                 }
             }.frame(height: 40)
 
+            CompactLinksSubView(quote, isEditing: self.isEditing)
+
             TextArea(text: $quote.text, textColor: NSColor.F.black, font: QuoteCell.textFont, isEditable: self.isEditing)
                 .layoutPriority(-1)
                 .lineSpacing(5)
-                .padding(.vertical, 0)
+                .padding(.top, 5)
+                .padding(.bottom, 10)
                 .padding(.horizontal, -4)
-                .offset(y: -5)
+                .offset(y: 0)
                 .saturation(0)
-                .frame(height: TextArea.textHeightFrom(text: quote.text, width: 925, font: QuoteCell.textFont, isShown: true))
+                .frame(height: TextArea.textHeightFrom(text: quote.text, width: 925, font: QuoteCell.textFont, isShown: true) + 15)
                 .onTapGesture(count: 2) {
                     if !self.isEditing {
                         notify(msg: "in die Zwischenablage kopiert")
@@ -503,8 +601,9 @@ struct QuoteCell: View {
                     }
                 }
 
+            // user comments
             if quoteLinkColl.links.count > 0 {
-                ForEach(quoteLinkColl.links, id: \.id) { c in
+                ForEach(quoteLinkColl.links.filter { $0 is Quote }, id: \.id) { c in
                     ConspectusLink(conspectus: c, isEditing: self.isEditing, action: { result in
                         if result == .navigate {
                             c.show()
@@ -512,9 +611,7 @@ struct QuoteCell: View {
                             self.quote.linkColl.removeLink(from: c)
                         }
                     })
-
-                }.padding(.leading, 0)
-                    .padding(.trailing, 0)
+                }
             }
 
             if chooser.owner == quote && isEditing {

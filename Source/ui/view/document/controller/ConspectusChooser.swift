@@ -221,6 +221,7 @@ class ConspectusChooser: ViewModel, ChooserController {
         owner = quote
         mode = .chooseLink
         selectedFilter = .authors
+        selectedTags = owner.linkColl.links.map { $0 as? Tag }.compactMap { $0 }
         showFilterBar = true
     }
 

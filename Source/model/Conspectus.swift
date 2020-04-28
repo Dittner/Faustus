@@ -260,7 +260,7 @@ class Conspectus: Comparable, Equatable {
         }
     }
 
-    func getDescription() -> String {
+    func getDescription(detailed: Bool = true) -> String {
         /* abstract */ return nil!
     }
 

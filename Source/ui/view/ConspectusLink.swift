@@ -25,6 +25,8 @@ struct ConspectusLink: View {
     let textColor: Color
     let btnIconColor: Color
     let withDetails: Bool
+    static let PADDING: CGFloat = 8
+    static let HEIGHT: CGFloat = 30
     let onLinkAction: ((ConspectusLinkAction) -> Void)?
 
     init(conspectus: Conspectus, isEditing: Bool, isLightMode: Bool = true, level: Int = 0,
@@ -32,40 +34,8 @@ struct ConspectusLink: View {
         self.conspectus = conspectus
         state = conspectus.state
         self.withDetails = withDetails
-
-        switch conspectus.genus {
-        case .author:
-            name = "\((conspectus as! Author).content.surname) \((conspectus as! Author).content.initials)"
-            details = ""
-        case .user:
-            name = "\((conspectus as! User).content.surname) \((conspectus as! User).content.initials)"
-            details = ""
-        case .book:
-            let bookInfo = (conspectus as! Book).content
-            let authorInfo = bookInfo.getAuthorFullName()
-
-            if !authorInfo.isEmpty {
-                name = "\(bookInfo.title), \(authorInfo), \(bookInfo.writtenDate)"
-            } else {
-                name = "\(bookInfo.title), \(bookInfo.writtenDate)"
-            }
-
-            details = ""
-        case .tag:
-            name = (conspectus as! Tag).content.name
-            details = ""
-        case .quote:
-            let bookInfo = (conspectus as! Quote).book.content
-            let authorInfo = bookInfo.getAuthorFullName()
-
-            if !authorInfo.isEmpty {
-                name = "\(bookInfo.title), \(authorInfo), \(bookInfo.writtenDate), s.\((conspectus as! Quote).startPage)"
-            } else {
-                name = "\(bookInfo.title), \(bookInfo.writtenDate), s.\((conspectus as! Quote).startPage)"
-            }
-
-            details = (conspectus as! Quote).text
-        }
+        name = conspectus.getDescription(detailed: false)
+        details = (conspectus as? Quote)?.text ?? ""
 
         self.isEditing = isEditing
 
@@ -87,8 +57,8 @@ struct ConspectusLink: View {
                     .lineLimit(1)
                     .foregroundColor(state.isRemoved ? Color.F.red : textColor)
                     .font(self.titleFont)
-                    .padding(.horizontal, 8)
-                    .frame(height: withDetails ? 30 : 20, alignment: .center)
+                    .padding(.horizontal, ConspectusLink.PADDING)
+                    .frame(height: withDetails ? ConspectusLink.HEIGHT : 20, alignment: .center)
                     .background(Color(conspectus.genus).opacity(0.2))
                     .cornerRadius(4)
                     .onHover { value in self.hover = value }
@@ -113,7 +83,7 @@ struct ConspectusLink: View {
                 Text(details)
                     .foregroundColor(textColor)
                     .font(self.detailsFont)
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, ConspectusLink.PADDING)
                     .padding(.top, 5)
                     .padding(.bottom, 10)
             }

@@ -62,8 +62,8 @@ class User: Conspectus, BooksOwner, ObservableObject {
         }
     }
     
-    override func getDescription() -> String {
-        return "\(content.name) \(content.surname)"
+    override func getDescription(detailed: Bool = true) -> String {
+        return detailed ? "\(content.surname) \(content.name)" : "\(content.surname) \(content.initials)"
     }
     
     override func getHashName() -> String {

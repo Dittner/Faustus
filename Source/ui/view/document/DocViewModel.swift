@@ -16,7 +16,6 @@ final class DocViewModel: ViewModel {
     let infoController = InfoController()
 
     let tagTreeController = TagTreeController()
-    let linkListController = LinkListController()
     let quoteListController = QuoteListController()
     let chooser = ConspectusChooser()
 
@@ -36,7 +35,6 @@ final class DocViewModel: ViewModel {
                 self.infoController.update(newValue)
                 self.quoteListController.update(newValue)
                 self.tagTreeController.update(newValue)
-                self.linkListController.update(newValue)
 
                 self.selectedConspectus = newValue
                 self.selectedConspectusState = newValue.state

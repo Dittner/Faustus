@@ -283,7 +283,7 @@ struct TagTreeNodeLink: View {
                 .font(font)
                 .foregroundColor(textColor)
                 .padding(.horizontal, 8)
-                .background(self.isSelected ? Color.F.tag.opacity(0.3) : Color.F.clear)
+                .background(self.isSelected ? Color(rgb: 0xEFE3CF) : Color.F.clear)
                 .cornerRadius(4)
                 .onTapGesture {
                     self.onTapAction?()

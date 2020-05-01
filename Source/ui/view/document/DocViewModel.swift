@@ -18,6 +18,7 @@ final class DocViewModel: ViewModel {
     let tagTreeController = TagTreeController()
     let quoteListController = QuoteListController()
     let chooser = ConspectusChooser()
+    let scrollController = CustomScrollViewController()
 
     private var disposeBag: Set<AnyCancellable> = []
 
@@ -32,6 +33,7 @@ final class DocViewModel: ViewModel {
             .removeDuplicates()
             .sink { newValue in
                 self.chooser.cancel()
+                self.scrollController.update(newValue)
                 self.infoController.update(newValue)
                 self.quoteListController.update(newValue)
                 self.tagTreeController.update(newValue)

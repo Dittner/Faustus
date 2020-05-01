@@ -15,103 +15,55 @@ struct DocView: View {
     private let statusPanelHeight: CGFloat = 30
 
     var body: some View {
-        VStack(alignment: .center, spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
             //
-            // USER
+            // HEADER
             //
 
             if vm.selectedConspectus is User {
-                UserHeader(user: vm.selectedConspectus as! User)
-
-                StatusPanel(vm.selectedConspectus, chooser: vm.chooser)
-                    .zIndex(1)
-
-                ScrollView(.vertical, showsIndicators: true) {
-                    VStack(alignment: .leading, spacing: 15) {
-                        StoreStatePanel(vm.selectedConspectus)
-                        BookListView(vm.selectedConspectus, chooser: vm.chooser, title: "AUFSÄTZE")
-                    }.padding(.leading, 15)
-                }
-                .offset(x: 0, y: -statusPanelHeight)
-
-                Spacer()
-                    .frame(height: -statusPanelHeight)
+                UserHeader(user: vm.selectedConspectus as! User).frame(width: 1000)
+            } else if vm.selectedConspectus is Author {
+                AuthorHeader(author: vm.selectedConspectus as! Author).frame(width: 1000)
+            } else if vm.selectedConspectus is Book {
+                BookHeader(book: vm.selectedConspectus as! Book, chooser: vm.chooser).zIndex(1).frame(width: 1000)
+            } else if vm.selectedConspectus is Tag {
+                TagHeader(tag: vm.selectedConspectus as! Tag, chooser: vm.chooser).frame(width: 1000)
             }
 
+            StatusPanel(vm.selectedConspectus, chooser: vm.chooser)
+                .frame(width: 1000)
+                .zIndex(1)
+
             //
-            // AUTHOR
+            // BODY
             //
 
-            else if vm.selectedConspectus is Author {
-                AuthorHeader(author: vm.selectedConspectus as! Author)
-
-                StatusPanel(vm.selectedConspectus, chooser: vm.chooser)
-                    .zIndex(1)
-
-                ScrollView(.vertical, showsIndicators: true) {
-                    VStack(alignment: .leading, spacing: 15) {
-                        StoreStatePanel(vm.selectedConspectus)
-                        InfoPanel(vm.infoController)
-                        TagLinksView(vm.tagTreeController, chooser: vm.chooser)
-                        BookListView(vm.selectedConspectus, chooser: vm.chooser)
-                        LinkListView(vm.selectedConspectus)
-                    }.padding(.leading, 15)
+            CustomScrollView(controller: vm.scrollController) {
+                VStack(alignment: .leading, spacing: 15) {
+                    StoreStatePanel(self.vm.selectedConspectus)
+                    if self.vm.selectedConspectus is User {
+                        BookListView(self.vm.selectedConspectus, chooser: self.vm.chooser, title: "AUFSÄTZE")
+                    } else if self.vm.selectedConspectus is Author {
+                        InfoPanel(self.vm.infoController)
+                        TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
+                        BookListView(self.vm.selectedConspectus, chooser: self.vm.chooser)
+                        LinkListView(self.vm.selectedConspectus)
+                    } else if self.vm.selectedConspectus is Book {
+                        BookInfoPanel(book: self.vm.selectedConspectus as! Book)
+                        TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
+                        LinkListView(self.vm.selectedConspectus)
+                        QuoteListView(self.vm.quoteListController, chooser: self.vm.chooser)
+                    } else if self.vm.selectedConspectus is Tag {
+                        InfoPanel(self.vm.infoController)
+                        LinkListView(self.vm.selectedConspectus)
+                    }
                 }
-                .offset(x: 0, y: -statusPanelHeight)
-
-                Spacer()
-                    .frame(height: -statusPanelHeight)
+                .padding(.horizontal, 15)
             }
+            .offset(x: 0, y: -statusPanelHeight)
 
-            //
-            // BOOK
-            //
-
-            else if vm.selectedConspectus is Book {
-                BookHeader(book: vm.selectedConspectus as! Book, chooser: vm.chooser)
-
-                StatusPanel(vm.selectedConspectus, chooser: vm.chooser)
-                    .zIndex(1)
-
-                ScrollView(.vertical, showsIndicators: true) {
-                    VStack(alignment: .leading, spacing: 15) {
-                        StoreStatePanel(vm.selectedConspectus)
-                        BookInfoPanel(book: vm.selectedConspectus as! Book)
-                        TagLinksView(vm.tagTreeController, chooser: vm.chooser)
-                        LinkListView(vm.selectedConspectus)
-                        QuoteListView(vm.quoteListController, chooser: vm.chooser)
-
-                    }.padding(.leading, 15)
-                }
-                .offset(x: 0, y: -statusPanelHeight)
-
-                Spacer()
-                    .frame(height: -statusPanelHeight)
-            }
-
-            //
-            // TAG
-            //
-
-            else if vm.selectedConspectus is Tag {
-                TagHeader(tag: vm.selectedConspectus as! Tag, chooser: vm.chooser)
-
-                StatusPanel(vm.selectedConspectus, chooser: vm.chooser)
-                    .zIndex(1)
-
-                ScrollView(.vertical, showsIndicators: true) {
-                    VStack(alignment: .leading, spacing: 15) {
-                        StoreStatePanel(vm.selectedConspectus)
-                        InfoPanel(vm.infoController)
-                        LinkListView(vm.selectedConspectus)
-
-                    }.padding(.leading, 15)
-                }
-                .offset(x: 0, y: -statusPanelHeight)
-
-                Spacer()
-                    .frame(height: -statusPanelHeight)
-            }
+            Spacer()
+                .frame(height: -statusPanelHeight)
         }
         .background(DocViewBG(conspectus: vm.selectedConspectus))
         .fillParent()
@@ -423,25 +375,24 @@ struct CompactLinksSubView: View {
         @Published var linkColl: LinkColl!
         @Published var filteredLinks: [ConspectusWrapper] = []
 
-        
         let viewHeight: CGFloat
 
         init(_ conspectus: Conspectus) {
             linkColl = conspectus.linkColl
-            let links = conspectus.linkColl.links.filter { $0.genus != .quote  }
+            let links = conspectus.linkColl.links.filter { $0.genus != .quote }
                 .sorted { $0 < $1 }
 
             var wrappedLinks: [ConspectusWrapper] = []
             let defLinkHeight = ConspectusLink.HEIGHT
             let defLinkWidthPadding = ConspectusLink.PADDING
-            let defLinkCloseBtnWidth: CGFloat = 0
-            let gap: CGFloat = 8
+            let defLinkIconBtnWidth: CGFloat = 26
+            let gap: CGFloat = 12
             var curXPos: CGFloat = 0
             var curYPos: CGFloat = 0
             let viewWidth: CGFloat = 920
 
             for (ind, link) in links.enumerated() {
-                let linkWidth = 2 * defLinkWidthPadding + defLinkCloseBtnWidth + CGFloat(link.getDescription(detailed: false).count) * 9.5
+                let linkWidth = 2 * defLinkWidthPadding + defLinkIconBtnWidth + CGFloat(link.getDescription(detailed: false).count) * 9.5
                 if link is Book || linkWidth > viewWidth - curXPos - gap {
                     curYPos = ind == 0 ? 0 : curYPos + defLinkHeight + gap
                     wrappedLinks.append(ConspectusWrapper(conspectus: link, x: 0, y: curYPos))
@@ -570,12 +521,12 @@ struct QuoteCell: View {
 
                 if isEditing {
                     Button("", action: { self.chooser.chooseLink(self.quote) })
-                        .buttonStyle(IconButtonStyle(iconName: "addLink", iconColor: Color.F.black, bgColor: quote.isValid ? Color.F.whiteBG : Color.F.redBG, width: 30, height: 25))
+                        .buttonStyle(IconButtonStyle(iconName: "link", iconColor: Color.F.black, bgColor: quote.isValid ? Color.F.whiteBG : Color.F.redBG, width: 30, height: 30))
                         .offset(y: -10)
                         .opacity(isEditing ? 1 : 0)
 
                     Button("", action: { self.quoteListController.removeQuote(self.quote) })
-                        .buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: quote.isValid ? Color.F.whiteBG : Color.F.redBG, width: 30, height: 25))
+                        .buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: quote.isValid ? Color.F.whiteBG : Color.F.redBG, width: 30, height: 30))
                         .offset(y: -10)
                         .opacity(isEditing ? 1 : 0)
                 }

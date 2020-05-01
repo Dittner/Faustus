@@ -30,12 +30,12 @@ struct RootView: View {
                 BlurAppBG()
                 HStack(alignment: .top, spacing: 0) {
                     SearchView()
-                        .frame(minWidth: 250, idealWidth: panelsWidth, maxWidth: .infinity, minHeight: 0, idealHeight: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .frame(minWidth: 200, idealWidth: panelsWidth, maxWidth: .infinity, minHeight: 0, idealHeight: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     DocView()
-                        .frame(minWidth: 1000, idealWidth: 1000, maxWidth: 1000, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)
+                        .frame(minWidth: 1150, idealWidth: 1150, maxWidth: 1150, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)
                     HistoryView()
-                        .frame(minWidth: 250, idealWidth: panelsWidth, maxWidth: .infinity, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)
-                }.frame(minWidth: 1500, idealWidth: 1500, maxWidth: .infinity, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .frame(minWidth: 200, idealWidth: panelsWidth, maxWidth: .infinity, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)
+                }.frame(minWidth: 1550, idealWidth: 1550, maxWidth: .infinity, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
                 if vm.keyLinesShown {
                     GeometryReader { geo in

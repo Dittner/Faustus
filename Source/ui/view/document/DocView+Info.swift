@@ -59,9 +59,9 @@ struct InfoPanel: View {
                     .saturation(0)
                     .colorScheme(.light)
                     .padding(.leading, 35)
-                    .padding(.trailing, 20)
+                    .padding(.trailing, 10)
                     .background(state.isEditing ? Color.F.whiteBG : Color.F.white)
-                    .frame(height: TextArea.textHeightFrom(text: controller.info, width: 925, font: font, isShown: isExpanded))
+                    .frame(height: TextArea.textHeightFrom(text: controller.info, width: 910, font: font, isShown: isExpanded))
                     .onTapGesture(count: 2) {
                         if !self.controller.owner.state.isEditing {
                             notify(msg: "in die Zwischenablage kopiert")
@@ -78,7 +78,7 @@ struct InfoPanel: View {
 struct BookInfoPanel: View {
     @EnvironmentObject var modalViewObservable: ModalViewObservable
     @EnvironmentObject var textFocus: TextFocus
-    @ObservedObject var book: Book
+    @ObservedObject var content: BookContent
     @ObservedObject var state: ConspectusState
     @State private var isExpanded: Bool = InfoPanel.isExpanded
 
@@ -87,7 +87,7 @@ struct BookInfoPanel: View {
     private var disposeBag: Set<AnyCancellable> = []
 
     init(book: Book, title: String = "INFO") {
-        self.book = book
+        content = book.content
         state = book.state
         self.title = title
         isExpanded = InfoPanel.isExpanded
@@ -101,15 +101,15 @@ struct BookInfoPanel: View {
 
             if self.isExpanded {
                 VStack(alignment: .leading, spacing: 5) {
-                    FormInput(title: "TITEL", text: $book.content.title, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoTitle, onEnter: { self.textFocus.id = .bookInfoSubtitle })
-                    FormInput(title: "UNTERTITEL", text: $book.content.subTitle, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoSubtitle, onEnter: { self.textFocus.id = .bookInfoAuthor })
-                    FormInput(title: "AUTHOR", text: $book.content.authorText, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoAuthor, onEnter: { self.textFocus.id = .bookInfoIsbn })
-                    FormInput(title: "ISBN", text: $book.content.ISBN, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoIsbn, onEnter: { self.textFocus.id = .bookInfoWritten })
-                    FormInput(title: "GESCHRIEBEN", text: $book.content.writtenDate, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoWritten, onEnter: { self.textFocus.id = .bookInfoPublishDate })
-                    FormInput(title: "ERSCHEINUNGSJAHR", text: $book.content.publishedDate, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPublishDate, onEnter: { self.textFocus.id = .bookInfoPagesCount })
-                    FormInput(title: "SEITENZAHL", text: $book.content.pageCount, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPagesCount, onEnter: { self.textFocus.id = .bookInfoPublisher })
-                    FormInput(title: "VERLAG", text: $book.content.publisher, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPublisher, onEnter: { self.textFocus.id = .bookInfoPlace })
-                    FormInput(title: "ORT", text: $book.content.place, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPlace, onEnter: { self.textFocus.id = .bookInfoTitle })
+                    FormInput(title: "TITEL", text: $content.title, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoTitle, onEnter: { self.textFocus.id = .bookInfoSubtitle })
+                    FormInput(title: "UNTERTITEL", text: $content.subTitle, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoSubtitle, onEnter: { self.textFocus.id = .bookInfoAuthor })
+                    FormInput(title: "AUTHOR", text: $content.authorText, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoAuthor, onEnter: { self.textFocus.id = .bookInfoIsbn })
+                    FormInput(title: "ISBN", text: $content.ISBN, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoIsbn, onEnter: { self.textFocus.id = .bookInfoWritten })
+                    FormInput(title: "GESCHRIEBEN", text: $content.writtenDate, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoWritten, onEnter: { self.textFocus.id = .bookInfoPublishDate })
+                    FormInput(title: "ERSCHEINUNGSJAHR", text: $content.publishedDate, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPublishDate, onEnter: { self.textFocus.id = .bookInfoPagesCount })
+                    FormInput(title: "SEITENZAHL", text: $content.pageCount, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPagesCount, onEnter: { self.textFocus.id = .bookInfoPublisher })
+                    FormInput(title: "VERLAG", text: $content.publisher, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPublisher, onEnter: { self.textFocus.id = .bookInfoPlace })
+                    FormInput(title: "ORT", text: $content.place, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPlace, onEnter: { self.textFocus.id = .bookInfoTitle })
                 }.disabled(modalViewObservable.isShown)
 
                 HStack(alignment: .top, spacing: 0) {
@@ -120,7 +120,7 @@ struct BookInfoPanel: View {
                         .frame(width: 295, height: 30, alignment: .trailing)
                         .background(Color.F.whiteBG)
 
-                    TextArea(text: $book.content.info, textColor: NSColor.F.black, font: font, isEditable: state.isEditing && !modalViewObservable.isShown)
+                    TextArea(text: $content.info, textColor: NSColor.F.black, font: font, isEditable: state.isEditing && !modalViewObservable.isShown)
                         .layoutPriority(-1)
                         .saturation(0)
                         .colorScheme(.light)
@@ -128,13 +128,13 @@ struct BookInfoPanel: View {
                         .padding(.leading, 3)
                         .padding(.trailing, 5)
                         .background(state.isEditing ? Color.F.whiteBG : Color.F.white)
-                        .frame(height: TextArea.textHeightFrom(text: book.content.info, width: 670, font: font, isShown: isExpanded))
+                        .frame(width: 670, height: TextArea.textHeightFrom(text: content.info, width: 670, font: font, isShown: isExpanded))
                         .onTapGesture(count: 2) {
-                            if !self.book.state.isEditing {
+                            if !self.state.isEditing {
                                 notify(msg: "in die Zwischenablage kopiert")
                                 let pasteBoard = NSPasteboard.general
                                 pasteBoard.clearContents()
-                                pasteBoard.setString(self.book.content.info, forType: .string)
+                                pasteBoard.setString(self.content.info, forType: .string)
                             }
                         }
                 }
@@ -152,27 +152,23 @@ struct FormInput: View {
     public let titleWidth: CGFloat = 300
 
     var body: some View {
-        return GeometryReader { geometry in
-            ZStack(alignment: .topLeading) {
-                Text(self.title)
-                    .font(Font.custom(.pragmaticaSemiBold, size: 18))
-                    .foregroundColor(Color.F.black)
-                    .padding(.trailing, 5)
-                    .frame(width: self.titleWidth - 5, height: 30, alignment: .trailing)
-                    .background(Color.F.whiteBG)
+        HStack(alignment: .center, spacing: 5) {
+            Text(self.title)
+                .font(Font.custom(.pragmaticaSemiBold, size: 18))
+                .foregroundColor(Color.F.black)
+                .frame(width: self.titleWidth - 5, height: 30, alignment: .trailing)
+                .background(Color.F.whiteBG)
 
-                TextInput(title: "", text: self.$text, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 18), alignment: .left, isFocused: self.isFocused, isSecure: false, format: nil, isEditable: self.isEditing, onEnterAction: self.onEnter)
-                    .saturation(0)
-                    .colorScheme(.light)
-                    .padding(.horizontal, 0)
-                    .allowsHitTesting(self.isEditing)
-                    .offset(x: self.titleWidth, y: 0)
-                    .frame(width: geometry.size.width - self.titleWidth, height: 30, alignment: .leading)
+            TextInput(title: "", text: self.$text, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 18), alignment: .left, isFocused: self.isFocused, isSecure: false, format: nil, isEditable: self.isEditing, onEnterAction: self.onEnter)
+                .saturation(0)
+                .colorScheme(.light)
+                .padding(.horizontal, 0)
+                .allowsHitTesting(self.isEditing)
+                .frame(height: 30, alignment: .leading)
 
-                Separator(color: Color.F.black, width: geometry.size.width - self.titleWidth)
-                    .opacity(self.isEditing ? 0.25 : 0)
-                    .offset(x: self.titleWidth, y: 29)
-            }
         }.frame(height: 30)
+            .background(Separator(color: Color.F.black, width: .infinity)
+                .opacity(self.isEditing ? 0.25 : 0)
+                .offset(x: self.titleWidth, y: 14))
     }
 }

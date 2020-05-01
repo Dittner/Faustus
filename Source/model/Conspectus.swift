@@ -40,7 +40,7 @@ enum ConspectusGenus: Int, Comparable {
     func toIconName() -> String {
         switch self {
         case .user:
-            return "user"
+            return "author"
         case .author:
             return "author"
         case .book:
@@ -49,6 +49,21 @@ enum ConspectusGenus: Int, Comparable {
             return "tag"
         case .quote:
             return "quote"
+        }
+    }
+
+    func toColor() -> Color {
+        switch self {
+        case .user:
+            return Color(rgb: 0xDACBEB)
+        case .author:
+            return Color(rgb: 0xDACBEB)
+        case .book:
+            return Color(rgb: 0xEBCDD9)
+        case .tag:
+            return Color(rgb: 0xEFE3CF)
+        case .quote:
+            return Color(rgb: 0xCCCCCC)
         }
     }
 }
@@ -146,7 +161,12 @@ class Conspectus: Comparable, Equatable {
                 return (lhs as! Book).content.writtenDate > (rhs as! Book).content.writtenDate
             case .quote:
                 if (lhs as! Quote).book == (rhs as! Quote).book {
-                    return (lhs as! Quote).startPage < (rhs as! Quote).startPage
+                    if (lhs as! Quote).startPage.count == (rhs as! Quote).startPage.count {
+                        return (lhs as! Quote).startPage < (rhs as! Quote).startPage
+                    } else {
+                        return (lhs as! Quote).startPage.count < (rhs as! Quote).startPage.count
+                    }
+
                 } else {
                     return (lhs as! Quote).book.content.writtenDate > (rhs as! Quote).book.content.writtenDate
                 }
@@ -164,8 +184,8 @@ class Conspectus: Comparable, Equatable {
 
     var uniqueNameBeforeChanges: String = ""
 
-    var genus: ConspectusGenus {
-        /* abstract */ return nil!
+    /* abstract */ var genus: ConspectusGenus {
+        fatalError()
     }
 
     let state: ConspectusState
@@ -260,12 +280,12 @@ class Conspectus: Comparable, Equatable {
         }
     }
 
-    func getDescription(detailed: Bool = true) -> String {
-        /* abstract */ return nil!
+    /* abstract */ func getDescription(detailed: Bool = true) -> String {
+        fatalError()
     }
 
-    func getHashName() -> String {
-        /* abstract */ return nil!
+    /* abstract */ func getHashName() -> String {
+        fatalError()
     }
 
     var storeDebouncer: Debouncer = Debouncer(seconds: 0.25)

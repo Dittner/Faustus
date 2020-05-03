@@ -221,7 +221,7 @@ struct SectionView: View {
                 Separator(color: Color.F.black, width: .infinity)
                     .offset(y: 15)
             }
-        }.frame(height: 40)
+        }.frame(height: 40).padding(.bottom, 8)
     }
 }
 
@@ -536,7 +536,6 @@ struct QuoteCell: View {
 
             TextArea(text: $quote.text, textColor: NSColor.F.black, font: QuoteCell.textFont, isEditable: self.isEditing)
                 .layoutPriority(-1)
-                .lineSpacing(5)
                 .padding(.top, 5)
                 .padding(.bottom, 10)
                 .padding(.horizontal, -4)

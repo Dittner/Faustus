@@ -21,41 +21,32 @@ struct CustomScrollView<Content>: View where Content: View {
 
     var body: some View {
         GeometryReader { window in
+            self.content
+                .modifier(ViewHeightKey())
+                .onPreferenceChange(ViewHeightKey.self) { self.controller.contentHeight = $0; self.controller.windowHeight = window.size.height }
+                .frame(width: Constants.docViewWidth, height: window.size.height, alignment: .topLeading)
+                .offset(y: self.controller.scrollPosition)
+                .clipped()
 
-            HStack(alignment: .top, spacing: 0) {
-                self.content
-                    .modifier(ViewHeightKey())
-                    .onPreferenceChange(ViewHeightKey.self) { self.controller.contentHeight = $0; self.controller.windowHeight = window.size.height }
-                    .frame(width: 1000, height: window.size.height, alignment: .topLeading)
-                    .offset(y: self.controller.scrollPosition)
-                    .clipped()
+            ZStack(alignment: .topLeading) {
+                Separator(color: Color.F.black025, width: 1, height: .infinity)
 
-                ZStack(alignment: .topLeading) {
-                    Separator(color: Color(self.controller.owner.genus).opacity(0.25), width: 1, height: .infinity)
+                self.content.frame(width: Constants.docViewWidth, height: window.size.height, alignment: .topLeading)
+                    .scaleEffect(x: Constants.docViewMinimapWidth / Constants.docViewWidth, y: self.controller.scaleY, anchor: .topLeading)
+                    .allowsHitTesting(false)
 
-                    self.content.frame(width: 1000, height: window.size.height, alignment: .topLeading)
-                        .scaleEffect(x: 0.15, y: self.controller.scaleY, anchor: .topLeading)
+                MouseWheelDetector(onScrolled: self.controller.onScrolled, onClicked: self.controller.onClicked)
 
-                    Color(self.controller.owner.genus).opacity(0.25)
-                        .frame(width: 150, height: window.size.height * self.controller.scaleY)
-                        .offset(y: -self.controller.scrollPosition * self.controller.scaleY)
+                Color(self.controller.owner.genus).opacity(0.25)
+                    .allowsHitTesting(true)
+                    .frame(width: Constants.docViewMinimapWidth, height: window.size.height * self.controller.scaleY)
+                    .offset(y: -self.controller.scrollPosition * self.controller.scaleY)
+                    .gesture(DragGesture().onChanged { value in
+                        self.controller.onDragged(value)
+                    })
 
-                    MouseWheelDetector(onScrolled: self.onScrolled, onClicked: self.onClicked)
-
-                }.frame(width: 150, height: window.size.height, alignment: .topLeading)
-            }
-        }
-    }
-
-    func onScrolled(_ deltaY: CGFloat) {
-        controller.updateScrollPosition(with: deltaY)
-    }
-
-    func onClicked(_ ration: CGFloat) {
-        let maxPos = controller.windowHeight - controller.contentHeight
-        let pos = -ration * controller.contentHeight
-        withAnimation {
-            controller.scrollPosition = maxPos > pos ? maxPos : abs(pos) < controller.windowHeight ? 0 : pos
+            }.frame(width: Constants.docViewMinimapWidth, height: window.size.height, alignment: .topLeading)
+                .offset(x: Constants.docViewWidth)
         }
     }
 }
@@ -77,7 +68,7 @@ extension ViewHeightKey: ViewModifier {
 
 struct MouseWheelDetector: NSViewRepresentable {
     public let onScrolled: (_ deltaY: CGFloat) -> Void
-    public let onClicked: (_ ration: CGFloat) -> Void
+    public var onClicked: ((_ ration: CGFloat) -> Void)?
 
     func updateNSView(_ nsView: MouseWheelDetectorView, context: Context) {
         nsView.parent = self
@@ -99,6 +90,6 @@ class MouseWheelDetectorView: NSView {
 
     override func mouseDown(with event: NSEvent) {
         let ration = bounds.height == 0 ? 0 : (bounds.height - event.locationInWindow.y) / bounds.height
-        parent?.onClicked(ration)
+        parent?.onClicked?(ration)
     }
 }

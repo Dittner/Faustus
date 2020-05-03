@@ -32,7 +32,7 @@ struct RootView: View {
                     SearchView()
                         .frame(minWidth: 200, idealWidth: panelsWidth, maxWidth: .infinity, minHeight: 0, idealHeight: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     DocView()
-                        .frame(minWidth: 1150, idealWidth: 1150, maxWidth: 1150, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)
+                        .frame(minWidth: Constants.docViewWidth + Constants.docViewMinimapWidth, idealWidth: Constants.docViewWidth + Constants.docViewMinimapWidth, maxWidth: Constants.docViewWidth + Constants.docViewMinimapWidth, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)
                     HistoryView()
                         .frame(minWidth: 200, idealWidth: panelsWidth, maxWidth: .infinity, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)
                 }.frame(minWidth: 1550, idealWidth: 1550, maxWidth: .infinity, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .topLeading)

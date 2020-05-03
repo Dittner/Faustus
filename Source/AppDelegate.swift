@@ -33,7 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered, defer: false)
 
-        mainWindow.contentView = NSHostingView(rootView: RootView()
+        mainWindow.contentView = CustomWindow(rootView: RootView()
             .environmentObject(TextFocus())
             .environmentObject(ModalViewObservable())
             .environmentObject(RootViewModel())
@@ -86,4 +86,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             AppModel.shared.selectedConspectus.state.isEditing.toggle()
         }
     }
+}
+
+class CustomWindow<Content>: NSHostingView<Content>, ObservableObject where Content: View {
+    
 }

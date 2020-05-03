@@ -13,7 +13,6 @@ class CustomScrollViewController: ViewModel {
     @Published var contentHeight: CGFloat = CGFloat.zero {
         didSet {
             let difference = oldValue - contentHeight
-            print("difference \(difference)")
             if abs(difference) < 50 && abs(difference) > 0 {
                 updateScrollPosition(with: difference / scrollFactor)
             }
@@ -34,7 +33,7 @@ class CustomScrollViewController: ViewModel {
         owner = model.selectedConspectus
         Publishers.CombineLatest($contentHeight, $windowHeight)
             .map { contentHeight, windowHeight in
-                min(0.15, windowHeight / contentHeight)
+                min(Constants.docViewMinimapWidth / Constants.docViewWidth, windowHeight / contentHeight)
             }
             .assign(to: \.scaleY, on: self)
             .store(in: &disposeBag)
@@ -47,9 +46,20 @@ class CustomScrollViewController: ViewModel {
             .debounce(for: 0.5, scheduler: RunLoop.main)
             .sink { value in
                 CustomScrollViewController.scrollPositionCache[self.owner.id] = value
-                print("     store scrollPosition to cache: \(value)")
             }
             .store(in: &disposeBag)
+
+        NotificationCenter.default.addObserver(self, selector: #selector(onDidWheelScroll(_:)), name: .didWheelScroll, object: nil)
+    }
+
+    @objc func onDidWheelScroll(_ notification: Notification) {
+        guard let event = notification.object as? NSEvent else { return }
+        guard let windowFrame = (NSApplication.shared.delegate as! AppDelegate).window?.frame else { return }
+
+        let sidePanelWidth = (windowFrame.width - Constants.docViewWidth - Constants.docViewMinimapWidth) / 2
+        if event.locationInWindow.x > sidePanelWidth && event.locationInWindow.x < sidePanelWidth + Constants.docViewWidth && event.locationInWindow.y < windowFrame.height - Constants.docViewHeaderHeight {
+            updateScrollPosition(with: event.deltaY)
+        }
     }
 
     func updateScrollPosition(with offset: CGFloat) {
@@ -71,8 +81,43 @@ class CustomScrollViewController: ViewModel {
         owner = conspectus
         if let cachedPosition = CustomScrollViewController.scrollPositionCache[owner.id] {
             scrollPosition = cachedPosition
-            print("     update scrollPosition from cache: \(cachedPosition)")
             owner = conspectus
         }
     }
+    
+    //
+    // handlers
+    //
+    
+    func onScrolled(_ deltaY: CGFloat) {
+        updateScrollPosition(with: deltaY)
+    }
+
+    func onClicked(_ ration: CGFloat) {
+        if windowHeight < contentHeight {
+            let maxPos = windowHeight - contentHeight
+            let pos = -ration * contentHeight
+            withAnimation {
+                scrollPosition = maxPos > pos ? maxPos : abs(pos) < windowHeight ? 0 : pos
+            }
+        }
+    }
+    
+    var startLocationPosY:CGFloat = 0
+    var thumbDownOffset:CGFloat = 0
+    func onDragged(_ value: DragGesture.Value) {
+        if windowHeight < contentHeight {
+            let maxPos = windowHeight - contentHeight
+            if startLocationPosY != value.startLocation.y {
+                startLocationPosY = value.startLocation.y
+                thumbDownOffset = value.startLocation.y + scrollPosition * scaleY
+            }
+            let pos = (thumbDownOffset - value.location.y) / scaleY
+            withAnimation {
+                scrollPosition = maxPos > pos ? maxPos : abs(pos) < windowHeight ? 0 : pos
+            }
+        }
+    }
+    
+    
 }

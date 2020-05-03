@@ -39,4 +39,13 @@ extension NSWindow {
         UserDefaults.standard.set(Int(frame.width), forKey: "WindowWidth")
         UserDefaults.standard.set(Int(frame.height), forKey: "WindowHight")
     }
+    
+
+    open override func scrollWheel(with event: NSEvent) {
+        NotificationCenter.default.post(name: .didWheelScroll, object: event)
+    }
+}
+
+extension Notification.Name {
+    static let didWheelScroll = Notification.Name("didWheelScroll")
 }

@@ -49,7 +49,7 @@ struct DocView: View {
                         BookListView(self.vm.selectedConspectus, chooser: self.vm.chooser)
                         LinkListView(self.vm.selectedConspectus)
                     } else if self.vm.selectedConspectus is Book {
-                        BookInfoPanel(book: self.vm.selectedConspectus as! Book)
+                        BookInfoPanel(self.vm.infoController)
                         TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
                         LinkListView(self.vm.selectedConspectus)
                         QuoteListView(self.vm.quoteListController, chooser: self.vm.chooser)
@@ -469,6 +469,8 @@ struct QuoteListView: View {
                     QuoteCell(quote: q, isEditing: self.state.isEditing, chooser: self.chooser, quoteListController: self.quoteListController)
                 }.padding(.leading, 0)
                     .padding(.trailing, 0)
+                
+                Spacer().frame(width: 0)
             }
         }.onDisappear { QuoteListView.isExpanded = self.isExpanded }
     }

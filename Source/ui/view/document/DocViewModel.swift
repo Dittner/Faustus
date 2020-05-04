@@ -13,7 +13,7 @@ final class DocViewModel: ViewModel {
     @Published var selectedConspectus: Conspectus
     @Published var selectedConspectusState: ConspectusState
 
-    let infoController = InfoController()
+    let infoController = DocInfoController()
 
     let tagTreeController = TagTreeController()
     let quoteListController = QuoteListController()

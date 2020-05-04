@@ -11,7 +11,7 @@ import SwiftUI
 
 struct InfoPanel: View {
     @EnvironmentObject var modalViewObservable: ModalViewObservable
-    @ObservedObject private var controller: InfoController
+    @ObservedObject private var controller: DocInfoController
     @ObservedObject var state: ConspectusState
     @State private var isExpanded: Bool = InfoPanel.isExpanded
     static var isExpanded: Bool = false
@@ -19,11 +19,10 @@ struct InfoPanel: View {
     private let font = NSFont(name: .pragmaticaLight, size: 21)
     private let title: String
 
-    init(_ controller: InfoController, title: String = "INFO") {
+    init(_ controller: DocInfoController, title: String = "INFO") {
         self.controller = controller
         state = controller.owner.state
         self.title = title
-        isExpanded = InfoPanel.isExpanded
         print("InfoPanel init, id: \(controller.owner.id), hasPrentTag: \(controller.parentTag != nil)")
     }
 
@@ -54,6 +53,7 @@ struct InfoPanel: View {
 
                     Spacer().frame(height: 5)
                 }
+
                 TextArea(text: $controller.info, textColor: NSColor.F.black, font: font, isEditable: state.isEditing && !modalViewObservable.isShown)
                     .layoutPriority(-1)
                     .saturation(0)
@@ -76,6 +76,7 @@ struct InfoPanel: View {
 }
 
 struct BookInfoPanel: View {
+    @ObservedObject private var controller: DocInfoController
     @EnvironmentObject var modalViewObservable: ModalViewObservable
     @EnvironmentObject var textFocus: TextFocus
     @ObservedObject var content: BookContent
@@ -86,12 +87,12 @@ struct BookInfoPanel: View {
     private let title: String
     private var disposeBag: Set<AnyCancellable> = []
 
-    init(book: Book, title: String = "INFO") {
-        content = book.content
-        state = book.state
+    init(_ controller: DocInfoController, title: String = "INFO") {
+        self.controller = controller
+        content = (controller.owner as! Book).content
+        state = controller.owner.state
         self.title = title
-        isExpanded = InfoPanel.isExpanded
-        print("BookInfoPanel init, id: \(book.id)")
+        print("BookInfoPanel init, id: \(controller.owner.id)")
     }
 
     var body: some View {
@@ -104,7 +105,15 @@ struct BookInfoPanel: View {
                     FormInput(title: "TITEL", text: $content.title, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoTitle, onEnter: { self.textFocus.id = .bookInfoSubtitle })
                     FormInput(title: "UNTERTITEL", text: $content.subTitle, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoSubtitle, onEnter: { self.textFocus.id = .bookInfoAuthor })
                     FormInput(title: "AUTHOR", text: $content.authorText, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoAuthor, onEnter: { self.textFocus.id = .bookInfoIsbn })
-                    FormInput(title: "ISBN", text: $content.ISBN, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoIsbn, onEnter: { self.textFocus.id = .bookInfoWritten })
+                    HStack(alignment: .top, spacing: 5) {
+                        FormInput(title: "ISBN", text: $content.ISBN, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoIsbn, onEnter: { self.textFocus.id = .bookInfoWritten })
+
+                        if state.isEditing {
+                            Button("", action: { self.controller.loadInfoFromInternet() })
+                                .buttonStyle(IconButtonStyle(iconName: "internet", iconColor: Color.F.black, bgColor: Color.F.white, width: 30, height: 30))
+                        }
+                    }
+
                     FormInput(title: "GESCHRIEBEN", text: $content.writtenDate, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoWritten, onEnter: { self.textFocus.id = .bookInfoPublishDate })
                     FormInput(title: "ERSCHEINUNGSJAHR", text: $content.publishedDate, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPublishDate, onEnter: { self.textFocus.id = .bookInfoPagesCount })
                     FormInput(title: "SEITENZAHL", text: $content.pageCount, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoPagesCount, onEnter: { self.textFocus.id = .bookInfoPublisher })
@@ -128,7 +137,7 @@ struct BookInfoPanel: View {
                         .padding(.leading, 3)
                         .padding(.trailing, 5)
                         .background(state.isEditing ? Color.F.whiteBG : Color.F.white)
-                        .frame(width: 670, height: TextArea.textHeightFrom(text: content.info, width: 670, font: font, isShown: isExpanded))
+                        .frame(width: 680, height: TextArea.textHeightFrom(text: content.info, width: 670, font: font, isShown: isExpanded))
                         .onTapGesture(count: 2) {
                             if !self.state.isEditing {
                                 notify(msg: "in die Zwischenablage kopiert")
@@ -169,6 +178,7 @@ struct FormInput: View {
         }.frame(height: 30)
             .background(Separator(color: Color.F.black, width: .infinity)
                 .opacity(self.isEditing ? 0.25 : 0)
-                .offset(x: self.titleWidth, y: 14))
+                .padding(.leading, self.titleWidth)
+                .padding(.top, 29))
     }
 }

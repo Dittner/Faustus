@@ -18,7 +18,7 @@ class BookContent: ObservableObject {
     @Published var pageCount: String = ""
     @Published var publisher: String = ""
     @Published var place: String = ""
-    @Published var info: String = "Keine Inhaltsangabe"
+    @Published var info: String = ""
     @Published var authorText: String = ""
     @Published var author: Conspectus?
 

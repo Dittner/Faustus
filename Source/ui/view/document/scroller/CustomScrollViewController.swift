@@ -82,13 +82,15 @@ class CustomScrollViewController: ViewModel {
         if let cachedPosition = CustomScrollViewController.scrollPositionCache[owner.id] {
             scrollPosition = cachedPosition
             owner = conspectus
+        } else {
+            scrollPosition = 0
         }
     }
-    
+
     //
     // handlers
     //
-    
+
     func onScrolled(_ deltaY: CGFloat) {
         updateScrollPosition(with: deltaY)
     }
@@ -96,15 +98,15 @@ class CustomScrollViewController: ViewModel {
     func onClicked(_ ration: CGFloat) {
         if windowHeight < contentHeight {
             let maxPos = windowHeight - contentHeight
-            let pos = -ration * contentHeight
+            let pos = -ration * windowHeight / scaleY
             withAnimation {
                 scrollPosition = maxPos > pos ? maxPos : abs(pos) < windowHeight ? 0 : pos
             }
         }
     }
-    
-    var startLocationPosY:CGFloat = 0
-    var thumbDownOffset:CGFloat = 0
+
+    var startLocationPosY: CGFloat = 0
+    var thumbDownOffset: CGFloat = 0
     func onDragged(_ value: DragGesture.Value) {
         if windowHeight < contentHeight {
             let maxPos = windowHeight - contentHeight
@@ -118,6 +120,4 @@ class CustomScrollViewController: ViewModel {
             }
         }
     }
-    
-    
 }

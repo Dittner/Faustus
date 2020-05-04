@@ -97,10 +97,13 @@ struct ConspectusLink: View {
             if withDetails && !details.isEmpty {
                 Text(details)
                     .foregroundColor(textColor)
+                    .lineLimit(nil)
                     .font(self.detailsFont)
                     .padding(.horizontal, ConspectusLink.PADDING)
                     .padding(.top, 5)
                     .padding(.bottom, 10)
+                    .frame(maxHeight: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }.background(withDetails && !details.isEmpty ? Color.F.grayBG : Color.F.clear)
     }

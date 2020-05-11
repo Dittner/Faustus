@@ -44,10 +44,14 @@ class Quote: Conspectus, ObservableObject {
     
     override func getDescription(detailed: Bool = true) -> String {
         let bookInfo = book.content
-        if let authorInfo = bookInfo.getAuthorFullName() {
-            return "\(bookInfo.title), \(authorInfo), \(bookInfo.writtenDate), s.\(startPage)"
+        if detailed {
+            return text
         } else {
-            return "\(bookInfo.title), \(bookInfo.writtenDate), s.\(startPage)"
+            if let authorInfo = bookInfo.getAuthorFullName() {
+                return "\(bookInfo.title), \(authorInfo), \(bookInfo.writtenDate), s.\(startPage)"
+            } else {
+                return "\(bookInfo.title), \(bookInfo.writtenDate), s.\(startPage)"
+            }
         }
     }
     

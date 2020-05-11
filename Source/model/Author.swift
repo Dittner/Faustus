@@ -37,8 +37,11 @@ class AuthorContent: ObservableObject {
 
         Publishers.CombineLatest($birthYear, $deathYear)
             .debounce(for: 0.2, scheduler: RunLoop.main)
-            .map { birth, death in
-                death.count > 0 ? birth + "–" + death : birth
+            .map { birthYear, deathYear in
+                if let birth = Int(birthYear), let death = Int(deathYear), birth < 0 {
+                    return deathYear.isEmpty ? "\(abs(birth)) v. Chr." : "\(abs(birth)) – \(abs(death)) v. Chr."
+                }
+                return deathYear.isEmpty ? birthYear : "\(birthYear) – \(deathYear)"
             }
             .assign(to: \.years, on: self)
             .store(in: &disposeBag)

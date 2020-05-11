@@ -40,7 +40,7 @@ struct HistoryView: View {
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(alignment: .leading, spacing: 1) {
                     ForEach(vm.stack, id: \.id) { conspectus in
-                        ConspectusRow(action: { _ in self.vm.select(conspectus: conspectus) }, conspectus: conspectus).frame(height: 50)
+                        ConspectusRow(action: { _ in self.vm.select(conspectus: conspectus) }, conspectus: conspectus)
                     }
                 }
             }

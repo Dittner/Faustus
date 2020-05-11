@@ -11,6 +11,7 @@ import SwiftUI
 
 class BookContent: ObservableObject {
     @Published var title: String = ""
+    @Published var fullTitle: String = ""
     @Published var subTitle: String = ""
     @Published var ISBN: String = ""
     @Published var writtenDate: String = ""
@@ -18,6 +19,7 @@ class BookContent: ObservableObject {
     @Published var pageCount: String = ""
     @Published var publisher: String = ""
     @Published var place: String = ""
+    @Published var reference: String = ""
     @Published var info: String = ""
     @Published var authorText: String = ""
     @Published var author: Conspectus?
@@ -118,6 +120,7 @@ class QuoteColl: ObservableObject {
 class Book: Conspectus, ObservableObject {
     @ObservedObject var content: BookContent = BookContent()
     @ObservedObject var quoteColl: QuoteColl = QuoteColl()
+    @Published var quotesFilter: String = ""
 
     override var genus: ConspectusGenus { return .book }
 
@@ -125,7 +128,7 @@ class Book: Conspectus, ObservableObject {
     override func didInit() {
         quoteColl.owner = self
 
-        for prop in [content.$title, content.$subTitle, content.$ISBN, content.$writtenDate, content.$publishedDate, content.$pageCount, content.$publisher, content.$place, content.$info, content.$authorText] {
+        for prop in [content.$title, content.$fullTitle, content.$subTitle, content.$ISBN, content.$writtenDate, content.$publishedDate, content.$pageCount, content.$publisher, content.$reference, content.$place, content.$info, content.$authorText] {
             prop
                 .removeDuplicates()
                 .sink { _ in
@@ -190,12 +193,14 @@ class Book: Conspectus, ObservableObject {
     override func serialize() -> [String: Any] {
         var dict = super.serialize()
         dict["title"] = content.title
+        dict["fullTitle"] = content.fullTitle
         dict["subTitle"] = content.subTitle
         dict["ISBN"] = content.ISBN
         dict["writtenDate"] = content.writtenDate
         dict["publishedDate"] = content.publishedDate
         dict["pageCount"] = content.pageCount
         dict["publisher"] = content.publisher
+        dict["reference"] = content.reference
         dict["place"] = content.place
         dict["info"] = content.info
         dict["authorText"] = content.authorText
@@ -217,12 +222,14 @@ class Book: Conspectus, ObservableObject {
         super.deserialize()
         if let dict = fileData {
             content.title = dict["title"] as? String ?? ""
+            content.fullTitle = dict["fullTitle"] as? String ?? ""
             content.subTitle = dict["subTitle"] as? String ?? ""
             content.ISBN = dict["ISBN"] as? String ?? ""
             content.writtenDate = dict["writtenDate"] as? String ?? ""
             content.publishedDate = dict["publishedDate"] as? String ?? ""
             content.pageCount = dict["pageCount"] as? String ?? ""
             content.publisher = dict["publisher"] as? String ?? ""
+            content.reference = dict["reference"] as? String ?? ""
             content.place = dict["place"] as? String ?? ""
             content.info = dict["info"] as? String ?? ""
             content.authorText = dict["authorText"] as? String ?? ""

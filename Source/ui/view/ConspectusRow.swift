@@ -147,7 +147,7 @@ struct ConspectusRow: View {
                 Rectangle()
                     .foregroundColor(self.genusColor)
                     .allowsHitTesting(false)
-                    .frame(width: 4, height: 50)
+                    .frame(width: 3, height: 50)
                     .opacity(isSelectable && notifier.isSelected ? 1 : 0)
                     .padding(.top, -2)
 
@@ -155,15 +155,16 @@ struct ConspectusRow: View {
                     .renderingMode(.template)
                     .foregroundColor(self.textColor)
                     .allowsHitTesting(false)
-                    .frame(width: 46, height: 50)
+                    .frame(width: 46)
                     .opacity(0.6)
                     .scaleEffect(0.8)
+                    .offset(y: -2)
 
                 VStack(alignment: .center, spacing: 0) {
                     Rectangle()
                         .foregroundColor(self.genusColor)
                         .allowsHitTesting(false)
-                        .frame(width: 20, height: 2)
+                        .frame(width: 20, height: 1)
                         .padding(.bottom, self.notifier.subTitle.isEmpty ? 13 : 8)
 
                     Text(self.notifier.title)

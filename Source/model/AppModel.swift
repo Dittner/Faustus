@@ -135,6 +135,8 @@ class AppModel: ObservableObject {
             recentOpened.append(selectedConspectus)
             recentOpened.removeFirst()
             selectedConspectus = recentOpened[0]
+        } else if selectedConspectus.state.isNew {
+            removeSelectedConspectus()
         }
     }
 

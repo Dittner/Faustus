@@ -62,10 +62,12 @@ struct AuthorHeader: View {
     @EnvironmentObject var vm: DocViewModel
     @EnvironmentObject var textFocus: TextFocus
     @ObservedObject var author: Author
+    @ObservedObject var content: AuthorContent
     @ObservedObject var state: ConspectusState
 
     init(author: Author) {
         self.author = author
+        content = author.content
         state = author.state
 
         print("AuthorHeader init, author: \(author.id), has changes: \(state.hasChanges)")
@@ -86,11 +88,29 @@ struct AuthorHeader: View {
 
                 Spacer().frame(width: 10)
 
-                TextInput(title: "Vorname", text: $author.content.name, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 30), alignment: .right, isFocused: textFocus.id == .headerAuthorName, isSecure: false, format: nil, isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorSurname })
-                    .saturation(0)
+                if state.isEditing {
+                    TextInput(title: "Vorname", text: $content.name, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 30), alignment: .right, isFocused: textFocus.id == .headerAuthorName, isSecure: false, format: nil, isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorSurname })
+                        .saturation(0)
 
-                TextInput(title: "Nachname", text: $author.content.surname, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .left, isFocused: textFocus.id == .headerAuthorSurname, isSecure: false, format: nil, isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorBirthYear })
-                    .saturation(0)
+                    TextInput(title: "Nachname", text: $content.surname, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .left, isFocused: textFocus.id == .headerAuthorSurname, isSecure: false, format: nil, isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorBirthYear })
+                        .saturation(0)
+                } else {
+                    Spacer()
+
+                    if !content.name.isEmpty {
+                        Text(content.name)
+                            .lineLimit(1)
+                            .font(Font.custom(.pragmaticaExtraLight, size: 30))
+                            .foregroundColor(Color.F.white)
+                    }
+
+                    Text(content.surname)
+                        .lineLimit(1)
+                        .font(Font.custom(.pragmaticaBold, size: 30))
+                        .foregroundColor(Color.F.white)
+
+                    Spacer()
+                }
 
                 Toggle("", isOn: $state.isEditing)
                     .toggleStyle(RoundToggleStyle(onColor: Color(author.genus), disabled: state.isRemoved))
@@ -108,20 +128,27 @@ struct AuthorHeader: View {
 
                 Spacer()
 
-                TextInput(title: "geboren", text: $author.content.birthYear, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .right, isFocused: textFocus.id == .headerAuthorBirthYear, isSecure: false, format: "-?[0-9]{0,4}", isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorDeathYear })
-                    .saturation(0)
-                    .frame(width: 100)
+                if state.isEditing {
+                    TextInput(title: "geboren", text: $content.birthYear, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .right, isFocused: textFocus.id == .headerAuthorBirthYear, isSecure: false, format: "-?[0-9]{0,4}", isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorDeathYear })
+                        .saturation(0)
+                        .frame(width: 200, height: 30)
 
-                Text("–")
-                    .font(Font.custom(.pragmaticaExtraLight, size: 16))
-                    .foregroundColor(Color.F.white)
-                    .frame(width: 10, alignment: .center)
-                    .opacity($author.content.deathYear.wrappedValue.count == 0 ? 0.25 : 1)
-                
+                    Text("–")
+                        .font(Font.custom(.pragmaticaExtraLight, size: 16))
+                        .foregroundColor(Color.F.white)
+                        .frame(width: 13, alignment: .center)
+                        .opacity($content.deathYear.wrappedValue.count == 0 ? 0.25 : 1)
 
-                TextInput(title: "gestorben", text: $author.content.deathYear, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerAuthorDeathYear, isSecure: false, format: "-?[0-9]{0,4}", isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorName })
-                    .saturation(0)
-                    .frame(width: 100)
+                    TextInput(title: "gestorben", text: $content.deathYear, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerAuthorDeathYear, isSecure: false, format: "-?[0-9]{0,4}", isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorName })
+                        .saturation(0)
+                        .frame(width: 200, height: 30)
+                } else {
+                    Text(content.years)
+                        .lineLimit(1)
+                        .font(Font.custom(.pragmaticaExtraLight, size: 16))
+                        .foregroundColor(Color.F.white)
+                        .frame(width: 200, height: 30)
+                }
 
                 Spacer()
 
@@ -185,6 +212,7 @@ struct BookHeader: View {
                 Spacer().frame(width: 250)
 
                 TextInput(title: "geschrieben", text: $book.content.writtenDate, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .right, isFocused: textFocus.id == .headerBookWritten, isSecure: false, format: "-?[0-9]{0,4}", isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerBookAuthor })
+                    .padding(.trailing, -3)
                     .saturation(0)
                     .frame(width: 200)
 

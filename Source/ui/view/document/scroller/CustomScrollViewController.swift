@@ -14,7 +14,9 @@ class CustomScrollViewController: ViewModel {
         didSet {
             let difference = oldValue - contentHeight
             if abs(difference) < 50 && abs(difference) > 0 {
-                updateScrollPosition(with: difference / scrollFactor)
+                withAnimation(.easeInOut(duration: 1.0)) {
+                    updateScrollPosition(with: difference / scrollFactor)
+                }
             }
         }
     }
@@ -24,7 +26,7 @@ class CustomScrollViewController: ViewModel {
     @Published var scaleY: CGFloat = 1
     @Published var owner: Conspectus!
 
-    let scrollFactor: CGFloat = 10
+    let scrollFactor: CGFloat = 15
     static var scrollPositionCache: [UID: CGFloat] = [:]
 
     private var disposeBag: Set<AnyCancellable> = []
@@ -63,17 +65,15 @@ class CustomScrollViewController: ViewModel {
     }
 
     func updateScrollPosition(with offset: CGFloat) {
-        withAnimation {
-            let maxScrollOffset = windowHeight - contentHeight
-            if maxScrollOffset > 0 {
-                scrollPosition = 0
-            } else if scrollPosition + offset * scrollFactor > 0 {
-                scrollPosition = CGFloat.zero
-            } else if scrollPosition + offset * scrollFactor < maxScrollOffset {
-                scrollPosition = maxScrollOffset
-            } else {
-                scrollPosition += offset * scrollFactor
-            }
+        let maxScrollOffset = windowHeight - contentHeight
+        if maxScrollOffset > 0 {
+            scrollPosition = 0
+        } else if scrollPosition + offset * scrollFactor > 0 {
+            scrollPosition = CGFloat.zero
+        } else if scrollPosition + offset * scrollFactor < maxScrollOffset {
+            scrollPosition = maxScrollOffset
+        } else {
+            scrollPosition += offset * scrollFactor
         }
     }
 
@@ -116,7 +116,7 @@ class CustomScrollViewController: ViewModel {
             }
             let pos = (thumbDownOffset - value.location.y) / scaleY
             withAnimation {
-                scrollPosition = maxPos > pos ? maxPos : abs(pos) < windowHeight ? 0 : pos
+                scrollPosition = maxPos > pos ? maxPos : abs(pos) < windowHeight || pos > 0 ? 0 : pos
             }
         }
     }

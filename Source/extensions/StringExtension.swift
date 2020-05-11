@@ -4,6 +4,25 @@ import Foundation
 import SwiftUI
 
 extension String {
+    func indexesOf(string: String) -> [Int] {
+        var indices = [Int]()
+        
+
+        let searchText = string.lowercased()
+        let selfText = lowercased()
+        var searchStartIndex = selfText.startIndex
+
+        while searchStartIndex < endIndex,
+            let range = selfText.range(of: searchText, range: searchStartIndex ..< selfText.endIndex),
+            !range.isEmpty {
+                let index = selfText.distance(from: selfText.startIndex, to: range.lowerBound)
+            indices.append(index)
+            searchStartIndex = range.upperBound
+        }
+
+        return indices
+    }
+
     /*
      "string_id".localized
      */
@@ -94,9 +113,9 @@ extension String {
         if end < startIndex { return "" }
         return self[startIndex ..< end]
     }
-    
+
     func index(from: Int) -> Index {
-        return self.index(startIndex, offsetBy: from)
+        return index(startIndex, offsetBy: from)
     }
 
     func substring(from: Int) -> String {
@@ -112,7 +131,7 @@ extension String {
     func substring(with r: Range<Int>) -> String {
         let startIndex = index(from: r.lowerBound)
         let endIndex = index(from: r.upperBound)
-        return String(self[startIndex..<endIndex])
+        return String(self[startIndex ..< endIndex])
     }
 
     /*

@@ -130,8 +130,8 @@ struct TextArea: NSViewRepresentable {
         TextInput.tf.stringValue = text
         TextInput.tf.font = font
         TextInput.tf.lineBreakMode = .byWordWrapping
-        // 0.4 + 1.25 – multiple of TextArea line hight
-        return max(minHeight, TextInput.tf.sizeThatFits(CGSize(width: width, height: .infinity)).height * 1.277)
+        // 0.3 + 1.25 – multiple of TextArea line hight
+        return max(minHeight, TextInput.tf.sizeThatFits(CGSize(width: width, height: .infinity)).height * 1.28)
     }
 
     @Binding var text: String
@@ -139,12 +139,13 @@ struct TextArea: NSViewRepresentable {
     let textColor: NSColor
     let font: NSFont
     let isEditable: Bool
+    var highlightedText: String = ""
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
 
-    func makeNSView(context: Context) -> NSTextView {
+    func makeNSView(context: Context) -> CustomNSTextView {
         print("TextArea init")
         let tv = CustomNSTextView()
         tv.delegate = context.coordinator
@@ -161,13 +162,33 @@ struct TextArea: NSViewRepresentable {
         return tv
     }
 
-    func updateNSView(_ textArea: NSTextView, context: Context) {
+    func updateNSView(_ textArea: CustomNSTextView, context: Context) {
         context.coordinator.parent = self
         textArea.isEditable = isEditable
         textArea.isSelectable = isEditable
 
-        if textArea.string != text {
+        if textArea.string != text || textArea.curHighlightedText != highlightedText {
+            textArea.curHighlightedText = highlightedText
             textArea.string = text
+
+            let attributedStr = NSMutableAttributedString(string: text)
+
+            attributedStr.addAttribute(NSAttributedString.Key.font, value: font, range: NSRange(location: 0, length: text.count))
+
+            let style = NSMutableParagraphStyle()
+            style.lineHeightMultiple = 1.25
+            textArea.defaultParagraphStyle = style
+            attributedStr.addAttribute(NSAttributedString.Key.paragraphStyle, value: style, range: NSRange(location: 0, length: text.count))
+            
+            if !highlightedText.isEmpty {
+                let indexes = text.indexesOf(string: highlightedText)
+                for ind in indexes {
+                    attributedStr.addAttribute(NSAttributedString.Key.backgroundColor, value: NSColor.F.dark, range: NSRange(location: ind, length: highlightedText.count))
+                    attributedStr.addAttribute(NSAttributedString.Key.foregroundColor, value: NSColor.F.white, range: NSRange(location: ind, length: highlightedText.count))
+                }
+            }
+
+            textArea.textStorage?.setAttributedString(attributedStr)
         }
     }
 
@@ -189,6 +210,8 @@ struct TextArea: NSViewRepresentable {
     }
 
     class CustomNSTextView: NSTextView {
+        var curHighlightedText: String = ""
+
         override func paste(_ sender: Any?) {
             pasteAsPlainText(sender)
         }

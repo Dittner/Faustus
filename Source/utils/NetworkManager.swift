@@ -20,10 +20,12 @@ class NetworkManager {
                 
                 var b = BookData()
                 b.publishedDate = json["items"]["volumeInfo"]["publishedDate"].value as? String ?? ""
+                b.title = json["items"]["volumeInfo"]["title"].value as? String ?? ""
                 b.subtitle = json["items"]["volumeInfo"]["subtitle"].value as? String ?? ""
                 b.pageCount = json["items"]["volumeInfo"]["pageCount"].value as? Int
                 b.authors = json["items"]["volumeInfo"]["authors"].value as? [String] ?? []
-                b.description = json["items"]["volumeInfo"]["authors"].value as? String ?? ""
+                b.description = json["items"]["volumeInfo"]["description"].value as? String ?? ""
+                b.publisher = json["items"]["volumeInfo"]["publisher"].value as? String ?? ""
 
                 promise(.success(b))
 
@@ -106,9 +108,11 @@ class JSONParser {
 }
 
 struct BookData {
+    var title: String = ""
     var subtitle: String = ""
     var publishedDate: String = ""
     var pageCount: Int?
     var description: String = ""
+    var publisher: String = ""
     var authors: [String] = []
 }

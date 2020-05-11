@@ -35,7 +35,7 @@ struct ConspectusLink: View {
         self.conspectus = conspectus
         state = conspectus.state
         self.withDetails = withDetails
-        name = conspectus.getDescription(detailed: false)
+        name = " \(conspectus.getDescription(detailed: false))"
         details = (conspectus as? Quote)?.text ?? ""
         iconName = (conspectus as? Quote)?.book.content.author?.genus == .user ? "comment" : conspectus.genus.toIconName()
 
@@ -64,6 +64,7 @@ struct ConspectusLink: View {
                         .frame(width: 30, height: 30)
                         .background(conspectus.genus.toColor())
                         .cornerRadius(4)
+                        .zIndex(1)
                 }
 
                 Text("\(name)")
@@ -75,7 +76,7 @@ struct ConspectusLink: View {
                     .frame(height: withDetails ? ConspectusLink.HEIGHT : 20, alignment: .center)
                     .background(withDetails ? conspectus.genus.toColor() : Color.F.clear)
                     .cornerRadius(4)
-                    .offset(x: withDetails ? -4 : 0)
+                    .offset(x: withDetails ? -15 : 0)
                     .onHover { value in self.hover = value }
                     .onTapGesture {
                         if !self.isEditing {
@@ -87,7 +88,7 @@ struct ConspectusLink: View {
                     .buttonStyle(IconButtonStyle(iconName: "smallClose", iconColor: btnIconColor, bgColor: Color(conspectus.genus), width: 20, height: 20, radius: 10))
                     .opacity(isEditing ? 1 : 0)
                     .layoutPriority(1)
-                    .offset(x: withDetails ? -14 : 0, y: -5)
+                    .offset(x: withDetails ? -25 : 0, y: -5)
 
                 if withDetails && !details.isEmpty {
                     Spacer()

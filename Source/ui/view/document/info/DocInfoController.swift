@@ -59,22 +59,34 @@ class DocInfoController: ObservableObject {
                 .receive(on: RunLoop.main)
                 .compactMap { $0 }
                 .sink { value in
-                    if bookContent.subTitle.isEmpty {
+                    if !value.title.isEmpty {
+                        bookContent.fullTitle = value.title
+                        if bookContent.title.isEmpty {
+                            bookContent.title = value.title
+                        }
+                    }
+
+                    if !value.subtitle.isEmpty {
                         bookContent.subTitle = value.subtitle
                     }
 
-                    if bookContent.info.isEmpty {
+                    if !value.description.isEmpty {
                         bookContent.info = value.description
                     }
 
-                    if bookContent.publishedDate.isEmpty {
+                    if !value.publishedDate.isEmpty {
                         bookContent.publishedDate = value.publishedDate
                     }
 
-                    if bookContent.pageCount.isEmpty, let pageCount = value.pageCount {
+                    if !value.publisher.isEmpty {
+                        bookContent.publisher = value.publisher
+                    }
+
+                    if let pageCount = value.pageCount, pageCount > 0 {
                         bookContent.pageCount = String(pageCount)
                     }
-                    if bookContent.authorText.isEmpty {
+
+                    if value.authors.count > 0 {
                         bookContent.authorText = value.authors.reduce("") { $0 + ", " + $1 }.substring(from: 2)
                     }
                 }

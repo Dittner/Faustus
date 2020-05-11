@@ -11,4 +11,5 @@ class Constants {
     static let docViewWidth:CGFloat = 1000
     static let docViewMinimapWidth:CGFloat = 100
     static let docViewHeaderHeight:CGFloat = 100
+    static let docViewLeading:CGFloat = 60
 }

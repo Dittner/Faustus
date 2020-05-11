@@ -73,7 +73,7 @@ final class DocViewModel: ViewModel {
         model.removeSelectedConspectus()
     }
 
-    func close() {
+    func close() {        
         model.closeSelectedConspectus()
     }
 }

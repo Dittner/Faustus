@@ -185,10 +185,10 @@ struct UserCommentsChooserSubView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if self.chooser.mode == .commenting {
-                TextArea(text: $chooser.userCommentText, textColor: NSColor.F.black, font: QuoteCell.textFont, isEditable: true)
+                TextArea(text: $chooser.userCommentText, textColor: NSColor.F.black, font: QuoteCell.nsTextFont, isEditable: true)
                     .lineSpacing(5)
                     .colorScheme(.light)
-                    .frame(width: 780, height: TextArea.textHeightFrom(text: chooser.userCommentText, width: 780, font: QuoteCell.textFont, isShown: true, minHeight: 50))
+                    .frame(width: 780, height: TextArea.textHeightFrom(text: chooser.userCommentText, width: 780, font: QuoteCell.nsTextFont, isShown: true, minHeight: 50))
                     .padding(.vertical, 5)
                     .padding(.leading, 10)
                     .padding(.trailing, 10)

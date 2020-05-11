@@ -31,7 +31,7 @@ struct RootView: View {
                 HStack(alignment: .top, spacing: 0) {
                     SearchView()
                         .frame(minWidth: 200, idealWidth: panelsWidth, maxWidth: .infinity, minHeight: 0, idealHeight: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                    DocView()
+                    DocView(vm: docViewModel)
                         .frame(minWidth: Constants.docViewWidth + Constants.docViewMinimapWidth, idealWidth: Constants.docViewWidth + Constants.docViewMinimapWidth, maxWidth: Constants.docViewWidth + Constants.docViewMinimapWidth, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)
                     HistoryView()
                         .frame(minWidth: 200, idealWidth: panelsWidth, maxWidth: .infinity, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)

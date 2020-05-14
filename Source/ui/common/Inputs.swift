@@ -151,7 +151,6 @@ struct TextArea: NSViewRepresentable {
         tv.delegate = context.coordinator
         tv.textColor = textColor
         tv.font = font
-
         tv.isEditable = isEditable
         tv.isSelectable = isEditable
         tv.allowsUndo = true
@@ -179,12 +178,12 @@ struct TextArea: NSViewRepresentable {
             style.lineHeightMultiple = 1.25
             textArea.defaultParagraphStyle = style
             attributedStr.addAttribute(NSAttributedString.Key.paragraphStyle, value: style, range: NSRange(location: 0, length: text.count))
-            
+
             if !highlightedText.isEmpty {
-                let indexes = text.indexesOf(string: highlightedText)
-                for ind in indexes {
-                    attributedStr.addAttribute(NSAttributedString.Key.backgroundColor, value: NSColor.F.dark, range: NSRange(location: ind, length: highlightedText.count))
-                    attributedStr.addAttribute(NSAttributedString.Key.foregroundColor, value: NSColor.F.white, range: NSRange(location: ind, length: highlightedText.count))
+                let ranges = text.ranges(of: highlightedText, options: .caseInsensitive)
+                for r in ranges {
+                    attributedStr.addAttribute(NSAttributedString.Key.backgroundColor, value: NSColor.F.dark, range: NSRange(r, in: highlightedText))
+                    attributedStr.addAttribute(NSAttributedString.Key.foregroundColor, value: NSColor.F.white, range: NSRange(r, in: highlightedText))
                 }
             }
 

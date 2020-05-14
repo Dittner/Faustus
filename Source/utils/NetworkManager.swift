@@ -17,15 +17,15 @@ class NetworkManager {
             URLSession.shared.dataTask(with: url) { data, _, _ in
                 guard let data = data else { promise(.success(nil)); return }
                 guard let json = JSONParser(data: data) else { promise(.success(nil)); return }
-                
+
                 var b = BookData()
-                b.publishedDate = json["items"]["volumeInfo"]["publishedDate"].value as? String ?? ""
-                b.title = json["items"]["volumeInfo"]["title"].value as? String ?? ""
-                b.subtitle = json["items"]["volumeInfo"]["subtitle"].value as? String ?? ""
-                b.pageCount = json["items"]["volumeInfo"]["pageCount"].value as? Int
+                b.publishedDate = json["items"]["volumeInfo"]["publishedDate"].string
+                b.title = json["items"]["volumeInfo"]["title"].string
+                b.subtitle = json["items"]["volumeInfo"]["subtitle"].string
+                b.pageCount = json["items"]["volumeInfo"]["pageCount"].int
                 b.authors = json["items"]["volumeInfo"]["authors"].value as? [String] ?? []
-                b.description = json["items"]["volumeInfo"]["description"].value as? String ?? ""
-                b.publisher = json["items"]["volumeInfo"]["publisher"].value as? String ?? ""
+                b.description = json["items"]["volumeInfo"]["description"].string
+                b.publisher = json["items"]["volumeInfo"]["publisher"].string
 
                 promise(.success(b))
 
@@ -55,6 +55,14 @@ struct JSONValue {
 
     init(dict: [String: JSONValue]) {
         self.dict = dict
+    }
+
+    var string: String {
+        value as? String ?? ""
+    }
+
+    var int: Int? {
+        value as? Int
     }
 
     init() {}

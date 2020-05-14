@@ -11,8 +11,9 @@ import SwiftUI
 
 class QuoteListController: ViewModel {
     var book: Book!
-    @Published var filter: String = ""
+    @Published var searchText: String = ""
     @Published var quotes: [Quote] = []
+    @Published var isExpanded: Bool = true
 
     var quotesFilterPublisher: AnyCancellable?
 
@@ -28,7 +29,7 @@ class QuoteListController: ViewModel {
                     self.quotes = filter.isEmpty ? self.book.quoteColl.quotes : self.book.quoteColl.quotes.filter { $0.getDescription().hasSubstring(filter)
                     }
 
-                    self.filter = filter
+                    self.searchText = filter
                 }
         }
     }

@@ -13,6 +13,7 @@ class TagTreeController: ViewModel {
     @Published var owner: Conspectus!
     @Published var ownerLinks: [Conspectus] = []
     @Published var ownerTags: [Tag] = []
+    @Published var isExpanded: Bool = false
     var tagTree: TagTree = TagTree([])
     var ownerLinksPublisher: AnyCancellable?
 

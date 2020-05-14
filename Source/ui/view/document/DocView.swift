@@ -48,26 +48,26 @@ struct DocView: View {
                 VStack(alignment: .leading, spacing: 15) {
                     StoreStatePanel(self.vm.selectedConspectus)
                     if self.vm.selectedConspectus is User {
-                        BookListView(self.vm.selectedConspectus, chooser: self.vm.chooser, title: "AUFSÄTZE")
+                        BookListView(self.vm.bookListViewController, chooser: self.vm.chooser, title: "AUFSÄTZE")
                     } else if self.vm.selectedConspectus is Author {
                         InfoPanel(self.vm.infoController)
                         TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
-                        BookListView(self.vm.selectedConspectus, chooser: self.vm.chooser)
-                        LinkListView(self.vm.selectedConspectus)
+                        BookListView(self.vm.bookListViewController, chooser: self.vm.chooser)
+                        LinkListView(self.vm.linkListViewController)
                     } else if self.vm.selectedConspectus is Book {
                         if chooser.owner == self.vm.selectedConspectus && chooser.mode == .chooseAuthor {
                             ConspectusChooserView(chooser: chooser).offset(x: Constants.docViewLeading)
                         }
                         BookInfoPanel(self.vm.infoController)
                         TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
-                        LinkListView(self.vm.selectedConspectus)
+                        LinkListView(self.vm.linkListViewController)
                         QuoteListView(self.vm.quoteListController, chooser: self.vm.chooser, changeInputsWithText: false)
                     } else if self.vm.selectedConspectus is Tag {
                         if chooser.owner == self.vm.selectedConspectus && chooser.mode == .chooseTags && chooser.selectOnlyParentTag {
                             ConspectusChooserView(chooser: chooser).offset(x: Constants.docViewLeading)
                         }
                         InfoPanel(self.vm.infoController)
-                        LinkListView(self.vm.selectedConspectus)
+                        LinkListView(self.vm.linkListViewController)
                     }
                 }
                 .padding(.horizontal, 15)
@@ -187,7 +187,6 @@ struct SectionView: View {
     let title: String
     var isEditing: Bool = false
     var action: (() -> Void)?
-    var onExpand: ((_ isExpanded: Bool) -> Void)?
     let actionBtnIcon: String = "plus"
 
     var body: some View {
@@ -208,7 +207,6 @@ struct SectionView: View {
 
                 Button(action: {
                     self.isExpanded.toggle()
-                    self.onExpand?(self.isExpanded)
                 }) {
                     RoundedRectangle(cornerRadius: 2)
                         .foregroundColor(self.isExpanded ? Color.F.black : Color.F.clear)
@@ -231,28 +229,27 @@ struct SectionView: View {
 
 struct BookListView: View {
     let owner: Conspectus
+    @ObservedObject var controller: BookListViewController
     @ObservedObject var chooser: ConspectusChooser
     @ObservedObject var booksColl: BookColl
     @ObservedObject var state: ConspectusState
-    @State private var isExpanded: Bool = BookListView.isExpanded
-    static var isExpanded: Bool = true
     private let font = NSFont(name: .pragmaticaLight, size: 21)
     private let title: String
 
-    init(_ conspectus: Conspectus, chooser: ConspectusChooser, title: String = "BÜCHER") {
-        owner = conspectus
+    init(_ controller: BookListViewController, chooser: ConspectusChooser, title: String = "BÜCHER") {
+        self.controller = controller
+        owner = controller.owner
         self.title = title
         self.chooser = chooser
-        booksColl = (conspectus as! BooksOwner).booksColl
-        state = conspectus.state
+        booksColl = (controller.owner as! BooksOwner).booksColl
+        state = controller.owner.state
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
-            SectionView(isExpanded: $isExpanded, title: title, isEditing: self.state.isEditing, action: { self.chooser.chooseBooks(self.owner) }, onExpand: { value in BookListView.isExpanded = value
-            })
+            SectionView(isExpanded: $controller.isExpanded, title: title, isEditing: self.state.isEditing, action: { self.chooser.chooseBooks(self.owner) })
 
-            if isExpanded || chooser.mode == .chooseBooks {
+            if controller.isExpanded || chooser.mode == .chooseBooks {
                 if chooser.mode == .chooseBooks {
                     ConspectusChooserView(chooser: chooser)
                 } else {
@@ -279,24 +276,19 @@ struct TagLinksView: View {
     @ObservedObject var controller: TagTreeController
     @ObservedObject var state: ConspectusState
 
-    @State private var isExpanded: Bool = TagLinksView.isExpanded
-    static var isExpanded: Bool = false
-
     private var disposeBag: Set<AnyCancellable> = []
 
     init(_ controller: TagTreeController, chooser: ConspectusChooser) {
         self.chooser = chooser
         self.controller = controller
         state = controller.owner.state
-        isExpanded = TagLinksView.isExpanded
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
-            SectionView(isExpanded: $isExpanded, title: "TAGS", isEditing: self.state.isEditing, action: { self.chooser.chooseTags(self.controller.owner) }, onExpand: { value in TagLinksView.isExpanded = value
-            })
+            SectionView(isExpanded: $controller.isExpanded, title: "TAGS", isEditing: self.state.isEditing, action: { self.chooser.chooseTags(self.controller.owner) })
 
-            if isExpanded || chooser.mode == .chooseTags {
+            if controller.isExpanded || chooser.mode == .chooseTags {
                 if chooser.mode == .chooseTags {
                     ConspectusChooserView(chooser: chooser).offset(x: Constants.docViewLeading)
                 } else {
@@ -313,60 +305,37 @@ struct TagLinksView: View {
                         .padding(.trailing, 0)
                 }
             }
-        }.onDisappear { TagLinksView.isExpanded = self.isExpanded }
+        }
     }
 }
 
 struct LinkListView: View {
-    @State var isExpanded: Bool = LinkListView.isExpanded
+    @ObservedObject var controller: LinkListViewController
     @ObservedObject var state: ConspectusState
-    @ObservedObject var notifier: Notifier
 
-    class Notifier: ObservableObject {
-        @Published var linkColl: LinkColl!
-        @Published var filteredLinks: [Conspectus] = []
-
-        init(_ conspectus: Conspectus) {
-            linkColl = conspectus.linkColl
-            filteredLinks = linkColl.links
-                .filter { $0.genus != .tag }
-                .sorted { $0 < $1 }
-        }
-
-        func removeLink(_ c: Conspectus) {
-            linkColl.removeLink(from: c)
-            filteredLinks = linkColl.links.filter { $0.genus != .tag }
-        }
-    }
-
-    static var isExpanded: Bool = true
-    private var disposeBag: Set<AnyCancellable> = []
-
-    init(_ conspectus: Conspectus) {
-        notifier = Notifier(conspectus)
-        state = conspectus.state
-        isExpanded = LinkListView.isExpanded
+    init(_ controller: LinkListViewController) {
+        self.controller = controller
+        state = controller.owner.state
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
-            SectionView(isExpanded: $isExpanded, title: "LINKS", isEditing: self.state.isEditing, onExpand: { value in LinkListView.isExpanded = value
-            })
+            SectionView(isExpanded: $controller.isExpanded, title: "LINKS", isEditing: self.state.isEditing)
 
-            if isExpanded {
-                ForEach(notifier.filteredLinks, id: \.id) { c in
+            if controller.isExpanded {
+                ForEach(controller.filteredLinks, id: \.id) { c in
                     ConspectusLink(conspectus: c, isEditing: self.state.isEditing, action: { result in
                         if result == .navigate {
                             c.show()
                         } else if result == .remove {
-                            self.notifier.removeLink(c)
+                            self.controller.removeLink(c)
                         }
                     }).padding(.leading, Constants.docViewLeading)
 
                 }.padding(.leading, 0)
                     .padding(.trailing, 0)
             }
-        }.onDisappear { LinkListView.isExpanded = self.isExpanded }
+        }
     }
 }
 
@@ -448,37 +417,32 @@ struct CompactLinksSubView: View {
 }
 
 struct QuoteListView: View {
-    @ObservedObject var quoteListController: QuoteListController
+    @ObservedObject var controller: QuoteListController
     @ObservedObject var chooser: ConspectusChooser
     @ObservedObject var state: ConspectusState
 
-    @State private var isExpanded: Bool = QuoteListView.isExpanded
     let changeInputsWithText: Bool
 
-    static var isExpanded: Bool = true
-
-    init(_ quoteListController: QuoteListController, chooser: ConspectusChooser, changeInputsWithText: Bool = false) {
-        self.quoteListController = quoteListController
+    init(_ controller: QuoteListController, chooser: ConspectusChooser, changeInputsWithText: Bool = false) {
+        self.controller = controller
         self.chooser = chooser
         self.changeInputsWithText = changeInputsWithText
-        state = quoteListController.book.state
-        isExpanded = QuoteListView.isExpanded
+        state = controller.book.state
         print("QuoteListView init")
     }
 
     var body: some View {
         VStack(alignment: .center, spacing: 15) {
-            SectionView(isExpanded: $isExpanded, title: "ZITATE", isEditing: self.state.isEditing, action: quoteListController.createQuote, onExpand: { value in QuoteListView.isExpanded = value
-            })
+            SectionView(isExpanded: $controller.isExpanded, title: "ZITATE", isEditing: self.state.isEditing, action: controller.createQuote)
 
-            if isExpanded {
+            if controller.isExpanded {
                 HStack(alignment: .lastTextBaseline, spacing: 0) {
                     Image("search")
                         .renderingMode(.template)
                         .foregroundColor(Color.F.black)
                         .frame(width: 60)
 
-                    TextInput(title: "", text: $quoteListController.book.quotesFilter, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 21), alignment: .left, isFocused: false, isSecure: false, format: nil, isEditable: true, onEnterAction: nil)
+                    TextInput(title: "", text: $controller.book.quotesFilter, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 21), alignment: .left, isFocused: false, isSecure: false, format: nil, isEditable: true, onEnterAction: nil)
                         .frame(width: 300, height: 50, alignment: .leading)
                         .padding(.horizontal, 0)
                         .saturation(0)
@@ -489,14 +453,14 @@ struct QuoteListView: View {
                 }
                 .frame(height: 50)
 
-                ForEach(quoteListController.quotes, id: \.id) { q in
-                    QuoteCell(quote: q, isEditing: self.state.isEditing, chooser: self.chooser, quoteListController: self.quoteListController, changeInputsWithText: self.changeInputsWithText)
+                ForEach(controller.quotes, id: \.id) { q in
+                    QuoteCell(quote: q, isEditing: self.state.isEditing, chooser: self.chooser, quoteListController: self.controller, changeInputsWithText: self.changeInputsWithText)
                 }.padding(.leading, 0)
                     .padding(.trailing, 0)
 
                 Spacer().frame(width: 0)
             }
-        }.onDisappear { QuoteListView.isExpanded = self.isExpanded }
+        }
     }
 }
 
@@ -525,6 +489,11 @@ struct QuoteCell: View {
 
     func pageInputWidthFrom(text: String, isEditing: Bool) -> CGFloat {
         return isEditing ? 70 : (CGFloat(text.count) + 0.5) * 12
+    }
+
+    static var bgTextFont: Font = Font.custom(.pragmaticaLight, size: 13.5)
+    func replace(_ str: String, searchText: String) -> String {
+        str.replacingOccurrences(of: searchText, with: "█", options: .caseInsensitive)
     }
 
     var body: some View {
@@ -576,11 +545,11 @@ struct QuoteCell: View {
             CompactLinksSubView(quote, isEditing: self.isEditing)
 
             if changeInputsWithText {
-                Text(quote.text)
-                .lineSpacing(9)
+                Text(self.replace(quote.text, searchText: self.quoteListController.searchText))
+                    .lineSpacing(9)
                     .font(QuoteCell.textFont)
                     .multilineTextAlignment(.leading)
-                    .frame(width: 905)
+                    .frame(width: 905, alignment: .leading)
                     .foregroundColor(Color.F.black)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 12)
@@ -588,7 +557,7 @@ struct QuoteCell: View {
 
                 Spacer()
             } else {
-                TextArea(text: $quote.text, textColor: NSColor.F.black, font: QuoteCell.nsTextFont, isEditable: self.isEditing, highlightedText: quoteListController.filter)
+                TextArea(text: $quote.text, textColor: NSColor.F.black, font: QuoteCell.nsTextFont, isEditable: self.isEditing, highlightedText: quoteListController.searchText)
                     .layoutPriority(-1)
                     .padding(.top, 5)
                     .padding(.bottom, 10)

@@ -38,26 +38,26 @@ struct CustomScrollView<Content>: View where Content: View {
                 VStack(alignment: .leading, spacing: 15) {
                     StoreStatePanel(self.vm.selectedConspectus)
                     if self.vm.selectedConspectus is User {
-                        BookListView(self.vm.selectedConspectus, chooser: self.vm.chooser, title: "AUFSÄTZE")
+                        BookListView(self.vm.bookListViewController, chooser: self.vm.chooser, title: "AUFSÄTZE")
                     } else if self.vm.selectedConspectus is Author {
                         InfoPanel(self.vm.infoController)
                         TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
-                        BookListView(self.vm.selectedConspectus, chooser: self.vm.chooser)
-                        LinkListView(self.vm.selectedConspectus)
+                        BookListView(self.vm.bookListViewController, chooser: self.vm.chooser)
+                        LinkListView(self.vm.linkListViewController)
                     } else if self.vm.selectedConspectus is Book {
                         if self.chooser.owner == self.vm.selectedConspectus && self.chooser.mode == .chooseAuthor {
                             ConspectusChooserView(chooser: self.chooser).offset(x: Constants.docViewLeading)
                         }
                         BookInfoPanel(self.vm.infoController)
                         TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
-                        LinkListView(self.vm.selectedConspectus)
+                        LinkListView(self.vm.linkListViewController)
                         QuoteListView(self.vm.quoteListController, chooser: self.vm.chooser, changeInputsWithText: true)
                     } else if self.vm.selectedConspectus is Tag {
                         if self.chooser.owner == self.vm.selectedConspectus && self.chooser.mode == .chooseTags && self.chooser.selectOnlyParentTag {
                             ConspectusChooserView(chooser: self.chooser).offset(x: Constants.docViewLeading)
                         }
                         InfoPanel(self.vm.infoController)
-                        LinkListView(self.vm.selectedConspectus)
+                        LinkListView(self.vm.linkListViewController)
                     }
                     
                 }

@@ -13,8 +13,6 @@ struct InfoPanel: View {
     @EnvironmentObject var modalViewObservable: ModalViewObservable
     @ObservedObject private var controller: DocInfoController
     @ObservedObject var state: ConspectusState
-    @State private var isExpanded: Bool = InfoPanel.isExpanded
-    static var isExpanded: Bool = false
 
     private let font = NSFont(name: .pragmaticaLight, size: 24)
     private let title: String
@@ -28,10 +26,9 @@ struct InfoPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionView(isExpanded: $isExpanded, title: title, onExpand: { value in InfoPanel.isExpanded = value
-            })
+            SectionView(isExpanded: $controller.isExpanded, title: title)
 
-            if self.isExpanded {
+            if controller.isExpanded {
                 if self.controller.parentTag != nil {
                     Spacer().frame(height: 5)
 
@@ -61,7 +58,7 @@ struct InfoPanel: View {
                     .padding(.leading, Constants.docViewLeading - 5)
                     .padding(.trailing, 10)
                     .background(state.isEditing ? Color.F.whiteBG : Color.F.white)
-                    .frame(height: TextArea.textHeightFrom(text: controller.info, width: 950 - Constants.docViewLeading, font: font, isShown: isExpanded))
+                    .frame(height: TextArea.textHeightFrom(text: controller.info, width: 950 - Constants.docViewLeading, font: font, isShown: controller.isExpanded))
                     .onTapGesture(count: 2) {
                         if !self.controller.owner.state.isEditing {
                             notify(msg: "in die Zwischenablage kopiert")
@@ -71,7 +68,7 @@ struct InfoPanel: View {
                         }
                     }
             }
-        }.onDisappear { InfoPanel.isExpanded = self.isExpanded }
+        }
     }
 }
 
@@ -81,11 +78,9 @@ struct BookInfoPanel: View {
     @EnvironmentObject var textFocus: TextFocus
     @ObservedObject var content: BookContent
     @ObservedObject var state: ConspectusState
-    @State private var isExpanded: Bool = InfoPanel.isExpanded
 
     private let font = NSFont(name: .pragmaticaLight, size: 18)
     private let title: String
-    private var disposeBag: Set<AnyCancellable> = []
 
     init(_ controller: DocInfoController, title: String = "INFO") {
         self.controller = controller
@@ -97,10 +92,9 @@ struct BookInfoPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            SectionView(isExpanded: $isExpanded, title: title, onExpand: { value in InfoPanel.isExpanded = value
-            })
+            SectionView(isExpanded: $controller.isExpanded, title: title)
 
-            if self.isExpanded {
+            if controller.isExpanded {
                 VStack(alignment: .leading, spacing: 5) {
                     FormInput(title: "TITEL", text: $content.fullTitle, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoTitle, onEnter: { self.textFocus.id = .bookInfoSubtitle })
                     FormInput(title: "UNTERTITEL", text: $content.subTitle, isEditing: state.isEditing, isFocused: textFocus.id == .bookInfoSubtitle, onEnter: { self.textFocus.id = .bookInfoAuthor })
@@ -137,7 +131,7 @@ struct BookInfoPanel: View {
                         .padding(.leading, 3)
                         .padding(.trailing, 5)
                         .background(state.isEditing ? Color.F.whiteBG : Color.F.white)
-                        .frame(width: 645, height: TextArea.textHeightFrom(text: content.reference, width: 645, font: font, isShown: isExpanded))
+                        .frame(width: 645, height: TextArea.textHeightFrom(text: content.reference, width: 645, font: font, isShown: controller.isExpanded))
                         .onTapGesture(count: 2) {
                             if !self.state.isEditing {
                                 notify(msg: "in die Zwischenablage kopiert")
@@ -164,7 +158,7 @@ struct BookInfoPanel: View {
                         .padding(.leading, 3)
                         .padding(.trailing, 5)
                         .background(state.isEditing ? Color.F.whiteBG : Color.F.white)
-                        .frame(width: 645, height: TextArea.textHeightFrom(text: content.info, width: 645, font: font, isShown: isExpanded))
+                        .frame(width: 645, height: TextArea.textHeightFrom(text: content.info, width: 645, font: font, isShown: controller.isExpanded))
                         .onTapGesture(count: 2) {
                             if !self.state.isEditing {
                                 notify(msg: "in die Zwischenablage kopiert")
@@ -175,7 +169,7 @@ struct BookInfoPanel: View {
                         }
                 }
             }
-        }.onDisappear { InfoPanel.isExpanded = self.isExpanded }
+        }
     }
 }
 

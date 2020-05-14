@@ -19,6 +19,8 @@ final class DocViewModel: ViewModel {
     let quoteListController = QuoteListController()
     let chooser = ConspectusChooser()
     let scrollController = CustomScrollViewController()
+    let bookListViewController = BookListViewController()
+    let linkListViewController = LinkListViewController()
 
     private var disposeBag: Set<AnyCancellable> = []
 
@@ -35,8 +37,10 @@ final class DocViewModel: ViewModel {
                 self.chooser.cancel()
                 self.scrollController.update(newValue)
                 self.infoController.update(newValue)
+                self.bookListViewController.update(newValue)
                 self.quoteListController.update(newValue)
                 self.tagTreeController.update(newValue)
+                self.linkListViewController.update(newValue)
 
                 self.selectedConspectus = newValue
                 self.selectedConspectusState = newValue.state

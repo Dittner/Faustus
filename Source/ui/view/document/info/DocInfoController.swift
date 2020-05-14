@@ -13,6 +13,7 @@ class DocInfoController: ObservableObject {
     @Published var info: String = ""
     @Published var parentTag: Tag?
     @Published var owner: Conspectus!
+    @Published var isExpanded: Bool = false
 
     var infoPublisher: AnyCancellable?
     var parentTagPublisher: AnyCancellable?

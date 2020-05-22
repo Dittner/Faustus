@@ -131,7 +131,7 @@ struct TextArea: NSViewRepresentable {
         TextInput.tf.font = font
         TextInput.tf.lineBreakMode = .byWordWrapping
         // 0.3 + 1.25 – multiple of TextArea line hight
-        return max(minHeight, TextInput.tf.sizeThatFits(CGSize(width: width, height: .infinity)).height * 1.28)
+        return max(minHeight, TextInput.tf.sizeThatFits(CGSize(width: width, height: .infinity)).height * 1.25)
     }
 
     @Binding var text: String

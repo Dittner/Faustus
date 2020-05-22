@@ -58,7 +58,7 @@ class AppModel: ObservableObject {
         bibliography.updateHashNames()
 
         prepareRecentOpenedStack()
-        // Font.printAllSystemFonts()
+        //Font.printAllSystemFonts()
     }
 
     private func loadAuthors() {

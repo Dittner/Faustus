@@ -73,7 +73,7 @@ extension NSColor {
                            author: NSColor(rgb: 0x6E3CAF, alpha: 1),
                            book: NSColor(rgb: 0xAD3D6B, alpha: 1),
                            tag: NSColor(rgb: 0xC19C49, alpha: 1),
-                           quote: NSColor(rgb: 0x000000, alpha: 1),
+                           quote: NSColor(rgb: 0xF0F0F0, alpha: 1),
                            whiteBG: NSColor(rgb: 0xF8F8F8, alpha: 1),
                            redBG: NSColor(rgb: 0xF4EFF1, alpha: 1),
                            grayBG: NSColor(rgb: 0xF0F0F0, alpha: 1),

@@ -18,6 +18,7 @@ enum FontName: String {
     case pragmaticaSemiBold = "PragmaticaMedium"
     case pragmaticaBold = "PragmaticaBold-Reg"
     case mono = "PTMono-Regular"
+    case georgia = "Georgia"
 }
 
 extension NSFont {

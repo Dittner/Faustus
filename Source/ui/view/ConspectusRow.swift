@@ -40,11 +40,11 @@ struct ConspectusRow: View {
         state = conspectus.state
         isSelectable = selectable
         self.textColor = textColor
+        genusColor = Color(conspectus.genus)
 
         iconName = conspectus.genus.toIconName()
 
         if let author = conspectus as? Author {
-            genusColor = Color.F.author
             Publishers.CombineLatest(author.content.$surname, author.content.$initials)
                 .map { surname, initials in
                     "\(surname) \(initials)"
@@ -57,7 +57,6 @@ struct ConspectusRow: View {
                 .store(in: &disposeBag)
 
         } else if let user = conspectus as? User {
-            genusColor = Color.F.black
             Publishers.CombineLatest(user.content.$surname, user.content.$initials)
                 .map { surname, initials in
                     "\(surname) \(initials)"
@@ -65,8 +64,6 @@ struct ConspectusRow: View {
                 .assign(to: \.title, on: notifier)
                 .store(in: &disposeBag)
         } else if let book = conspectus as? Book {
-            genusColor = Color.F.book
-
             book.content.$title
                 .assign(to: \.title, on: notifier)
                 .store(in: &disposeBag)
@@ -98,14 +95,10 @@ struct ConspectusRow: View {
                 .assign(to: \.hasLinks, on: notifier)
                 .store(in: &disposeBag)
         } else if let tag = conspectus as? Tag {
-            genusColor = Color.F.tag
-
             tag.content.$name
                 .assign(to: \.title, on: notifier)
                 .store(in: &disposeBag)
         } else if let quote = conspectus as? Quote {
-            genusColor = Color.F.gray
-
             Publishers.CombineLatest3(quote.book.content.$title, quote.$startPage, quote.$endPage)
                 .map { title, startPage, endPage in
                     let res: String = title.isEmpty ? "" : title + ", "
@@ -123,9 +116,6 @@ struct ConspectusRow: View {
             quote.$text
                 .assign(to: \.subTitle, on: notifier)
                 .store(in: &disposeBag)
-
-        } else {
-            genusColor = Color.F.gray
         }
 
         notifier.isSelected = selected

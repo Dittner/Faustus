@@ -86,8 +86,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             AppModel.shared.selectedConspectus.state.isEditing.toggle()
         }
     }
+
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        NSApplication.shared.hide(nil)
+        return false
+    }
 }
 
 class CustomWindow<Content>: NSHostingView<Content>, ObservableObject where Content: View {
-    
 }

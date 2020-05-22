@@ -45,32 +45,8 @@ struct DocView: View {
             //
 
             CustomScrollView(controller: vm.scrollController, vm: vm) {
-                VStack(alignment: .leading, spacing: 15) {
-                    StoreStatePanel(self.vm.selectedConspectus)
-                    if self.vm.selectedConspectus is User {
-                        BookListView(self.vm.bookListViewController, chooser: self.vm.chooser, title: "AUFSÄTZE")
-                    } else if self.vm.selectedConspectus is Author {
-                        InfoPanel(self.vm.infoController)
-                        TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
-                        BookListView(self.vm.bookListViewController, chooser: self.vm.chooser)
-                        LinkListView(self.vm.linkListViewController)
-                    } else if self.vm.selectedConspectus is Book {
-                        if chooser.owner == self.vm.selectedConspectus && chooser.mode == .chooseAuthor {
-                            ConspectusChooserView(chooser: chooser).offset(x: Constants.docViewLeading)
-                        }
-                        BookInfoPanel(self.vm.infoController)
-                        TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
-                        LinkListView(self.vm.linkListViewController)
-                        QuoteListView(self.vm.quoteListController, chooser: self.vm.chooser, changeInputsWithText: false)
-                    } else if self.vm.selectedConspectus is Tag {
-                        if chooser.owner == self.vm.selectedConspectus && chooser.mode == .chooseTags && chooser.selectOnlyParentTag {
-                            ConspectusChooserView(chooser: chooser).offset(x: Constants.docViewLeading)
-                        }
-                        InfoPanel(self.vm.infoController)
-                        LinkListView(self.vm.linkListViewController)
-                    }
-                }
-                .padding(.horizontal, 15)
+                DocViewContent(self.vm)
+                    .padding(.horizontal, 15)
             }
             .offset(x: 0, y: -statusPanelHeight)
 
@@ -79,6 +55,46 @@ struct DocView: View {
         }
         .background(DocViewBG(conspectus: vm.selectedConspectus))
         .fillParent()
+    }
+}
+
+struct DocViewContent: View {
+    @ObservedObject var vm: DocViewModel
+    @ObservedObject var chooser: ConspectusChooser
+    let changeInputsWithText: Bool
+
+    init(_ vm: DocViewModel, changeInputsWithText: Bool = false) {
+        self.vm = vm
+        self.changeInputsWithText = changeInputsWithText
+        chooser = vm.chooser
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            StoreStatePanel(self.vm.selectedConspectus)
+            if self.vm.selectedConspectus is User {
+                BookListView(self.vm.bookListViewController, chooser: self.vm.chooser, title: "AUFSÄTZE")
+            } else if self.vm.selectedConspectus is Author {
+                InfoPanel(self.vm.infoController)
+                TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
+                BookListView(self.vm.bookListViewController, chooser: self.vm.chooser)
+                LinkListView(self.vm.linkListViewController)
+            } else if self.vm.selectedConspectus is Book {
+                if self.chooser.owner == self.vm.selectedConspectus && self.chooser.mode == .chooseAuthor {
+                    ConspectusChooserView(chooser: self.chooser).offset(x: Constants.docViewLeading)
+                }
+                BookInfoPanel(self.vm.infoController)
+                TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
+                LinkListView(self.vm.linkListViewController)
+                QuoteListView(self.vm.quoteListController, chooser: self.vm.chooser, changeInputsWithText: changeInputsWithText)
+            } else if self.vm.selectedConspectus is Tag {
+                if self.chooser.owner == self.vm.selectedConspectus && self.chooser.mode == .chooseTags && self.chooser.selectOnlyParentTag {
+                    ConspectusChooserView(chooser: self.chooser).offset(x: Constants.docViewLeading)
+                }
+                InfoPanel(self.vm.infoController)
+                LinkListView(self.vm.linkListViewController)
+            }
+        }
     }
 }
 
@@ -472,8 +488,8 @@ struct QuoteCell: View {
     let changeInputsWithText: Bool
 
     static let pagesFont: NSFont = NSFont(name: .pragmaticaBold, size: 21)
-    static var nsTextFont: NSFont = NSFont(name: .pragmaticaLight, size: 24)
-    static var textFont: Font = Font.custom(.pragmaticaLight, size: 24)
+    static var nsTextFont: NSFont = NSFont(name: .georgia, size: 24)
+    static var textFont: Font = Font.custom(.georgia, size: 24)
 
     private let isEditing: Bool
 

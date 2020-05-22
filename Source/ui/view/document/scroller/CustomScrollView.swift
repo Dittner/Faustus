@@ -12,14 +12,12 @@ import SwiftUI
 struct CustomScrollView<Content>: View where Content: View {
     @ObservedObject var controller: CustomScrollViewController
     @ObservedObject var vm: DocViewModel
-    @ObservedObject var chooser: ConspectusChooser
 
     let content: Content
 
-    init(controller: CustomScrollViewController, vm:DocViewModel, @ViewBuilder content: () -> Content) {
+    init(controller: CustomScrollViewController, vm: DocViewModel, @ViewBuilder content: () -> Content) {
         self.controller = controller
         self.vm = vm
-        self.chooser = vm.chooser
         self.content = content()
     }
 
@@ -33,39 +31,12 @@ struct CustomScrollView<Content>: View where Content: View {
                 .clipped()
 
             ZStack(alignment: .topLeading) {
-                
-
-                VStack(alignment: .leading, spacing: 15) {
-                    StoreStatePanel(self.vm.selectedConspectus)
-                    if self.vm.selectedConspectus is User {
-                        BookListView(self.vm.bookListViewController, chooser: self.vm.chooser, title: "AUFSÄTZE")
-                    } else if self.vm.selectedConspectus is Author {
-                        InfoPanel(self.vm.infoController)
-                        TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
-                        BookListView(self.vm.bookListViewController, chooser: self.vm.chooser)
-                        LinkListView(self.vm.linkListViewController)
-                    } else if self.vm.selectedConspectus is Book {
-                        if self.chooser.owner == self.vm.selectedConspectus && self.chooser.mode == .chooseAuthor {
-                            ConspectusChooserView(chooser: self.chooser).offset(x: Constants.docViewLeading)
-                        }
-                        BookInfoPanel(self.vm.infoController)
-                        TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
-                        LinkListView(self.vm.linkListViewController)
-                        QuoteListView(self.vm.quoteListController, chooser: self.vm.chooser, changeInputsWithText: true)
-                    } else if self.vm.selectedConspectus is Tag {
-                        if self.chooser.owner == self.vm.selectedConspectus && self.chooser.mode == .chooseTags && self.chooser.selectOnlyParentTag {
-                            ConspectusChooserView(chooser: self.chooser).offset(x: Constants.docViewLeading)
-                        }
-                        InfoPanel(self.vm.infoController)
-                        LinkListView(self.vm.linkListViewController)
-                    }
-                    
-                }
+                DocViewContent(self.vm, changeInputsWithText: true)
                     .frame(width: Constants.docViewWidth, height: window.size.height, alignment: .topTrailing)
                     .scaleEffect(x: Constants.docViewMinimapWidth / Constants.docViewWidth, y: self.controller.scaleY, anchor: .topLeading)
-                    
+
                     .allowsHitTesting(false)
-                                    
+
                 MouseWheelDetector(onScrolled: self.controller.onScrolled, onClicked: self.controller.onClicked)
 
                 Color(self.controller.owner.genus).opacity(0.25)
@@ -75,8 +46,7 @@ struct CustomScrollView<Content>: View where Content: View {
                     .gesture(DragGesture().onChanged { value in
                         self.controller.onDragged(value)
                     })
-                
-                
+
                 Separator(color: Color.F.black025, width: 1, height: window.size.height)
             }.frame(width: Constants.docViewMinimapWidth, height: window.size.height, alignment: .topLeading)
                 .offset(x: Constants.docViewWidth)

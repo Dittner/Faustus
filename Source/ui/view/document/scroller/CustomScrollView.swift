@@ -34,7 +34,6 @@ struct CustomScrollView<Content>: View where Content: View {
                 DocViewContent(self.vm, changeInputsWithText: true)
                     .frame(width: Constants.docViewWidth, height: window.size.height, alignment: .topTrailing)
                     .scaleEffect(x: Constants.docViewMinimapWidth / Constants.docViewWidth, y: self.controller.scaleY, anchor: .topLeading)
-
                     .allowsHitTesting(false)
 
                 MouseWheelDetector(onScrolled: self.controller.onScrolled, onClicked: self.controller.onClicked)

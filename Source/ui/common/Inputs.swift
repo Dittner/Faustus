@@ -124,14 +124,14 @@ struct TextInput: NSViewRepresentable {
 }
 
 struct TextArea: NSViewRepresentable {
+    static let lineHight: CGFloat = 1.37
     static func textHeightFrom(text: String, width: CGFloat, font: NSFont, isShown: Bool, minHeight: CGFloat = 30) -> CGFloat {
         guard isShown else { return 0 }
 
         TextInput.tf.stringValue = text
         TextInput.tf.font = font
         TextInput.tf.lineBreakMode = .byWordWrapping
-        // 0.3 + 1.25 – multiple of TextArea line hight
-        return max(minHeight, TextInput.tf.sizeThatFits(CGSize(width: width, height: .infinity)).height * 1.25)
+        return max(minHeight, TextInput.tf.sizeThatFits(CGSize(width: width, height: .infinity)).height * TextArea.lineHight)
     }
 
     @Binding var text: String
@@ -155,7 +155,7 @@ struct TextArea: NSViewRepresentable {
         tv.isSelectable = isEditable
         tv.allowsUndo = true
         let style = NSMutableParagraphStyle()
-        style.lineHeightMultiple = 1.25
+        style.lineHeightMultiple = TextArea.lineHight
         tv.defaultParagraphStyle = style
         tv.backgroundColor = NSColor.F.black.withAlphaComponent(0)
         return tv
@@ -175,7 +175,7 @@ struct TextArea: NSViewRepresentable {
             attributedStr.addAttribute(NSAttributedString.Key.font, value: font, range: NSRange(location: 0, length: text.count))
 
             let style = NSMutableParagraphStyle()
-            style.lineHeightMultiple = 1.25
+            style.lineHeightMultiple = TextArea.lineHight
             textArea.defaultParagraphStyle = style
             attributedStr.addAttribute(NSAttributedString.Key.paragraphStyle, value: style, range: NSRange(location: 0, length: text.count))
 

@@ -94,4 +94,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 }
 
 class CustomWindow<Content>: NSHostingView<Content>, ObservableObject where Content: View {
+    override func scrollWheel(with event: NSEvent) {
+        NotificationCenter.default.post(name: .didWheelScroll, object: event)
+    }
 }

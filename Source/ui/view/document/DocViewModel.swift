@@ -11,10 +11,8 @@ import SwiftUI
 
 final class DocViewModel: ViewModel {
     @Published var selectedConspectus: Conspectus
-    @Published var selectedConspectusState: ConspectusState
 
     let infoController = DocInfoController()
-
     let tagTreeController = TagTreeController()
     let quoteListController = QuoteListController()
     let chooser = ConspectusChooser()
@@ -26,7 +24,6 @@ final class DocViewModel: ViewModel {
 
     init() {
         selectedConspectus = AppModel.shared.user
-        selectedConspectusState = AppModel.shared.user.state
 
         logInfo(tag: .APP, msg: "DocViewModel init")
         model.$selectedConspectus
@@ -43,7 +40,6 @@ final class DocViewModel: ViewModel {
                 self.linkListViewController.update(newValue)
 
                 self.selectedConspectus = newValue
-                self.selectedConspectusState = newValue.state
             }
             .store(in: &disposeBag)
 

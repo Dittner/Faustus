@@ -14,7 +14,7 @@ struct InfoPanel: View {
     @ObservedObject private var controller: DocInfoController
     @ObservedObject var state: ConspectusState
 
-    private let font = NSFont(name: .pragmaticaLight, size: 24)
+    private let font = NSFont(name: .pragmaticaLight, size: 18)
     private let title: String
 
     init(_ controller: DocInfoController, title: String = "INFO") {

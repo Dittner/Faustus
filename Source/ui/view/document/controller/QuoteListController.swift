@@ -26,7 +26,7 @@ class QuoteListController: ViewModel {
             quotesFilterPublisher = book.$quotesFilter
                 .debounce(for: 1, scheduler: RunLoop.main)
                 .sink { filter in
-                    self.quotes = filter.isEmpty ? self.book.quoteColl.quotes : self.book.quoteColl.quotes.filter { $0.getDescription().hasSubstring(filter)
+                    self.quotes = filter.count < 3 ? self.book.quoteColl.quotes : self.book.quoteColl.quotes.filter { $0.getDescription().hasSubstring(filter)
                     }
 
                     self.searchText = filter
@@ -46,6 +46,6 @@ class QuoteListController: ViewModel {
     }
 
     func formatQuoteText(_ q: Quote) {
-        q.text.removeAll { $0 == "\n" }
+        q.text = q.text.replacingOccurrences(of: "\n", with: " ")
     }
 }

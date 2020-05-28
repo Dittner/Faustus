@@ -45,7 +45,7 @@ struct DocView: View {
             //
 
             CustomScrollView(controller: vm.scrollController, vm: vm) {
-                DocViewContent(self.vm)
+                DocViewContent(self.vm, changeInputsWithText: false)
                     .padding(.horizontal, 15)
             }
             .offset(x: 0, y: -statusPanelHeight)
@@ -444,7 +444,7 @@ struct QuoteListView: View {
         self.chooser = chooser
         self.changeInputsWithText = changeInputsWithText
         state = controller.book.state
-        print("QuoteListView init")
+        logInfo(tag: .UI, msg: "QuoteListView init with \(controller.quotes.count)")
     }
 
     var body: some View {
@@ -452,11 +452,11 @@ struct QuoteListView: View {
             SectionView(isExpanded: $controller.isExpanded, title: "ZITATE", isEditing: self.state.isEditing, action: controller.createQuote)
 
             if controller.isExpanded {
-                HStack(alignment: .lastTextBaseline, spacing: 0) {
+                HStack(alignment: .lastTextBaseline, spacing: 5) {
                     Image("search")
                         .renderingMode(.template)
                         .foregroundColor(Color.F.black)
-                        .frame(width: 60)
+                        .frame(width: 55, alignment: .trailing)
 
                     TextInput(title: "", text: $controller.book.quotesFilter, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 21), alignment: .left, isFocused: false, isSecure: false, format: nil, isEditable: true, onEnterAction: nil)
                         .frame(width: 300, height: 50, alignment: .leading)
@@ -500,42 +500,47 @@ struct QuoteCell: View {
         self.chooser = chooser
         self.quoteListController = quoteListController
         self.changeInputsWithText = changeInputsWithText
-        print("QuoteCell quote id = \(quote.id)")
+        // print("QuoteCell quote id = \(quote.id)")
     }
 
     func pageInputWidthFrom(text: String, isEditing: Bool) -> CGFloat {
         return isEditing ? 70 : (CGFloat(text.count) + 0.5) * 12
     }
 
-    static var bgTextFont: Font = Font.custom(.pragmaticaLight, size: 13.5)
     func replace(_ str: String, searchText: String) -> String {
-        str.replacingOccurrences(of: searchText, with: "█", options: .caseInsensitive)
+        guard searchText.count > 2 else { return str }
+        var replaceStr = ""
+        for _ in 1 ... searchText.count/2 { replaceStr += "█" }
+        return str.replacingOccurrences(of: searchText, with: replaceStr, options: .caseInsensitive)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
-            HStack(alignment: .top, spacing: 0) {
-                if changeInputsWithText {
-                    Text("S. \(quote.startPage)–\(quote.endPage)")
+            HStack(alignment: .bottom, spacing: 0) {
+                if changeInputsWithText || !isEditing {
+                    Text("S. " + quote.startPage + (quote.endPage.count > 0 ? "–\(quote.endPage)" : ""))
                         .font(Font.custom(.pragmaticaBold, size: 21))
                         .foregroundColor(Color.F.black)
+                        .frame(height: 30)
                 } else {
                     Text("S.")
                         .font(Font.custom(.pragmaticaBold, size: 21))
                         .foregroundColor(Color.F.black)
+                        .frame(height: 30)
 
                     EditableText("", text: $quote.startPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .right, isEditing: isEditing, format: "[1-9][0-9]{0,4}")
                         .saturation(0)
-                        .frame(width: pageInputWidthFrom(text: quote.startPage, isEditing: isEditing))
+                        .frame(width: pageInputWidthFrom(text: quote.startPage, isEditing: isEditing), height: 30)
 
                     Text("–")
                         .font(Font.custom(.pragmaticaBold, size: 21))
                         .foregroundColor(Color.F.black)
                         .opacity($quote.endPage.wrappedValue.count == 0 && !isEditing ? 0 : 1)
+                        .frame(height: 30)
 
                     EditableText("", text: $quote.endPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .left, isEditing: isEditing, format: "[1-9][0-9]{0,4}")
                         .saturation(0)
-                        .frame(width: 70)
+                        .frame(width: 70, height: 30)
                 }
 
                 Spacer()
@@ -543,44 +548,44 @@ struct QuoteCell: View {
                 if isEditing {
                     Button("", action: { self.quoteListController.formatQuoteText(self.quote) })
                         .buttonStyle(IconButtonStyle(iconName: "format", iconColor: Color.F.black, bgColor: quote.isValid ? Color.F.whiteBG : Color.F.redBG, width: 30, height: 30))
-                        .offset(y: -10)
-                        .opacity(isEditing ? 1 : 0)
 
                     Button("", action: { self.chooser.chooseLink(self.quote) })
                         .buttonStyle(IconButtonStyle(iconName: "link", iconColor: Color.F.black, bgColor: quote.isValid ? Color.F.whiteBG : Color.F.redBG, width: 30, height: 30))
-                        .offset(y: -10)
-                        .opacity(isEditing ? 1 : 0)
 
                     Button("", action: { self.quoteListController.removeQuote(self.quote) })
                         .buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: quote.isValid ? Color.F.whiteBG : Color.F.redBG, width: 30, height: 30))
-                        .offset(y: -10)
-                        .opacity(isEditing ? 1 : 0)
                 }
             }.frame(height: 40)
 
             CompactLinksSubView(quote, isEditing: self.isEditing)
 
+            if chooser.owner == quote && isEditing {
+                ConspectusChooserView(chooser: chooser)
+            }
+
             if changeInputsWithText {
                 Text(self.replace(quote.text, searchText: self.quoteListController.searchText))
-                    .lineSpacing(9)
+                    .lineSpacing(10)
                     .font(QuoteCell.textFont)
                     .multilineTextAlignment(.leading)
-                    .frame(width: 905, alignment: .leading)
-                    .foregroundColor(Color.F.black)
+                    .frame(width: 900, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 12)
+                    .padding(.top, 10)
+                    .padding(.bottom, 20)
+                    .foregroundColor(Color.F.black)
                     .allowsHitTesting(false)
 
-                Spacer()
+                // Spacer()
             } else {
                 TextArea(text: $quote.text, textColor: NSColor.F.black, font: QuoteCell.nsTextFont, isEditable: self.isEditing, highlightedText: quoteListController.searchText)
                     .layoutPriority(-1)
-                    .padding(.top, 5)
-                    .padding(.bottom, 10)
+                    .padding(.top, 0)
+                    .padding(.bottom, 0)
                     .padding(.leading, -5)
+                    .padding(.trailing, 5)
                     .offset(y: 0)
                     .saturation(0)
-                    .frame(height: TextArea.textHeightFrom(text: quote.text, width: 905, font: QuoteCell.nsTextFont, isShown: true) + 15)
+                    .frame(height: TextArea.textHeightFrom(text: quote.text, width: 905, font: QuoteCell.nsTextFont, isShown: true) + 13.3)
                     .onTapGesture(count: 2) {
                         if !self.isEditing {
                             notify(msg: "in die Zwischenablage kopiert")
@@ -602,10 +607,6 @@ struct QuoteCell: View {
                         }
                     })
                 }
-            }
-
-            if chooser.owner == quote && isEditing {
-                ConspectusChooserView(chooser: chooser)
             }
         }
         .colorScheme(.light)

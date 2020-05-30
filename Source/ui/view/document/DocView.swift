@@ -13,86 +13,158 @@ struct DocView: View {
     @ObservedObject var vm: DocViewModel
     @ObservedObject var chooser: ConspectusChooser
 
-    private let statusPanelHeight: CGFloat = 30
-
     init(vm: DocViewModel) {
         self.vm = vm
         chooser = vm.chooser
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .center, spacing: 0) {
             //
             // HEADER
             //
 
             if vm.selectedConspectus is User {
-                UserHeader(user: vm.selectedConspectus as! User).frame(width: 1000)
+                UserHeader(user: vm.selectedConspectus as! User).frame(width: Constants.docViewAndScrollerWidth)
             } else if vm.selectedConspectus is Author {
-                AuthorHeader(author: vm.selectedConspectus as! Author).frame(width: 1000)
+                AuthorHeader(author: vm.selectedConspectus as! Author).frame(width: Constants.docViewAndScrollerWidth)
             } else if vm.selectedConspectus is Book {
-                BookHeader(book: vm.selectedConspectus as! Book, chooser: vm.chooser).zIndex(1).frame(width: 1000)
+                BookHeader(book: vm.selectedConspectus as! Book, chooser: vm.chooser).zIndex(1).frame(width: Constants.docViewAndScrollerWidth)
             } else if vm.selectedConspectus is Tag {
-                TagHeader(tag: vm.selectedConspectus as! Tag, chooser: vm.chooser).frame(width: 1000)
+                TagHeader(tag: vm.selectedConspectus as! Tag, chooser: vm.chooser).frame(width: Constants.docViewAndScrollerWidth)
             }
-
-            StatusPanel(vm.selectedConspectus)
-                .frame(width: 1000)
-                .zIndex(1)
 
             //
             // BODY
             //
 
-            CustomScrollView(controller: vm.scrollController, vm: vm) {
-                DocViewContent(self.vm, changeInputsWithText: false)
-                    .padding(.horizontal, 15)
-            }
-            .offset(x: 0, y: -statusPanelHeight)
+            StatusPanel(vm.selectedConspectus)
+                .padding(.horizontal, 15)
+                .frame(width: Constants.docViewAndScrollerWidth)
+                .zIndex(1)
 
-            Spacer()
-                .frame(height: -statusPanelHeight)
+            Spacer().frame(height: -30)
+
+            StoreStatePanel(self.vm.selectedConspectus)
+                .padding(.horizontal, 15)
+
+            Spacer().frame(height: 15)
+
+            HStack(alignment: .lastTextBaseline, spacing: 0) {
+                SectionTabBar(selectedSection: $vm.selectedSection, enabledSections: vm.enabledSections)
+
+                Spacer()
+
+                if vm.selectedSection == .books {
+                    SelectableText(text: "+Buch", color: Color.F.black)
+                        .font(Font.custom(.pragmatica, size: 16))
+                        .padding(.leading, 0)
+                        .offset(y: 2)
+                        .onTapGesture {
+                            self.vm.chooser.chooseBooks(self.vm.selectedConspectus)
+                        }
+                } else if vm.selectedSection == .tags {
+                    SelectableText(text: "+Tag", color: Color.F.black)
+                        .font(Font.custom(.pragmatica, size: 16))
+                        .padding(.leading, 0)
+                        .offset(y: 2)
+                        .onTapGesture {
+                            self.vm.chooser.chooseTags(self.vm.selectedConspectus)
+                        }
+                } else if vm.selectedSection == .quotes {
+                    SelectableText(text: "+Zitat", color: Color.F.black)
+                        .font(Font.custom(.pragmatica, size: 16))
+                        .padding(.leading, 0)
+                        .offset(y: 2)
+                        .onTapGesture {
+                            self.vm.quoteListController.createQuote()
+                        }
+                }
+            }
+            .padding(.leading, Constants.docViewLeading)
+            .padding(.trailing, Constants.docViewScrollerWidth)
+            .padding(.bottom, 2)
+
+            Separator(color: Color.F.black, width: .infinity, height: 2)
+                .padding(.horizontal, 15)
+
+            CustomScrollView(controller: vm.scrollController) {
+                VStack(alignment: .leading, spacing: 1) {
+                    if vm.selectedSection == .info {
+                        if self.vm.selectedConspectus is Book {
+                            if self.chooser.owner == self.vm.selectedConspectus && self.chooser.mode == .chooseAuthor {
+                                ConspectusChooserView(chooser: self.chooser).offset(x: Constants.docViewLeading)
+                            }
+                            BookInfoPanel(self.vm.infoController)
+                        } else if self.vm.selectedConspectus is Tag {
+                            if self.chooser.owner == self.vm.selectedConspectus && self.chooser.mode == .chooseTags && self.chooser.selectOnlyParentTag {
+                                ConspectusChooserView(chooser: self.chooser).offset(x: Constants.docViewLeading)
+                            }
+                            InfoPanel(self.vm.infoController)
+                        } else {
+                            InfoPanel(self.vm.infoController)
+                        }
+                    } else if vm.selectedSection == .books {
+                        BookListView(self.vm.bookListViewController, chooser: self.vm.chooser)
+                    } else if vm.selectedSection == .tags {
+                        TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
+                    } else if vm.selectedSection == .links {
+                        LinkListView(self.vm.linkListViewController)
+                    } else if vm.selectedSection == .quotes {
+                        QuoteListView(self.vm.quoteListController, chooser: self.vm.chooser)
+                    }
+                }
+                .padding(.top, 15)
+                .padding(.leading, Constants.docViewPadding)
+            }
         }
         .background(DocViewBG(conspectus: vm.selectedConspectus))
         .fillParent()
     }
 }
 
-struct DocViewContent: View {
-    @ObservedObject var vm: DocViewModel
-    @ObservedObject var chooser: ConspectusChooser
-    let changeInputsWithText: Bool
+enum DocViewSection: String {
+    case info
+    case tags
+    case books
+    case links
+    case quotes
 
-    init(_ vm: DocViewModel, changeInputsWithText: Bool = false) {
-        self.vm = vm
-        self.changeInputsWithText = changeInputsWithText
-        chooser = vm.chooser
+    func toTitle() -> String {
+        switch self {
+        case .info:
+            return "INFO"
+        case .tags:
+            return "TAGS"
+        case .books:
+            return "BÜCHER"
+        case .links:
+            return "LINKS"
+        case .quotes:
+            return "ZITATE"
+        }
     }
+}
+
+struct SectionTabBar: View {
+    @Binding var selectedSection: DocViewSection
+    var enabledSections: [DocViewSection] = [.info, .tags, .books, .links]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 15) {
-            StoreStatePanel(self.vm.selectedConspectus)
-            if self.vm.selectedConspectus is User {
-                BookListView(self.vm.bookListViewController, chooser: self.vm.chooser, title: "AUFSÄTZE")
-            } else if self.vm.selectedConspectus is Author {
-                InfoPanel(self.vm.infoController)
-                TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
-                BookListView(self.vm.bookListViewController, chooser: self.vm.chooser)
-                LinkListView(self.vm.linkListViewController)
-            } else if self.vm.selectedConspectus is Book {
-                if self.chooser.owner == self.vm.selectedConspectus && self.chooser.mode == .chooseAuthor {
-                    ConspectusChooserView(chooser: self.chooser).offset(x: Constants.docViewLeading)
-                }
-                BookInfoPanel(self.vm.infoController)
-                TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
-                LinkListView(self.vm.linkListViewController)
-                QuoteListView(self.vm.quoteListController, chooser: self.vm.chooser, changeInputsWithText: changeInputsWithText)
-            } else if self.vm.selectedConspectus is Tag {
-                if self.chooser.owner == self.vm.selectedConspectus && self.chooser.mode == .chooseTags && self.chooser.selectOnlyParentTag {
-                    ConspectusChooserView(chooser: self.chooser).offset(x: Constants.docViewLeading)
-                }
-                InfoPanel(self.vm.infoController)
-                LinkListView(self.vm.linkListViewController)
+        HStack(alignment: .center, spacing: 1) {
+            ForEach(enabledSections, id: \.self) { section in
+                Text(section.toTitle())
+                    .lineLimit(1)
+                    .font(Font.custom(.pragmatica, size: 16))
+                    .padding(.horizontal, 10)
+                    .padding(.top, 4)
+                    .frame(height: 30)
+                    .foregroundColor(self.selectedSection == section ? Color.F.white : Color.F.black)
+                    .background(self.selectedSection == section ? Color.F.black : Color.F.clear)
+                    .cornerRadius(4)
+                    .onTapGesture {
+                        self.selectedSection = section
+                    }
             }
         }
     }
@@ -198,51 +270,6 @@ struct StoreStatePanel: View {
     }
 }
 
-struct SectionView: View {
-    @Binding var isExpanded: Bool
-    let title: String
-    var isEditing: Bool = false
-    var action: (() -> Void)?
-    let actionBtnIcon: String = "plus"
-
-    var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .center) {
-                if self.isEditing && self.action != nil {
-                    Button("", action: self.action!)
-                        .buttonStyle(IconButtonStyle(iconName: self.actionBtnIcon, iconColor: Color.F.black, bgColor: Color.F.white, width: 20, height: 20))
-                        .offset(x: 10 - geometry.size.width / 2)
-                }
-
-                Text(self.title)
-                    .lineLimit(1)
-                    .font(Font.custom(.pragmaticaSemiBold, size: 21))
-                    .foregroundColor(Color.F.black)
-                    .padding(.leading, 0)
-                    .offset(y: 3)
-
-                Button(action: {
-                    self.isExpanded.toggle()
-                }) {
-                    RoundedRectangle(cornerRadius: 2)
-                        .foregroundColor(self.isExpanded ? Color.F.black : Color.F.clear)
-
-                    Image("dropdown")
-                        .renderingMode(.template)
-                        .foregroundColor(self.isExpanded ? Color.F.white : Color.F.black)
-                        .rotationEffect(Angle(degrees: self.isExpanded ? 0 : -90))
-                        .allowsHitTesting(false)
-                }.buttonStyle(PlainButtonStyle())
-                    .frame(width: 20, height: 20)
-                    .offset(x: geometry.size.width / 2 - 10)
-
-                Separator(color: Color.F.black, width: .infinity)
-                    .offset(y: 15)
-            }
-        }.frame(height: 40).padding(.bottom, 8)
-    }
-}
-
 struct BookListView: View {
     let owner: Conspectus
     @ObservedObject var controller: BookListViewController
@@ -250,40 +277,34 @@ struct BookListView: View {
     @ObservedObject var booksColl: BookColl
     @ObservedObject var state: ConspectusState
     private let font = NSFont(name: .pragmaticaLight, size: 21)
-    private let title: String
 
-    init(_ controller: BookListViewController, chooser: ConspectusChooser, title: String = "BÜCHER") {
+    init(_ controller: BookListViewController, chooser: ConspectusChooser) {
         self.controller = controller
         owner = controller.owner
-        self.title = title
         self.chooser = chooser
         booksColl = (controller.owner as! BooksOwner).booksColl
         state = controller.owner.state
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 1) {
-            SectionView(isExpanded: $controller.isExpanded, title: title, isEditing: self.state.isEditing, action: { self.chooser.chooseBooks(self.owner) })
-
-            if controller.isExpanded || chooser.mode == .chooseBooks {
-                if chooser.mode == .chooseBooks {
-                    ConspectusChooserView(chooser: chooser)
-                } else {
-                    ForEach(booksColl.books, id: \.id) { book in
-                        ConspectusLink(conspectus: book, isEditing: self.state.isEditing, action: { result in
-                            switch result {
-                            case .remove:
-                                self.booksColl.removeBook(book)
-                            case .navigate:
-                                book.show()
-                            }
-                        })
-                    }.padding(.leading, Constants.docViewLeading)
-                        .padding(.trailing, 0)
-                        .padding(.top, 0)
-                }
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(booksColl.books, id: \.id) { book in
+                ConspectusLink(conspectus: book, isEditing: self.state.isEditing, action: { result in
+                    switch result {
+                    case .remove:
+                        self.controller.remove(book)
+                    case .navigate:
+                        book.show()
+                    }
+                })
             }
-        }
+
+            if chooser.mode == .chooseBooks {
+                ConspectusChooserView(chooser: chooser)
+            }
+        }.padding(.leading, Constants.docViewLeading - Constants.docViewPadding)
+            .padding(.trailing, 0)
+            .padding(.top, 0)
     }
 }
 
@@ -301,25 +322,21 @@ struct TagLinksView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 1) {
-            SectionView(isExpanded: $controller.isExpanded, title: "TAGS", isEditing: self.state.isEditing, action: { self.chooser.chooseTags(self.controller.owner) })
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(controller.ownerTags, id: \.id) { tag in
+                ConspectusLink(conspectus: tag, isEditing: self.state.isEditing, action: { result in
+                    if result == .navigate {
+                        tag.show()
+                    } else if result == .remove {
+                        self.controller.removeTag(tag)
+                    }
+                }).offset(x: CGFloat(tag.content.getLevel()) * 50, y: 0)
 
-            if controller.isExpanded || chooser.mode == .chooseTags {
-                if chooser.mode == .chooseTags {
-                    ConspectusChooserView(chooser: chooser).offset(x: Constants.docViewLeading)
-                } else {
-                    ForEach(controller.ownerTags, id: \.id) { tag in
-                        ConspectusLink(conspectus: tag, isEditing: self.state.isEditing, action: { result in
-                            if result == .navigate {
-                                tag.show()
-                            } else if result == .remove {
-                                self.controller.removeTag(tag)
-                            }
-                        }).offset(x: CGFloat(tag.content.getLevel()) * Constants.docViewLeading, y: 0)
+            }.padding(.leading, Constants.docViewLeading - Constants.docViewPadding)
+                .padding(.trailing, 0)
 
-                    }.padding(.leading, Constants.docViewLeading)
-                        .padding(.trailing, 0)
-                }
+            if chooser.mode == .chooseTags {
+                ConspectusChooserView(chooser: chooser).offset(x: Constants.docViewLeading)
             }
         }
     }
@@ -336,21 +353,17 @@ struct LinkListView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
-            SectionView(isExpanded: $controller.isExpanded, title: "LINKS", isEditing: self.state.isEditing)
+            ForEach(controller.filteredLinks, id: \.id) { c in
+                ConspectusLink(conspectus: c, isEditing: self.state.isEditing, action: { result in
+                    if result == .navigate {
+                        c.show()
+                    } else if result == .remove {
+                        self.controller.removeLink(c)
+                    }
+                }).padding(.leading, Constants.docViewLeading - Constants.docViewPadding)
 
-            if controller.isExpanded {
-                ForEach(controller.filteredLinks, id: \.id) { c in
-                    ConspectusLink(conspectus: c, isEditing: self.state.isEditing, action: { result in
-                        if result == .navigate {
-                            c.show()
-                        } else if result == .remove {
-                            self.controller.removeLink(c)
-                        }
-                    }).padding(.leading, Constants.docViewLeading)
-
-                }.padding(.leading, 0)
-                    .padding(.trailing, 0)
-            }
+            }.padding(.leading, 0)
+                .padding(.trailing, 0)
         }
     }
 }
@@ -437,44 +450,77 @@ struct QuoteListView: View {
     @ObservedObject var chooser: ConspectusChooser
     @ObservedObject var state: ConspectusState
 
-    let changeInputsWithText: Bool
-
-    init(_ controller: QuoteListController, chooser: ConspectusChooser, changeInputsWithText: Bool = false) {
+    init(_ controller: QuoteListController, chooser: ConspectusChooser) {
         self.controller = controller
         self.chooser = chooser
-        self.changeInputsWithText = changeInputsWithText
         state = controller.book.state
         logInfo(tag: .UI, msg: "QuoteListView init with \(controller.quotes.count)")
     }
 
     var body: some View {
-        VStack(alignment: .center, spacing: 15) {
-            SectionView(isExpanded: $controller.isExpanded, title: "ZITATE", isEditing: self.state.isEditing, action: controller.createQuote)
+        VStack(alignment: .center, spacing: 0) {
+            HStack(alignment: .lastTextBaseline, spacing: 10) {
+                Image("search")
+                    .renderingMode(.template)
+                    .foregroundColor(Color.F.black)
 
-            if controller.isExpanded {
-                HStack(alignment: .lastTextBaseline, spacing: 5) {
-                    Image("search")
-                        .renderingMode(.template)
-                        .foregroundColor(Color.F.black)
-                        .frame(width: 55, alignment: .trailing)
+                TextInput(title: "", text: $controller.book.quotesFilter, textColor: NSColor.F.black, font: NSFont(name: .pragmatica, size: 21), alignment: .left, isFocused: false, isSecure: false, format: nil, isEditable: true, onEnterAction: nil)
+                    .frame(width: 200, height: 50, alignment: .leading)
+                    .padding(.horizontal, 0)
+                    .saturation(0)
+                    .colorScheme(.light)
+                    .background(Separator(color: Color.F.black, width: 300).offset(x: 0, y: 15))
 
-                    TextInput(title: "", text: $controller.book.quotesFilter, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 21), alignment: .left, isFocused: false, isSecure: false, format: nil, isEditable: true, onEnterAction: nil)
-                        .frame(width: 300, height: 50, alignment: .leading)
-                        .padding(.horizontal, 0)
-                        .saturation(0)
-                        .colorScheme(.light)
-                        .background(Separator(color: Color.F.black, width: 300).offset(x: 0, y: 15))
+                Spacer()
 
-                    Spacer()
-                }
-                .frame(height: 50)
+                TextInput(title: "", text: $controller.book.quoteColl.selectedQuoteIndex, textColor: NSColor.F.black, font: NSFont(name: .pragmatica, size: 21), alignment: .right, isFocused: false, isSecure: false, format: "[0-9]{0,5}", isEditable: true, onEnterAction: nil)
+                    .frame(width: 70, height: 50)
+                    .padding(.horizontal, 0)
+                    .saturation(0)
+                    .colorScheme(.light)
+                    .background(Separator(color: Color.F.black, width: 70).offset(x: 0, y: 15))
 
-                ForEach(controller.quotes, id: \.id) { q in
-                    QuoteCell(quote: q, isEditing: self.state.isEditing, chooser: self.chooser, quoteListController: self.controller, changeInputsWithText: self.changeInputsWithText)
-                }.padding(.leading, 0)
+                Text("/ \(controller.quotes.count)")
+                    .font(Font.custom(.pragmatica, size: 21))
+                    .foregroundColor(Color.F.black)
+                    .padding(.leading, -5)
+                    .frame(width: 270, height: 30, alignment: .topLeading)
+
+                Spacer()
+
+                SelectableText(text: "ZURÜCK", color: Color.F.black05)
+                    .font(Font.custom(.mono, size: 16))
+                    .padding(.leading, 0)
+                    .padding(.trailing, 5)
+                    .offset(y: 7)
+                    .frame(height: 50, alignment: .bottom)
+                    .opacity(controller.isSelectedQuoteFirst() ? 0 : 1)
+                    .onTapGesture {
+                        self.controller.showPrevQuote()
+                    }
+            }
+            .padding(.leading, Constants.docViewLeading - Constants.docViewPadding)
+            .frame(height: 50)
+
+            if controller.selectedQuote != nil {
+                QuoteCell(quote: controller.selectedQuote!, isEditing: self.state.isEditing, chooser: self.chooser, quoteListController: self.controller)
+                    .padding(.top, 10)
+            }
+
+            Spacer()
+
+            HStack(alignment: .bottom, spacing: 0) {
+                Spacer()
+
+                SelectableText(text: "WEITER", color: Color.F.black05)
+                    .font(Font.custom(.mono, size: 16))
                     .padding(.trailing, 0)
-
-                Spacer().frame(width: 0)
+                    .padding(.trailing, 5)
+                    .frame(height: 50)
+                    .opacity(controller.isSelectedQuoteLast() ? 0 : 1)
+                    .onTapGesture {
+                        self.controller.showNextQuote()
+                    }
             }
         }
     }
@@ -485,21 +531,19 @@ struct QuoteCell: View {
     @ObservedObject var quoteLinkColl: LinkColl
     @ObservedObject var chooser: ConspectusChooser
     @ObservedObject var quoteListController: QuoteListController
-    let changeInputsWithText: Bool
 
     static let pagesFont: NSFont = NSFont(name: .pragmaticaBold, size: 21)
-    static var nsTextFont: NSFont = NSFont(name: .georgia, size: 24)
-    static var textFont: Font = Font.custom(.georgia, size: 24)
+    static var nsTextFont: NSFont = NSFont(name: .georgia, size: 21)
+    static var textFont: Font = Font.custom(.georgia, size: 21)
 
     private let isEditing: Bool
 
-    init(quote: Quote, isEditing: Bool, chooser: ConspectusChooser, quoteListController: QuoteListController, changeInputsWithText: Bool) {
+    init(quote: Quote, isEditing: Bool, chooser: ConspectusChooser, quoteListController: QuoteListController) {
         self.quote = quote
         quoteLinkColl = quote.linkColl
         self.isEditing = isEditing
         self.chooser = chooser
         self.quoteListController = quoteListController
-        self.changeInputsWithText = changeInputsWithText
         // print("QuoteCell quote id = \(quote.id)")
     }
 
@@ -507,17 +551,10 @@ struct QuoteCell: View {
         return isEditing ? 70 : (CGFloat(text.count) + 0.5) * 12
     }
 
-    func replace(_ str: String, searchText: String) -> String {
-        guard searchText.count > 2 else { return str }
-        var replaceStr = ""
-        for _ in 1 ... searchText.count/2 { replaceStr += "█" }
-        return str.replacingOccurrences(of: searchText, with: replaceStr, options: .caseInsensitive)
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
             HStack(alignment: .bottom, spacing: 0) {
-                if changeInputsWithText || !isEditing {
+                if !isEditing {
                     Text("S. " + quote.startPage + (quote.endPage.count > 0 ? "–\(quote.endPage)" : ""))
                         .font(Font.custom(.pragmaticaBold, size: 21))
                         .foregroundColor(Color.F.black)
@@ -563,38 +600,7 @@ struct QuoteCell: View {
                 ConspectusChooserView(chooser: chooser)
             }
 
-            if changeInputsWithText {
-                Text(self.replace(quote.text, searchText: self.quoteListController.searchText))
-                    .lineSpacing(10)
-                    .font(QuoteCell.textFont)
-                    .multilineTextAlignment(.leading)
-                    .frame(width: 900, alignment: .leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 10)
-                    .padding(.bottom, 20)
-                    .foregroundColor(Color.F.black)
-                    .allowsHitTesting(false)
-
-                // Spacer()
-            } else {
-                TextArea(text: $quote.text, textColor: NSColor.F.black, font: QuoteCell.nsTextFont, isEditable: self.isEditing, highlightedText: quoteListController.searchText)
-                    .layoutPriority(-1)
-                    .padding(.top, 0)
-                    .padding(.bottom, 0)
-                    .padding(.leading, -5)
-                    .padding(.trailing, 5)
-                    .offset(y: 0)
-                    .saturation(0)
-                    .frame(height: TextArea.textHeightFrom(text: quote.text, width: 905, font: QuoteCell.nsTextFont, isShown: true) + 13.3)
-                    .onTapGesture(count: 2) {
-                        if !self.isEditing {
-                            notify(msg: "in die Zwischenablage kopiert")
-                            let pasteBoard = NSPasteboard.general
-                            pasteBoard.clearContents()
-                            pasteBoard.setString(self.quote.text, forType: .string)
-                        }
-                    }
-            }
+            MultilineInput(text: $quote.text, width: 900, textColor: NSColor.F.black, font: QuoteCell.nsTextFont, isEditing: self.isEditing, highlightedText: quoteListController.searchText)
 
             // user comments
             if quoteLinkColl.links.count > 0 {
@@ -610,7 +616,7 @@ struct QuoteCell: View {
             }
         }
         .colorScheme(.light)
-        .padding(.leading, Constants.docViewLeading)
+        .padding(.leading, Constants.docViewLeading - Constants.docViewPadding)
         .padding(.vertical, 10)
         .background(quote.isValid ? Color.F.whiteBG : Color.F.redBG)
     }

@@ -12,7 +12,6 @@ import SwiftUI
 class LinkListViewController: ViewModel {
     @Published var linkColl: LinkColl!
     @Published var filteredLinks: [Conspectus] = []
-    @Published var isExpanded: Bool = true
 
     var owner: Conspectus!
 

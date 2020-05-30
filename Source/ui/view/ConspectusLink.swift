@@ -29,6 +29,7 @@ struct ConspectusLink: View {
     static let PADDING: CGFloat = 8
     static let HEIGHT: CGFloat = 30
     let onLinkAction: ((ConspectusLinkAction) -> Void)?
+    let closeBtnColor: Color
 
     init(conspectus: Conspectus, isEditing: Bool, isLightMode: Bool = true, level: Int = 0,
          withDetails: Bool = true, action: ((ConspectusLinkAction) -> Void)?) {
@@ -47,6 +48,7 @@ struct ConspectusLink: View {
         detailsFont = Font.custom(.pragmaticaLight, size: 16)
 
         onLinkAction = action
+        closeBtnColor = conspectus.genus != .quote ? Color(conspectus.genus) : Color.F.black
     }
 
     @State private var hover = false
@@ -85,9 +87,9 @@ struct ConspectusLink: View {
                     }
 
                 Button("", action: { self.onLinkAction?(.remove) })
-                    .buttonStyle(IconButtonStyle(iconName: "smallClose", iconColor: btnIconColor, bgColor: Color(conspectus.genus), width: 20, height: 20, radius: 10))
+                    .buttonStyle(IconButtonStyle(iconName: "smallClose", iconColor: btnIconColor, bgColor: closeBtnColor, width: 20, height: 20, radius: 10))
                     .opacity(isEditing ? 1 : 0)
-                    .layoutPriority(1)
+                    .zIndex(1)
                     .offset(x: withDetails ? -25 : 0, y: -5)
 
                 if withDetails && !details.isEmpty {
@@ -98,7 +100,7 @@ struct ConspectusLink: View {
             if withDetails && !details.isEmpty {
                 Text(details)
                     .foregroundColor(textColor)
-                    .lineLimit(nil)
+                    .lineLimit(15)
                     .font(self.detailsFont)
                     .padding(.horizontal, ConspectusLink.PADDING)
                     .padding(.top, 5)

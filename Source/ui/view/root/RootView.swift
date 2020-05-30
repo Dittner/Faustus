@@ -31,8 +31,10 @@ struct RootView: View {
                 HStack(alignment: .top, spacing: 0) {
                     SearchView()
                         .frame(minWidth: 200, idealWidth: panelsWidth, maxWidth: .infinity, minHeight: 0, idealHeight: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
                     DocView(vm: docViewModel)
-                        .frame(minWidth: Constants.docViewWidth + Constants.docViewMinimapWidth, idealWidth: Constants.docViewWidth + Constants.docViewMinimapWidth, maxWidth: Constants.docViewWidth + Constants.docViewMinimapWidth, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)
+                        .frame(minWidth: Constants.docViewAndScrollerWidth, idealWidth: Constants.docViewAndScrollerWidth, maxWidth: Constants.docViewAndScrollerWidth, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)
+
                     HistoryView()
                         .frame(minWidth: 200, idealWidth: panelsWidth, maxWidth: .infinity, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)
                 }.frame(minWidth: 1550, idealWidth: 1550, maxWidth: .infinity, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -46,22 +48,22 @@ struct RootView: View {
                             .offset(x: 50, y: 0)
 
                         Separator(color: Color.F.debugLines, height: .infinity)
-                            .offset(x: geo.size.width / 2 - 530, y: 0)
+                            .offset(x: geo.size.width / 2 - Constants.docViewAndScrollerWidth / 2 - 15, y: 0)
 
                         Separator(color: Color.F.debugLines, height: .infinity)
-                            .offset(x: geo.size.width / 2 - 515, y: 0)
+                            .offset(x: geo.size.width / 2 - Constants.docViewAndScrollerWidth / 2 + 15, y: 0)
 
                         Separator(color: Color.F.debugLines, height: .infinity)
-                            .offset(x: geo.size.width / 2 - 485, y: 0)
+                            .offset(x: geo.size.width / 2 - Constants.docViewAndScrollerWidth / 2 + Constants.docViewLeading, y: 0)
 
                         Separator(color: Color.F.debugLines, height: .infinity)
-                            .offset(x: geo.size.width / 2 - 445, y: 0)
+                            .offset(x: geo.size.width / 2 + Constants.docViewAndScrollerWidth / 2 - 15, y: 0)
 
                         Separator(color: Color.F.debugLines, height: .infinity)
                             .offset(x: geo.size.width / 2, y: 0)
 
                         Separator(color: Color.F.debugLines, height: .infinity)
-                            .offset(x: geo.size.width / 2 + 485, y: 0)
+                            .offset(x: geo.size.width / 2 + Constants.docViewAndScrollerWidth / 2 + 25, y: 0)
 
                         // horizontal
 
@@ -128,4 +130,3 @@ struct DeleteConfirmation: View {
         .shadow(color: Color.F.black05, radius: 5, x: 0, y: 5)
     }
 }
-

@@ -91,6 +91,7 @@ class BookColl: ObservableObject {
 class QuoteColl: ObservableObject {
     var owner: Book!
     @Published var quotes: [Quote] = []
+    @Published var selectedQuoteIndex: String = "1" //begin with 1
 
     func removeQuote(_ quoteToRemove: Quote) {
         for (ind, quote) in quotes.enumerated() {

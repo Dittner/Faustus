@@ -10,12 +10,13 @@ import Combine
 import SwiftUI
 
 class BookListViewController: ViewModel {
-    @Published var isExpanded: Bool = true
     var owner: Conspectus!
 
-   
     func update(_ conspectus: Conspectus) {
         owner = conspectus
     }
 
+    func remove(_ book: Book) {
+        (owner as? BooksOwner)?.booksColl.removeBook(book)
+    }
 }

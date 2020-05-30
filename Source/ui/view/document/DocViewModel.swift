@@ -11,21 +11,38 @@ import SwiftUI
 
 final class DocViewModel: ViewModel {
     @Published var selectedConspectus: Conspectus
+    @Published var selectedSection: DocViewSection = .books
+    @Published var enabledSections: [DocViewSection] = []
 
     let infoController = DocInfoController()
     let tagTreeController = TagTreeController()
-    let quoteListController = QuoteListController()
-    let chooser = ConspectusChooser()
     let scrollController = CustomScrollViewController()
+    let quoteListController:QuoteListController
+    let chooser = ConspectusChooser()
     let bookListViewController = BookListViewController()
     let linkListViewController = LinkListViewController()
+
+    private var selectedSectionCache: [ConspectusGenus: DocViewSection] = [:]
 
     private var disposeBag: Set<AnyCancellable> = []
 
     init() {
-        selectedConspectus = AppModel.shared.user
-
         logInfo(tag: .APP, msg: "DocViewModel init")
+        quoteListController = QuoteListController(scrollerController: scrollController)
+        
+        selectedConspectus = AppModel.shared.user
+        enabledSections = getEnabledSections(for: .user)
+        self.selectedSectionCache[.user] = .books
+        self.selectedSectionCache[.author] = .books
+        self.selectedSectionCache[.book] = .quotes
+        self.selectedSectionCache[.tag] = .links
+        $selectedSection
+            .removeDuplicates()
+            .compactMap { $0 }
+            .sink { value in
+                self.selectedSectionCache[self.selectedConspectus.genus] = value
+            }.store(in: &disposeBag)
+
         model.$selectedConspectus
             .filter { $0 != nil }
             .map { $0! }
@@ -40,6 +57,8 @@ final class DocViewModel: ViewModel {
                 self.linkListViewController.update(newValue)
 
                 self.selectedConspectus = newValue
+                self.enabledSections = self.getEnabledSections(for: newValue.genus)
+                self.selectedSection = self.selectedSectionCache[newValue.genus] ?? .info
             }
             .store(in: &disposeBag)
 
@@ -55,6 +74,21 @@ final class DocViewModel: ViewModel {
                 appDelegate.window?.makeFirstResponder(nil)
 
             }.store(in: &disposeBag)
+    }
+
+    func getEnabledSections(for genus: ConspectusGenus) -> [DocViewSection] {
+        switch genus {
+        case .tag:
+            return [.info, .links]
+        case .author:
+            return [.info, .tags, .books, .links]
+        case .book:
+            return [.info, .tags, .links, .quotes]
+        case .quote:
+            return []
+        case .user:
+            return [.books]
+        }
     }
 
     var confirmPublisher: AnyCancellable?
@@ -73,7 +107,7 @@ final class DocViewModel: ViewModel {
         model.removeSelectedConspectus()
     }
 
-    func close() {        
+    func close() {
         model.closeSelectedConspectus()
     }
 }

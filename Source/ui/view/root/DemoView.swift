@@ -28,7 +28,6 @@ class AA: DomainObject, BooksHaber {
     @Published var hasChanges: Bool = true
 
     private var disposeBag: Set<AnyCancellable> = []
-
 }
 
 class UU: DomainObject, BooksHaber {

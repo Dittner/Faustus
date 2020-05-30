@@ -124,14 +124,22 @@ struct TextInput: NSViewRepresentable {
 }
 
 struct TextArea: NSViewRepresentable {
-    static let lineHight: CGFloat = 1.37
+    static func getLineHight(fontSize: CGFloat) -> CGFloat {
+        fontSize < 21 ? 1.25 : 1.5
+    }
+    
+    static func getLineHightExtra(fontSize: CGFloat) -> CGFloat {
+        fontSize < 21 ? 0.05 : 0
+    }
+
     static func textHeightFrom(text: String, width: CGFloat, font: NSFont, isShown: Bool, minHeight: CGFloat = 30) -> CGFloat {
         guard isShown else { return 0 }
 
-        TextInput.tf.stringValue = text
+        let factor = TextArea.getLineHight(fontSize: font.pointSize)
+        TextInput.tf.stringValue = text.isEmpty ? "Ag" : text
         TextInput.tf.font = font
         TextInput.tf.lineBreakMode = .byWordWrapping
-        return max(minHeight, TextInput.tf.sizeThatFits(CGSize(width: width, height: .infinity)).height * TextArea.lineHight)
+        return max(minHeight, TextInput.tf.sizeThatFits(CGSize(width: width, height: .infinity)).height * (factor + getLineHightExtra(fontSize: font.pointSize)))
     }
 
     @Binding var text: String
@@ -155,10 +163,17 @@ struct TextArea: NSViewRepresentable {
         tv.isSelectable = isEditable
         tv.allowsUndo = true
         let style = NSMutableParagraphStyle()
-        style.lineHeightMultiple = TextArea.lineHight
+        setUpStyle(style)
         tv.defaultParagraphStyle = style
         tv.backgroundColor = NSColor.F.black.withAlphaComponent(0)
+        tv.isVerticallyResizable = false
+        tv.string = "Ag"
         return tv
+    }
+    
+    private func setUpStyle(_ s:NSMutableParagraphStyle) {
+        s.alignment = .left
+        s.lineHeightMultiple = TextArea.getLineHight(fontSize: font.pointSize)
     }
 
     func updateNSView(_ textArea: CustomNSTextView, context: Context) {
@@ -175,7 +190,7 @@ struct TextArea: NSViewRepresentable {
             attributedStr.addAttribute(NSAttributedString.Key.font, value: font, range: NSRange(location: 0, length: text.count))
 
             let style = NSMutableParagraphStyle()
-            style.lineHeightMultiple = TextArea.lineHight
+            setUpStyle(style)
             textArea.defaultParagraphStyle = style
             attributedStr.addAttribute(NSAttributedString.Key.paragraphStyle, value: style, range: NSRange(location: 0, length: text.count))
 
@@ -214,5 +229,35 @@ struct TextArea: NSViewRepresentable {
         override func paste(_ sender: Any?) {
             pasteAsPlainText(sender)
         }
+    }
+}
+
+
+struct MultilineInput: View {
+    @EnvironmentObject var modalViewObservable: ModalViewObservable
+    @Binding var text: String
+    public let width: CGFloat
+    public let textColor: NSColor
+    public let font: NSFont
+    public let isEditing: Bool
+    public var highlightedText: String = ""
+    
+    var body: some View {
+        TextArea(text: $text, textColor: textColor, font: font, isEditable: isEditing && !modalViewObservable.isShown, highlightedText: highlightedText)
+            .layoutPriority(-1)
+            .saturation(0)
+            .colorScheme(.light)
+            .offset(y: -1)
+            .padding(.leading, -5)
+            .padding(.trailing, 0)
+            .frame(width: width, height: TextArea.textHeightFrom(text: text, width: width - 5, font: font, isShown: true), alignment: .topLeading)
+            .onTapGesture(count: 2) {
+                if !self.isEditing {
+                    notify(msg: "in die Zwischenablage kopiert")
+                    let pasteBoard = NSPasteboard.general
+                    pasteBoard.clearContents()
+                    pasteBoard.setString(self.text, forType: .string)
+                }
+            }
     }
 }

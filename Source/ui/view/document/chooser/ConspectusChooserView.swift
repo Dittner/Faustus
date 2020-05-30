@@ -17,7 +17,6 @@ struct ConspectusChooserView: View {
                 ChooserHeader(chooser: chooser).frame(width: 800)
                 Separator(color: Color.F.black, width: .infinity).padding(.horizontal, 15)
             }
-            
 
             if self.chooser.selectedFilter == .comments && self.chooser.mode == .commenting {
                 UserCommentForm(chooser: chooser)
@@ -40,7 +39,7 @@ struct ConspectusChooserView: View {
 
             ChooserFooter(controller: chooser)
         }
-        .frame(width: 800, height: 330)
+        .frame(width: 800, height: 450)
         .background(Color.F.grayBG)
         .cornerRadius(10)
         .shadow(color: Color.F.black025, radius: 1, x: 0, y: 1)
@@ -62,14 +61,13 @@ struct ChooserHeader: View {
                 .padding(.horizontal, -5)
                 .saturation(0)
                 .colorScheme(.light)
-            
+
             if chooser.showFilterBar {
                 FilterTabBar(selectedFilter: $chooser.selectedFilter, iconColor: Color.F.dark, bgColor: Color.F.whiteBG, selectedIconColor: Color.F.whiteBG, selectBgColor: Color.F.dark, enabledFilters: [.authors, .books, .tags, .comments])
                     .cornerRadius(2)
             } else {
                 Spacer()
             }
-            
 
             SelectableText(text: "Kommentieren", color: Color.F.black)
                 .font(Font.custom(.mono, size: 16))
@@ -185,14 +183,7 @@ struct UserCommentsChooserSubView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if self.chooser.mode == .commenting {
-                TextArea(text: $chooser.userCommentText, textColor: NSColor.F.black, font: QuoteCell.nsTextFont, isEditable: true)
-                    .lineSpacing(5)
-                    .colorScheme(.light)
-                    .frame(width: 780, height: TextArea.textHeightFrom(text: chooser.userCommentText, width: 780, font: QuoteCell.nsTextFont, isShown: true, minHeight: 50))
-                    .padding(.vertical, 5)
-                    .padding(.leading, 10)
-                    .padding(.trailing, 10)
-                    .saturation(0)
+                MultilineInput(text: $chooser.userCommentText, width: 780, textColor: NSColor.F.black, font: QuoteCell.nsTextFont, isEditing: true)
 
             } else if self.chooser.mode == .chooseLinkAmongUserBooksComment {
                 ForEach(chooser.userBookComments, id: \.id) { comment in
@@ -288,7 +279,7 @@ struct TagTreeNodeLink: View {
                 .onTapGesture {
                     self.onTapAction?()
                 }
-            
+
             Spacer()
         }
     }

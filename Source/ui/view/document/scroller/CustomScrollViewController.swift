@@ -13,7 +13,7 @@ class CustomScrollViewController: ViewModel {
     @Published var contentHeight: CGFloat = CGFloat.zero {
         didSet {
             let difference = oldValue - contentHeight
-            if abs(difference) < 50 && abs(difference) > 0 {
+            if abs(difference) < 80 && abs(difference) > 0 && windowHeight > 0 && windowHeight < contentHeight{
                 withAnimation(.easeInOut(duration: 1.0)) {
                     updateScrollPosition(with: difference / scrollFactor)
                 }
@@ -21,7 +21,14 @@ class CustomScrollViewController: ViewModel {
         }
     }
 
-    @Published var windowHeight: CGFloat = CGFloat.zero
+    @Published var windowHeight: CGFloat = CGFloat.zero{
+        didSet {
+            if contentHeight < windowHeight {
+                scrollPosition = CGFloat.zero
+            }
+        }
+    }
+    
     @Published var scrollPosition = CGFloat.zero
     @Published var scaleY: CGFloat = 1
     @Published var owner: Conspectus!
@@ -35,7 +42,7 @@ class CustomScrollViewController: ViewModel {
         owner = model.selectedConspectus
         Publishers.CombineLatest($contentHeight, $windowHeight)
             .map { contentHeight, windowHeight in
-                min(Constants.docViewMinimapWidth / Constants.docViewWidth, windowHeight / contentHeight)
+                contentHeight > 0 ? min(1, windowHeight / contentHeight) : 1
             }
             .assign(to: \.scaleY, on: self)
             .store(in: &disposeBag)
@@ -58,7 +65,7 @@ class CustomScrollViewController: ViewModel {
         guard let event = notification.object as? NSEvent else { return }
         guard let windowFrame = (NSApplication.shared.delegate as! AppDelegate).window?.frame else { return }
 
-        let sidePanelWidth = (windowFrame.width - Constants.docViewWidth - Constants.docViewMinimapWidth) / 2
+        let sidePanelWidth = (windowFrame.width - Constants.docViewAndScrollerWidth) / 2
         if event.locationInWindow.x > sidePanelWidth && event.locationInWindow.x < sidePanelWidth + Constants.docViewWidth && event.locationInWindow.y < windowFrame.height - Constants.docViewHeaderHeight {
             updateScrollPosition(with: event.deltaY)
         }
@@ -67,7 +74,7 @@ class CustomScrollViewController: ViewModel {
     func updateScrollPosition(with offset: CGFloat) {
         let maxScrollOffset = windowHeight - contentHeight
         if maxScrollOffset > 0 {
-            scrollPosition = 0
+            scrollPosition = CGFloat.zero
         } else if scrollPosition + offset * scrollFactor > 0 {
             scrollPosition = CGFloat.zero
         } else if scrollPosition + offset * scrollFactor < maxScrollOffset {
@@ -100,7 +107,7 @@ class CustomScrollViewController: ViewModel {
             let maxPos = windowHeight - contentHeight
             let pos = -ration * windowHeight / scaleY
             withAnimation {
-                scrollPosition = maxPos > pos ? maxPos : abs(pos) < windowHeight ? 0 : pos
+                scrollPosition = maxPos > pos ? maxPos : pos
             }
         }
     }
@@ -116,7 +123,7 @@ class CustomScrollViewController: ViewModel {
             }
             let pos = (thumbDownOffset - value.location.y) / scaleY
             withAnimation {
-                scrollPosition = maxPos > pos ? maxPos : abs(pos) < windowHeight || pos > 0 ? 0 : pos
+                scrollPosition = maxPos > pos ? maxPos : pos > 0 ? 0 : pos
             }
         }
     }

@@ -9,7 +9,9 @@
 import Foundation
 class Constants {
     static let docViewWidth:CGFloat = 1000
-    static let docViewMinimapWidth:CGFloat = 150
+    static let docViewScrollerWidth:CGFloat = 15
+    static let docViewAndScrollerWidth:CGFloat = docViewWidth + docViewScrollerWidth
     static let docViewHeaderHeight:CGFloat = 100
-    static let docViewLeading:CGFloat = 60
+    static let docViewLeading:CGFloat = 80
+    static let docViewPadding:CGFloat = 15
 }

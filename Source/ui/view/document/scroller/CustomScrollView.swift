@@ -11,13 +11,11 @@ import SwiftUI
 
 struct CustomScrollView<Content>: View where Content: View {
     @ObservedObject var controller: CustomScrollViewController
-    @ObservedObject var vm: DocViewModel
 
     let content: Content
 
-    init(controller: CustomScrollViewController, vm: DocViewModel, @ViewBuilder content: () -> Content) {
+    init(controller: CustomScrollViewController, @ViewBuilder content: () -> Content) {
         self.controller = controller
-        self.vm = vm
         self.content = content()
     }
 
@@ -31,23 +29,19 @@ struct CustomScrollView<Content>: View where Content: View {
                 .clipped()
 
             ZStack(alignment: .topLeading) {
-                DocViewContent(self.vm, changeInputsWithText: true)
-                    .frame(width: Constants.docViewWidth, height: window.size.height, alignment: .topTrailing)
-                    .scaleEffect(x: Constants.docViewMinimapWidth / Constants.docViewWidth, y: self.controller.scaleY, anchor: .topLeading)
-                    .allowsHitTesting(false)
-
                 MouseWheelDetector(onScrolled: self.controller.onScrolled, onClicked: self.controller.onClicked)
 
-                Color(self.controller.owner.genus).opacity(0.25)
+                RoundedRectangle(cornerRadius: 4)
+                    .stroke(Color.F.black025)
+                    .background(Color.F.white)
+                    .frame(width: 8, height: window.size.height * self.controller.scaleY)
+                    .offset(x: 3, y: -self.controller.scrollPosition * self.controller.scaleY)
                     .allowsHitTesting(true)
-                    .frame(width: Constants.docViewMinimapWidth, height: window.size.height * self.controller.scaleY)
-                    .offset(y: -self.controller.scrollPosition * self.controller.scaleY)
                     .gesture(DragGesture().onChanged { value in
                         self.controller.onDragged(value)
-                    })
+                    }).opacity(self.controller.scaleY == 1 ? 0 : 1)
 
-                Separator(color: Color.F.black025, width: 1, height: window.size.height)
-            }.frame(width: Constants.docViewMinimapWidth, height: window.size.height, alignment: .topLeading)
+            }.frame(width: Constants.docViewScrollerWidth, height: window.size.height, alignment: .topLeading)
                 .offset(x: Constants.docViewWidth)
         }
     }

@@ -14,7 +14,7 @@ struct ConspectusChooserView: View {
     var body: some View {
         VStack(alignment: .center, spacing: 0) {
             if chooser.selectedFilter != .tags || chooser.showFilterBar {
-                ChooserHeader(chooser: chooser).frame(width: 800)
+                ChooserHeader(chooser: chooser).frame(width: Constants.docViewWidth - Constants.docViewLeading - 100)
                 Separator(color: Color.F.black, width: .infinity).padding(.horizontal, 15)
             }
 
@@ -39,7 +39,7 @@ struct ConspectusChooserView: View {
 
             ChooserFooter(controller: chooser)
         }
-        .frame(width: 800, height: 450)
+        .frame(width: Constants.docViewWidth - Constants.docViewLeading - 100, height: 500)
         .background(Color.F.grayBG)
         .cornerRadius(10)
         .shadow(color: Color.F.black025, radius: 1, x: 0, y: 1)
@@ -88,19 +88,19 @@ struct UserCommentForm: View {
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
             Text("S.")
-                .font(Font.custom(.pragmaticaBold, size: 21))
+                .font(QuoteCell.titleFont)
                 .foregroundColor(Color.F.black)
 
-            EditableText("", text: $chooser.userCommentStartPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .right, isEditing: true, format: "[1-9][0-9]{0,4}")
+            EditableText("", text: $chooser.userCommentStartPage, textColor: NSColor.F.black, font: QuoteCell.nsTitleFont, alignment: .right, isEditing: true, format: "[1-9][0-9]{0,4}")
                 .saturation(0)
                 .frame(width: 70)
 
             Text("–")
-                .font(Font.custom(.pragmaticaBold, size: 21))
+                .font(QuoteCell.titleFont)
                 .foregroundColor(Color.F.black)
                 .opacity(chooser.userCommentEndPage.count == 0 ? 0 : 1)
 
-            EditableText("", text: $chooser.userCommentEndPage, textColor: NSColor.F.black, font: QuoteCell.pagesFont, alignment: .left, isEditing: true, format: "[1-9][0-9]{0,4}")
+            EditableText("", text: $chooser.userCommentEndPage, textColor: NSColor.F.black, font: QuoteCell.nsTitleFont, alignment: .left, isEditing: true, format: "[1-9][0-9]{0,4}")
                 .saturation(0)
                 .frame(width: 70)
 
@@ -183,7 +183,7 @@ struct UserCommentsChooserSubView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if self.chooser.mode == .commenting {
-                MultilineInput(text: $chooser.userCommentText, width: 780, textColor: NSColor.F.black, font: QuoteCell.nsTextFont, isEditing: true)
+                MultilineInput(text: $chooser.userCommentText, width: Constants.docViewWidth - Constants.docViewLeading - 120, textColor: NSColor.F.black, font: QuoteCell.nsTextFont, isEditing: true)
 
             } else if self.chooser.mode == .chooseLinkAmongUserBooksComment {
                 ForEach(chooser.userBookComments, id: \.id) { comment in

@@ -15,6 +15,7 @@ class Quote: Conspectus, ObservableObject {
     @Published var text: String = "Neues Zitat"
     @Published var startPage: String = ""
     @Published var endPage: String = ""
+    @Published var title: String = ""
     @Published var isValid: Bool = false
 
     override var genus: ConspectusGenus { return .quote }
@@ -25,7 +26,7 @@ class Quote: Conspectus, ObservableObject {
         book = owner
         super.init(fileData: fileData)
 
-        for prop in [$text, $startPage, $endPage] {
+        for prop in [$text, $startPage, $endPage, $title] {
             prop
                 .sink { _ in
                     self.book.state.markAsChanged()
@@ -75,6 +76,7 @@ class Quote: Conspectus, ObservableObject {
         dict["text"] = text
         dict["startPage"] = startPage
         dict["endPage"] = endPage
+        dict["title"] = title
         return dict
     }
 
@@ -84,6 +86,7 @@ class Quote: Conspectus, ObservableObject {
             text = dict["text"] as? String ?? ""
             startPage = dict["startPage"] as? String ?? ""
             endPage = dict["endPage"] as? String ?? ""
+            title = dict["title"] as? String ?? ""
         }
 
         state.markAsNotChanged()

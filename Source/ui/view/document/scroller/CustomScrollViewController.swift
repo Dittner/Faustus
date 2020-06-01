@@ -13,7 +13,7 @@ class CustomScrollViewController: ViewModel {
     @Published var contentHeight: CGFloat = CGFloat.zero {
         didSet {
             let difference = oldValue - contentHeight
-            if abs(difference) < 80 && abs(difference) > 0 && windowHeight > 0 && windowHeight < contentHeight{
+            if abs(difference) < 80 && abs(difference) > 0 && windowHeight > 0 && windowHeight < contentHeight && owner != nil && owner.state.isEditing {
                 withAnimation(.easeInOut(duration: 1.0)) {
                     updateScrollPosition(with: difference / scrollFactor)
                 }

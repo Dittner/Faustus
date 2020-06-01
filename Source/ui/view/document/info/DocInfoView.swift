@@ -30,7 +30,6 @@ struct InfoPanel: View {
                     Text("Supertag")
                         .font(Font.custom(.pragmaticaSemiBold, size: 21))
                         .foregroundColor(Color.F.black)
-                        .padding(.leading, Constants.docViewLeading)
                         .frame(height: 30, alignment: .leading)
 
                     ConspectusLink(conspectus: self.controller.parentTag!, isEditing: self.state.isEditing, action: { action in
@@ -40,6 +39,8 @@ struct InfoPanel: View {
                             self.controller.removeParentTag()
                         }
                     })
+                    
+                    Spacer()
                 }
 
                 Spacer().frame(height: 5)
@@ -59,6 +60,7 @@ struct BookInfoPanel: View {
     @ObservedObject var state: ConspectusState
 
     private let font = NSFont(name: .pragmaticaLight, size: 18)
+    public static let rightColumnWidth: CGFloat = Constants.docViewWidth - 4 * Constants.docViewPadding - FormInput.titleWidth
 
     init(_ controller: DocInfoController) {
         self.controller = controller
@@ -97,7 +99,7 @@ struct BookInfoPanel: View {
                     .frame(width: FormInput.titleWidth, height: 30, alignment: .trailing)
                     .background(Color.F.whiteBG)
 
-                MultilineInput(text: $content.reference, width: 650, textColor: NSColor.F.black, font: font, isEditing: state.isEditing)
+                MultilineInput(text: $content.reference, width: BookInfoPanel.rightColumnWidth, textColor: NSColor.F.black, font: font, isEditing: state.isEditing)
                     .background(state.isEditing ? Color.F.whiteBG : Color.F.white)
 
             }.padding(.top, 5)
@@ -110,7 +112,7 @@ struct BookInfoPanel: View {
                     .frame(width: FormInput.titleWidth, height: 30, alignment: .trailing)
                     .background(Color.F.whiteBG)
 
-                MultilineInput(text: $content.info, width: 650, textColor: NSColor.F.black, font: font, isEditing: state.isEditing)
+                MultilineInput(text: $content.info, width: BookInfoPanel.rightColumnWidth, textColor: NSColor.F.black, font: font, isEditing: state.isEditing)
                     .background(state.isEditing ? Color.F.whiteBG : Color.F.white)
             }
         }
@@ -139,7 +141,7 @@ struct FormInput: View {
                 .colorScheme(.light)
                 .padding(.horizontal, 0)
                 .allowsHitTesting(self.isEditing)
-                .frame(width: 640, height: 30, alignment: .leading)
+                .frame(width: BookInfoPanel.rightColumnWidth, height: 30, alignment: .leading)
 
         }.frame(height: 30)
             .background(Separator(color: Color.F.black, width: .infinity)

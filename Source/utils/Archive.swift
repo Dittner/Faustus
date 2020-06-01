@@ -49,6 +49,7 @@ struct SectionView: View {
                 Separator(color: Color.F.black, width: .infinity)
                     .offset(y: 15)
             }
-        }.frame(height: 40).padding(.bottom, 8)
+        }.frame(height: 40)
+            .padding(.bottom, 8)
     }
 }

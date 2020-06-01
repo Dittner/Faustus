@@ -35,7 +35,7 @@ struct CustomScrollView<Content>: View where Content: View {
                     .stroke(Color.F.black025)
                     .background(Color.F.white)
                     .frame(width: 8, height: window.size.height * self.controller.scaleY)
-                    .offset(x: 3, y: -self.controller.scrollPosition * self.controller.scaleY)
+                    .offset(x: 4, y: -self.controller.scrollPosition * self.controller.scaleY)
                     .allowsHitTesting(true)
                     .gesture(DragGesture().onChanged { value in
                         self.controller.onDragged(value)

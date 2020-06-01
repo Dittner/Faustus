@@ -33,6 +33,7 @@ enum FocusID: Int {
     case modalBookChooserSearch
     case authorChooserSearch
     case linkChooserSearch
+    case quoteSearch
 }
 
 class TextFocus: ObservableObject {
@@ -127,19 +128,26 @@ struct TextArea: NSViewRepresentable {
     static func getLineHight(fontSize: CGFloat) -> CGFloat {
         fontSize < 21 ? 1.25 : 1.5
     }
-    
+
     static func getLineHightExtra(fontSize: CGFloat) -> CGFloat {
         fontSize < 21 ? 0.05 : 0
     }
 
-    static func textHeightFrom(text: String, width: CGFloat, font: NSFont, isShown: Bool, minHeight: CGFloat = 30) -> CGFloat {
+    static func textHeightFrom(text: String, width: CGFloat, font: NSFont, isShown: Bool, minHeight: CGFloat = 30, firstLineHeadIndent: CGFloat) -> CGFloat {
         guard isShown else { return 0 }
 
-        let factor = TextArea.getLineHight(fontSize: font.pointSize)
-        TextInput.tf.stringValue = text.isEmpty ? "Ag" : text
+        //TextInput.tf.stringValue = text.isEmpty ? "Ag" : text
         TextInput.tf.font = font
         TextInput.tf.lineBreakMode = .byWordWrapping
-        return max(minHeight, TextInput.tf.sizeThatFits(CGSize(width: width, height: .infinity)).height * (factor + getLineHightExtra(fontSize: font.pointSize)))
+
+        let attributedStr = NSMutableAttributedString(string: text)
+        attributedStr.addAttribute(NSAttributedString.Key.font, value: font, range: NSRange(location: 0, length: text.count))
+        let style = TextArea.getStyle(font: font, firstLineHeadIndent: firstLineHeadIndent)
+        attributedStr.addAttribute(NSAttributedString.Key.paragraphStyle, value: style, range: NSRange(location: 0, length: text.count))
+
+        TextInput.tf.attributedStringValue = attributedStr
+        
+        return max(minHeight, TextInput.tf.sizeThatFits(CGSize(width: width, height: .infinity)).height * (1 + getLineHightExtra(fontSize: font.pointSize)))
     }
 
     @Binding var text: String
@@ -148,6 +156,7 @@ struct TextArea: NSViewRepresentable {
     let font: NSFont
     let isEditable: Bool
     var highlightedText: String = ""
+    var firstLineHeadIndent: CGFloat
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -162,18 +171,22 @@ struct TextArea: NSViewRepresentable {
         tv.isEditable = isEditable
         tv.isSelectable = isEditable
         tv.allowsUndo = true
-        let style = NSMutableParagraphStyle()
-        setUpStyle(style)
+        let style = TextArea.getStyle(font: font, firstLineHeadIndent: firstLineHeadIndent)
         tv.defaultParagraphStyle = style
         tv.backgroundColor = NSColor.F.black.withAlphaComponent(0)
         tv.isVerticallyResizable = false
         tv.string = "Ag"
         return tv
     }
-    
-    private func setUpStyle(_ s:NSMutableParagraphStyle) {
-        s.alignment = .left
-        s.lineHeightMultiple = TextArea.getLineHight(fontSize: font.pointSize)
+
+    static func getStyle(font: NSFont, firstLineHeadIndent: CGFloat) -> NSMutableParagraphStyle {
+        let style = NSMutableParagraphStyle()
+        style.alignment = .left
+        style.lineHeightMultiple = TextArea.getLineHight(fontSize: font.pointSize)
+        style.firstLineHeadIndent = firstLineHeadIndent
+        style.lineBreakMode = .byWordWrapping
+
+        return style
     }
 
     func updateNSView(_ textArea: CustomNSTextView, context: Context) {
@@ -189,10 +202,11 @@ struct TextArea: NSViewRepresentable {
 
             attributedStr.addAttribute(NSAttributedString.Key.font, value: font, range: NSRange(location: 0, length: text.count))
 
-            let style = NSMutableParagraphStyle()
-            setUpStyle(style)
-            textArea.defaultParagraphStyle = style
+            let style = TextArea.getStyle(font: font, firstLineHeadIndent: firstLineHeadIndent)
+
             attributedStr.addAttribute(NSAttributedString.Key.paragraphStyle, value: style, range: NSRange(location: 0, length: text.count))
+
+            textArea.defaultParagraphStyle = style
 
             if !highlightedText.isEmpty {
                 let ranges = text.ranges(of: highlightedText, options: .caseInsensitive)
@@ -232,7 +246,6 @@ struct TextArea: NSViewRepresentable {
     }
 }
 
-
 struct MultilineInput: View {
     @EnvironmentObject var modalViewObservable: ModalViewObservable
     @Binding var text: String
@@ -241,16 +254,17 @@ struct MultilineInput: View {
     public let font: NSFont
     public let isEditing: Bool
     public var highlightedText: String = ""
-    
+    public var firstLineHeadIndent: CGFloat = 0
+
     var body: some View {
-        TextArea(text: $text, textColor: textColor, font: font, isEditable: isEditing && !modalViewObservable.isShown, highlightedText: highlightedText)
+        TextArea(text: $text, textColor: textColor, font: font, isEditable: isEditing && !modalViewObservable.isShown, highlightedText: highlightedText, firstLineHeadIndent: firstLineHeadIndent)
             .layoutPriority(-1)
             .saturation(0)
             .colorScheme(.light)
             .offset(y: -1)
             .padding(.leading, -5)
             .padding(.trailing, 0)
-            .frame(width: width, height: TextArea.textHeightFrom(text: text, width: width - 5, font: font, isShown: true), alignment: .topLeading)
+            .frame(width: width, height: TextArea.textHeightFrom(text: text, width: width - 5, font: font, isShown: true, firstLineHeadIndent: firstLineHeadIndent), alignment: .topLeading)
             .onTapGesture(count: 2) {
                 if !self.isEditing {
                     notify(msg: "in die Zwischenablage kopiert")

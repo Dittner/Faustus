@@ -79,7 +79,7 @@ struct AuthorHeader: View {
                 .lineLimit(1)
                 .font(Font.custom(.mono, size: 13))
                 .foregroundColor(Color.F.white)
-                .frame(width: 1000, height: 20)
+                .frame(width: Constants.docViewAndScrollerWidth, height: 20)
                 .opacity(state.isRemoved ? 1 : 0)
 
             HStack(alignment: .lastTextBaseline, spacing: 10) {
@@ -102,12 +102,15 @@ struct AuthorHeader: View {
                             .lineLimit(1)
                             .font(Font.custom(.pragmaticaExtraLight, size: 30))
                             .foregroundColor(Color.F.white)
+                        .padding(.trailing, 2)
+                        .padding(.leading, -1)
                     }
 
                     Text(content.surname)
                         .lineLimit(1)
                         .font(Font.custom(.pragmaticaBold, size: 30))
                         .foregroundColor(Color.F.white)
+                        .padding(.leading, 2)
 
                     Spacer()
                 }
@@ -120,42 +123,41 @@ struct AuthorHeader: View {
             .padding(.horizontal, 15)
             .frame(height: 30)
 
-            HStack(alignment: .lastTextBaseline, spacing: 0) {
-                Button("") {
-                    _ = self.author.store()
-                }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: state.isRemoved ? Color.F.red : Color.F.black))
-                    .opacity(state.hasChanges ? 1 : 0)
+            GeometryReader { geometry in
+                Group {
+                    Button("") {
+                        _ = self.author.store()
+                    }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: self.state.isRemoved ? Color.F.red : Color.F.black))
+                        .opacity(self.state.hasChanges ? 1 : 0)
+                        .offset(x: 15, y: 10)
 
-                Spacer()
+                    if self.state.isEditing {
+                        TextInput(title: "geboren", text: self.$content.birthYear, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .right, isFocused: self.textFocus.id == .headerAuthorBirthYear, isSecure: false, format: "-?[0-9]{0,4}", isEditable: self.state.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorDeathYear })
+                            .saturation(0)
+                            .frame(width: 200)
+                            .offset(x: geometry.size.width / 2 - 206, y: 20)
 
-                if state.isEditing {
-                    TextInput(title: "geboren", text: $content.birthYear, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .right, isFocused: textFocus.id == .headerAuthorBirthYear, isSecure: false, format: "-?[0-9]{0,4}", isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorDeathYear })
-                        .saturation(0)
-                        .frame(width: 200, height: 30)
+                        Text("–")
+                            .font(Font.custom(.pragmaticaExtraLight, size: 16))
+                            .foregroundColor(Color.F.white)
+                            .frame(width: 13, alignment: .center)
+                            .opacity(self.$content.deathYear.wrappedValue.count == 0 ? 0.25 : 1)
+                            .offset(x: geometry.size.width / 2 - 7, y: 20)
 
-                    Text("–")
-                        .font(Font.custom(.pragmaticaExtraLight, size: 16))
-                        .foregroundColor(Color.F.white)
-                        .frame(width: 13, alignment: .center)
-                        .opacity($content.deathYear.wrappedValue.count == 0 ? 0.25 : 1)
-
-                    TextInput(title: "gestorben", text: $content.deathYear, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerAuthorDeathYear, isSecure: false, format: "-?[0-9]{0,4}", isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorName })
-                        .saturation(0)
-                        .frame(width: 200, height: 30)
-                } else {
-                    Text(content.years)
-                        .lineLimit(1)
-                        .font(Font.custom(.pragmaticaExtraLight, size: 16))
-                        .foregroundColor(Color.F.white)
-                        .frame(width: 200, height: 30)
+                        TextInput(title: "gestorben", text: self.$content.deathYear, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: self.textFocus.id == .headerAuthorDeathYear, isSecure: false, format: "-?[0-9]{0,4}", isEditable: self.state.isEditing, onEnterAction: { self.textFocus.id = .headerAuthorName })
+                            .saturation(0)
+                            .frame(width: 200)
+                            .offset(x: geometry.size.width / 2 + 7, y: 20)
+                    } else {
+                        Text(self.content.years)
+                            .lineLimit(1)
+                            .font(Font.custom(.pragmaticaExtraLight, size: 16))
+                            .foregroundColor(Color.F.white)
+                            .frame(width: 200)
+                            .offset(x: geometry.size.width / 2 - 100, y: 20)
+                    }
                 }
-
-                Spacer()
-
-                Spacer().frame(width: 30)
-            }
-            .padding(.horizontal, 15)
-            .frame(height: 50)
+            }.frame(width: Constants.docViewAndScrollerWidth, height: 50)
         }
     }
 }
@@ -183,7 +185,7 @@ struct BookHeader: View {
                 .lineLimit(1)
                 .font(Font.custom(.mono, size: 13))
                 .foregroundColor(Color.F.white)
-                .frame(width: 1000, height: 20)
+                .frame(width: Constants.docViewAndScrollerWidth, height: 20)
                 .opacity(state.isRemoved ? 1 : 0)
 
             HStack(alignment: .lastTextBaseline, spacing: 10) {
@@ -203,53 +205,57 @@ struct BookHeader: View {
             .padding(.horizontal, 15)
             .frame(height: 30)
 
-            HStack(alignment: .lastTextBaseline, spacing: 0) {
-                Button("") {
-                    _ = self.book.store()
-                }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: state.isRemoved ? Color.F.red : Color.F.black))
-                    .opacity(state.hasChanges ? 1 : 0)
+            GeometryReader { geometry in
+                Group {
+                    Button("") {
+                        _ = self.book.store()
+                    }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: self.state.isRemoved ? Color.F.red : Color.F.black))
+                        .opacity(self.state.hasChanges ? 1 : 0)
+                        .offset(x: 15, y: 10)
 
-                Spacer().frame(width: 250)
-
-                TextInput(title: "geschrieben", text: $book.content.writtenDate, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .right, isFocused: textFocus.id == .headerBookWritten, isSecure: false, format: "-?[0-9]{0,4}", isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerBookAuthor })
-                    .padding(.trailing, -3)
-                    .saturation(0)
-                    .frame(width: 200)
-
-                Text(", ")
-                    .font(Font.custom(.pragmaticaExtraLight, size: 16))
-                    .foregroundColor(Color.F.white)
-                    .frame(width: 10, alignment: .center)
-                    .opacity(book.content.authorText.isEmpty && book.content.author == nil ? 0.25 : 1)
-
-                if bookContent.author == nil {
-                    TextInput(title: "Author", text: $book.content.authorText, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .headerBookAuthor, isSecure: false, format: nil, isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerBookTitle })
+                    TextInput(title: "geschrieben", text: self.$book.content.writtenDate, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .right, isFocused: self.textFocus.id == .headerBookWritten, isSecure: false, format: "-?[0-9]{0,4}", isEditable: self.state.isEditing, onEnterAction: { self.textFocus.id = .headerBookAuthor })
+                        .padding(.trailing, -3)
                         .saturation(0)
                         .frame(width: 300)
-                } else {
-                    ConspectusLink(conspectus: bookContent.author!, isEditing: self.state.isEditing, isLightMode: false, withDetails: false, action: { result in
-                        switch result {
-                        case .remove:
-                            (self.bookContent.author as! BooksOwner).booksColl.removeBook(self.book)
-                        case .navigate:
-                            self.bookContent.author!.show()
-                        }
-                    })
-                    Spacer()
+                        .offset(x: geometry.size.width / 2 - 305, y: 20)
+
+                    Text(",")
+                        .font(Font.custom(.pragmaticaExtraLight, size: 16))
+                        .foregroundColor(Color.F.white)
+                        .frame(width: 10, alignment: .center)
+                        .opacity(self.book.content.authorText.isEmpty && self.book.content.author == nil ? 0.25 : 1)
+                        .offset(x: geometry.size.width / 2 - 5, y: 20)
+
+                    if self.bookContent.author == nil {
+                        TextInput(title: "Author", text: self.$book.content.authorText, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: self.textFocus.id == .headerBookAuthor, isSecure: false, format: nil, isEditable: self.state.isEditing, onEnterAction: { self.textFocus.id = .headerBookTitle })
+                            .saturation(0)
+                            .frame(width: 300)
+                            .offset(x: geometry.size.width / 2 + 5, y: 20)
+
+                        SelectableText(text: "+Author", color: Color.F.white)
+                            .font(Font.custom(.mono, size: 13))
+                            .padding(.leading, 0)
+                            .padding(.top, 0)
+                            .onTapGesture {
+                                self.chooser.chooseAuthor(self.book)
+                            }
+                            .frame(width: 200, alignment: .trailing)
+                            .offset(x: geometry.size.width - 215, y: 25)
+
+                    } else {
+                        ConspectusLink(conspectus: self.bookContent.author!, isEditing: self.state.isEditing, isLightMode: false, withDetails: false, action: { result in
+                            switch result {
+                            case .remove:
+                                (self.bookContent.author as! BooksOwner).booksColl.removeBook(self.book)
+                            case .navigate:
+                                self.bookContent.author!.show()
+                            }
+                        })
+                            .offset(x: geometry.size.width / 2 + 5, y: 20)
+                    }
                 }
 
-                SelectableText(text: "+Author", color: Color.F.white)
-                    .font(Font.custom(.mono, size: 13))
-                    .padding(.leading, 0)
-                    .padding(.top, 0)
-                    .onTapGesture {
-                        self.chooser.chooseAuthor(self.book)
-                    }
-                    .frame(width: 180, alignment: .trailing)
-                    .opacity(state.isEditing && bookContent.author == nil ? 1 : 0)
-            }
-            .padding(.horizontal, 15)
-            .frame(height: 50)
+            }.frame(width: Constants.docViewAndScrollerWidth, height: 50)
         }
     }
 }
@@ -277,7 +283,7 @@ struct TagHeader: View {
                 .lineLimit(1)
                 .font(Font.custom(.mono, size: 13))
                 .foregroundColor(Color.F.white)
-                .frame(width: 1000, height: 20)
+                .frame(width: Constants.docViewAndScrollerWidth, height: 20)
                 .opacity(state.isRemoved ? 1 : 0)
 
             HStack(alignment: .lastTextBaseline, spacing: 10) {

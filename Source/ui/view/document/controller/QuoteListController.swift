@@ -10,16 +10,17 @@ import Combine
 import SwiftUI
 
 class QuoteListController: ViewModel {
-    let scrollerController:CustomScrollViewController
-    
+    let scrollerController: CustomScrollViewController
+
     var book: Book!
     @Published var searchText: String = ""
+    @Published var filterEnabled: Bool = false
     @Published var quotes: [Quote] = []
     @Published var selectedQuote: Quote?
 
     var quotesFilterPublisher: AnyCancellable?
     var selectedQuoteIndexPublisher: AnyCancellable?
-    
+
     init(scrollerController: CustomScrollViewController) {
         self.scrollerController = scrollerController
     }
@@ -57,8 +58,8 @@ class QuoteListController: ViewModel {
     }
 
     func showNextQuote() {
-        guard let q = selectedQuote, q.isValid else {return}
-        
+        guard let q = selectedQuote, q.isValid else { return }
+
         if let curInd = Int(book.quoteColl.selectedQuoteIndex), curInd < quotes.count {
             book.quoteColl.selectedQuoteIndex = (curInd + 1).description
             scrollerController.scrollPosition = 0
@@ -66,8 +67,8 @@ class QuoteListController: ViewModel {
     }
 
     func showPrevQuote() {
-        guard let q = selectedQuote, q.isValid else {return}
-        
+        guard let q = selectedQuote, q.isValid else { return }
+
         if let curInd = Int(book.quoteColl.selectedQuoteIndex), curInd > 1 {
             book.quoteColl.selectedQuoteIndex = (curInd - 1).description
         }
@@ -75,18 +76,18 @@ class QuoteListController: ViewModel {
 
     var chooseBooksPublisher: AnyCancellable?
     func createQuote() {
-        guard let q = selectedQuote, q.isValid else {return}
-        
+        if let q = selectedQuote, !q.isValid { return }
+
         book.quoteColl.createQuote()
         quotes = book.quoteColl.quotes
         book.quotesFilter = ""
         book.quoteColl.selectedQuoteIndex = "1"
     }
-    
+
     func isSelectedQuoteFirst() -> Bool {
         book.quoteColl.selectedQuoteIndex == "1"
     }
-    
+
     func isSelectedQuoteLast() -> Bool {
         book.quoteColl.selectedQuoteIndex == book.quoteColl.quotes.count.description
     }
@@ -94,6 +95,8 @@ class QuoteListController: ViewModel {
     func removeQuote(_ q: Quote) {
         book.quoteColl.removeQuote(q)
         quotes = book.quoteColl.quotes
+        book.quotesFilter = ""
+        book.quoteColl.selectedQuoteIndex = "1"
     }
 
     func formatQuoteText(_ q: Quote) {

@@ -128,6 +128,7 @@ class ConspectusChooser: ViewModel, ChooserController {
         owner = author
         mode = .chooseBooks
         selectedFilter = .books
+        selectedBooks = (author as! BooksOwner).booksColl.books
     }
 
     //

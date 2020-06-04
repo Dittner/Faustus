@@ -68,7 +68,7 @@ struct DocView: View {
                         self.vm.chooser.chooseTags(self.vm.selectedConspectus)
                     })
                         .buttonStyle(IconButtonStyle(iconName: "middlePlus", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
-                    
+
                 } else if vm.selectedSection == .quotes {
                     QuoteToolsView(self.vm.quoteListController, chooser: self.vm.chooser)
                 } else {
@@ -91,8 +91,7 @@ struct DocView: View {
                         ConspectusChooserView(chooser: self.chooser)
                             .offset(x: Constants.docViewLeading - Constants.docViewPadding)
                             .padding(.bottom, 15)
-                    }
-                    else if self.chooser.owner == self.vm.quoteListController.selectedQuote && self.chooser.mode == .chooseLink {
+                    } else if self.chooser.owner == self.vm.quoteListController.selectedQuote && self.chooser.mode == .chooseLink {
                         ConspectusChooserView(chooser: self.chooser)
                             .offset(x: Constants.docViewLeading - Constants.docViewPadding)
                     }
@@ -529,15 +528,31 @@ struct QuoteListView: View {
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 0) {
-            SelectableText(text: "ZURÜCK", color: Color.F.book)
-                .font(Font.custom(.mono, size: 16))
-                .padding(.leading, 0)
-                .padding(.trailing, Constants.quoteTextTrailing)
-                .frame(height: 30)
-                .opacity(controller.isSelectedQuoteFirst() ? 0 : 1)
-                .onTapGesture {
-                    self.controller.showPrevQuote()
-                }
+            HStack(alignment: .center, spacing: 0) {
+                SelectableText(text: "ZURÜCK", color: Color.F.book)
+                    .font(Font.custom(.mono, size: 16))
+                    .padding(.leading, 0)
+                    .padding(.trailing, Constants.quoteTextTrailing)
+                    .frame(height: 30)
+                    .background(Color.F.clear)
+                    .opacity(controller.isSelectedQuoteFirst() ? 0 : 1)
+                    .onTapGesture {
+                        self.controller.showPrevQuote()
+                    }
+
+                Spacer()
+
+                SelectableText(text: "WEITER", color: Color.F.book)
+                    .font(Font.custom(.mono, size: 16))
+                    .padding(.trailing, 0)
+                    .padding(.trailing, Constants.quoteTextTrailing)
+                    .frame(height: 30)
+                    .background(Color.F.clear)
+                    .opacity(controller.isSelectedQuoteLast() ? 0 : 1)
+                    .onTapGesture {
+                        self.controller.showNextQuote()
+                    }
+            }
 
             if controller.selectedQuote != nil {
                 HStack(alignment: .center, spacing: 0) {
@@ -549,16 +564,32 @@ struct QuoteListView: View {
             }
 
             Spacer()
+            
+            HStack(alignment: .center, spacing: 0) {
+                SelectableText(text: "ZURÜCK", color: Color.F.book)
+                    .font(Font.custom(.mono, size: 16))
+                    .padding(.leading, 0)
+                    .padding(.trailing, Constants.quoteTextTrailing)
+                    .frame(height: 30)
+                    .background(Color.F.clear)
+                    .opacity(controller.isSelectedQuoteFirst() ? 0 : 1)
+                    .onTapGesture {
+                        self.controller.showPrevQuote()
+                    }
 
-            SelectableText(text: "WEITER", color: Color.F.book)
-                .font(Font.custom(.mono, size: 16))
-                .padding(.trailing, 0)
-                .padding(.trailing, Constants.quoteTextTrailing)
-                .frame(height: 30)
-                .opacity(controller.isSelectedQuoteLast() ? 0 : 1)
-                .onTapGesture {
-                    self.controller.showNextQuote()
-                }
+                Spacer()
+
+                SelectableText(text: "WEITER", color: Color.F.book)
+                    .font(Font.custom(.mono, size: 16))
+                    .padding(.trailing, 0)
+                    .padding(.trailing, Constants.quoteTextTrailing)
+                    .frame(height: 30)
+                    .background(Color.F.clear)
+                    .opacity(controller.isSelectedQuoteLast() ? 0 : 1)
+                    .onTapGesture {
+                        self.controller.showNextQuote()
+                    }
+            }
         }
     }
 }
@@ -629,7 +660,7 @@ struct QuoteCell: View {
 
                     EditableText("Titel", text: $quote.title, textColor: NSColor.F.black05, font: QuoteCell.nsTitleFont, alignment: .right, isEditing: isEditing)
                         .saturation(0)
-                        .frame(width: 500, height: 30)
+                        .frame(width: 500, height: 30).offset(x: 1, y: 1)
                 }
             }.padding(.bottom, 30)
 

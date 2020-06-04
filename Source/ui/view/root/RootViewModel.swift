@@ -19,7 +19,7 @@ enum ModalViewCategory: String {
     case deleteConfirmation
 }
 
-func notify(msg:String) {
+func notify(msg: String) {
     RootViewModel.shared?.notificationController.msg = msg
 }
 
@@ -36,12 +36,18 @@ final class RootViewModel: ViewModel {
 
     init() {
         RootViewModel.shared = self
-        model.$state
+        model.$areUserFilesReady
+            .debounce(for: 0.5, scheduler: RunLoop.main)
             .removeDuplicates()
-            .map { value in
-                value == .auth ? .login : .docList
+            .sink { areUserFilesReady in
+                if areUserFilesReady {
+                    self.screen = .docList
+                    let appDelegate = NSApplication.shared.delegate as! AppDelegate
+                    appDelegate.expandWindow()
+                } else {
+                    self.screen = .login
+                }
             }
-            .assign(to: \.screen, on: self)
             .store(in: &disposeBag)
     }
 

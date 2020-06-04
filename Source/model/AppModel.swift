@@ -10,17 +10,10 @@ import Combine
 import Foundation
 import SwiftUI
 
-enum AppModelState {
-    case auth
-    case loading
-    case docView
-    case docEditing
-}
-
 class AppModel: ObservableObject {
     static var shared = AppModel()
 
-    @Published var state: AppModelState = .auth
+    @Published private(set) var areUserFilesReady: Bool = false
     @Published private(set) var selectedConspectus: Conspectus!
     @Published private(set) var recentOpened: [Conspectus] = []
     @ObservedObject var bibliography: Bibliography
@@ -38,7 +31,7 @@ class AppModel: ObservableObject {
     }
 
     func loadUser() {
-        let userFileUrls = DocumentsStorage.getContentOf(dir: .user, filesWithExtension: "faustus")
+        let userFileUrls = DocumentsStorage.getURLs(dir: .user, filesWithExtension: "faustus")
         if userFileUrls.count > 0, let userFromFile = User(from: userFileUrls[0]) {
             logInfo(tag: .IO, msg: "the user profile has been read")
             user = userFromFile
@@ -51,60 +44,74 @@ class AppModel: ObservableObject {
     }
 
     func loadUserFiles() {
+        // Font.printAllSystemFonts()
         loadAuthors()
-        loadBooks()
-        loadTags()
-        deserialize()
-        bibliography.updateHashNames()
-
-        prepareRecentOpenedStack()
-        //Font.printAllSystemFonts()
     }
 
     private func loadAuthors() {
-        let authorFileUrls = DocumentsStorage.getContentOf(dir: .authors, filesWithExtension: "faustus")
+        let authorFileUrls = DocumentsStorage.getURLs(dir: .authors, filesWithExtension: "faustus")
         logInfo(tag: .IO, msg: "Author files = \(authorFileUrls.count)")
-        if authorFileUrls.count > 0 {
-            for fileUrl in authorFileUrls {
-                if Author(from: fileUrl) == nil {
-                    logErr(tag: .IO, msg: "Could't read a file with url: \(fileUrl.description)")
+
+        let iterator = AsyncIterator<URL>(authorFileUrls)
+        iterator.iterate()
+            .sink(receiveCompletion: { _ in
+                self.loadBooks()
+            }, receiveValue: { url in
+                if Author(from: url) == nil {
+                    logErr(tag: .IO, msg: "Could't read a file with url: \(url.description)")
                 }
-            }
-        }
+            }).store(in: &disposeBag)
     }
 
     private func loadBooks() {
-        let bookFileUrls = DocumentsStorage.getContentOf(dir: .books, filesWithExtension: "faustus")
+        let bookFileUrls = DocumentsStorage.getURLs(dir: .books, filesWithExtension: "faustus")
         logInfo(tag: .IO, msg: "Books files = \(bookFileUrls.count)")
-        if bookFileUrls.count > 0 {
-            for fileUrl in bookFileUrls {
-                if Book(from: fileUrl) == nil {
-                    logErr(tag: .IO, msg: "Could't read a file with url: \(fileUrl.description)")
+        
+        let iterator = AsyncIterator<URL>(bookFileUrls)
+        iterator.iterate()
+            .sink(receiveCompletion: { _ in
+                self.loadTags()
+            }, receiveValue: { url in
+                if Book(from: url) == nil {
+                    logErr(tag: .IO, msg: "Could't read a file with url: \(url.description)")
                 }
-            }
-        }
+            }).store(in: &disposeBag)
     }
 
     private func loadTags() {
-        let tagFileUrls = DocumentsStorage.getContentOf(dir: .tags, filesWithExtension: "faustus")
+        let tagFileUrls = DocumentsStorage.getURLs(dir: .tags, filesWithExtension: "faustus")
         logInfo(tag: .IO, msg: "Tags files = \(tagFileUrls.count)")
-        if tagFileUrls.count > 0 {
-            for fileUrl in tagFileUrls {
-                if Tag(from: fileUrl) == nil {
-                    logErr(tag: .IO, msg: "Could't read a file with url: \(fileUrl.description)")
+        
+        let iterator = AsyncIterator<URL>(tagFileUrls)
+        iterator.iterate()
+            .sink(receiveCompletion: { _ in
+                self.deserializeLinkedFiles()
+            }, receiveValue: { url in
+                if Tag(from: url) == nil {
+                    logErr(tag: .IO, msg: "Could't read a file with url: \(url.description)")
                 }
-            }
-        }
+            }).store(in: &disposeBag)
+    }
+    
+    private func deserializeLinkedFiles() {
+        logInfo(tag: .IO, msg: "Deserialization of all link conspectus-files")
+
+        let iterator = AsyncIterator<Conspectus>(bibliography.getValues())
+        iterator.iterate()
+            .sink(receiveCompletion: { _ in
+                self.completeFilesLoadingAndDeserialization()
+            }, receiveValue: { c in
+                c.deserializeLinkedFiles()
+            }).store(in: &disposeBag)
+    }
+    
+    private func completeFilesLoadingAndDeserialization() {
+        bibliography.updateHashNames()
+        prepareRecentOpenedStack()
+        areUserFilesReady = true
     }
 
-    private func deserialize() {
-        logInfo(tag: .IO, msg: "Deserialization of all conspectus-files")
-        for c in bibliography.getValues() {
-            c.deserializeLinkedFiles()
-        }
-    }
-
-    func prepareRecentOpenedStack() {
+    private func prepareRecentOpenedStack() {
         $selectedConspectus
             .removeDuplicates()
             .compactMap { $0 }
@@ -115,6 +122,10 @@ class AppModel: ObservableObject {
 
             }.store(in: &disposeBag)
     }
+    
+    //
+    // Select
+    //
 
     func selectUser() {
         selectedConspectus = user
@@ -193,5 +204,33 @@ extension ViewModel {
 
     var rootVM: RootViewModel {
         return RootViewModel.shared!
+    }
+}
+
+class AsyncIterator<Element> {
+    private var notifier: PassthroughSubject<Element, Never>
+    private let elements: [Element]
+    private var index: Int = 0
+
+    init(_ elements: [Element]) {
+        self.elements = elements
+        notifier = PassthroughSubject<Element, Never>()
+    }
+
+    func iterate() -> PassthroughSubject<Element, Never> {
+        iterateNext()
+        return notifier
+    }
+
+    private func iterateNext() {
+        if index < elements.count {
+            notifier.send(elements[index])
+            index += 1
+            DispatchQueue.main.async {
+                self.iterateNext()
+            }
+        } else {
+            notifier.send(completion: .finished)
+        }
     }
 }

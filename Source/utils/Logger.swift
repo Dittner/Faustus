@@ -107,7 +107,7 @@ class Logger {
 
     private func removeExpiredLogs() {
         do {
-            let urls = DocumentsStorage.getContentOf(dir: .logs, filesWithExtension: "clientLog")
+            let urls = DocumentsStorage.getURLs(dir: .logs, filesWithExtension: "clientLog")
             let curDateTime = Int(Date().timeIntervalSinceReferenceDate)
             let expireTimeInSecs = curDateTime - keepLogsInDays * 24 * 60 * 60
             var countOfExpiredFiles: Int = 0

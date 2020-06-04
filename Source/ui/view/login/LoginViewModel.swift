@@ -15,6 +15,7 @@ final class LoginViewModel: ViewModel {
 
     private var disposeBag: Set<AnyCancellable> = []
     @Published var errorMsg: String = ""
+    @Published var filesLoading: Bool = false
 
     init() {
         logInfo(tag: .APP, msg: "LoginViewModel init")
@@ -31,8 +32,7 @@ final class LoginViewModel: ViewModel {
             print("LogedIn")
             user.content.isLoggedIn = true
             model.loadUserFiles()
-            model.state = .loading
-
+            filesLoading = true
         } else {
             errorMsg = status.rawValue
         }

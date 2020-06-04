@@ -68,7 +68,7 @@ class DocumentsStorage {
         }
     }
 
-    open class func getContentOf(dir: StorageDirectory, filesWithExtension: String) -> [URL] {
+    open class func getURLs(dir: StorageDirectory, filesWithExtension: String) -> [URL] {
         let dirPath = dir.rawValue
         do {
             return try FileManager.default.contentsOfDirectory(at: projectURL.appendingPathComponent(dirPath), includingPropertiesForKeys: nil).filter { $0.pathExtension == filesWithExtension }

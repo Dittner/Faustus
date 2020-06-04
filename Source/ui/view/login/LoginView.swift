@@ -25,20 +25,20 @@ struct LoginView: View {
                 .offset(x: /*@START_MENU_TOKEN@*/0.0/*@END_MENU_TOKEN@*/, y: -80.0)
 
             if vm.user.state.isNew {
-                TextInput(title: "Vorname", text: $vm.user.content.name, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaLight, size: 16), alignment: .left, isFocused: textFocus.id == .loginUserName, isSecure: false, format: nil, isEditable: true, onEnterAction: { self.textFocus.id = .loginUserSurname })
+                TextInput(title: "Vorname", text: $vm.user.content.name, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaLight, size: 16), alignment: .left, isFocused: textFocus.id == .loginUserName, isSecure: false, format: nil, isEditable: !vm.filesLoading, onEnterAction: { self.textFocus.id = .loginUserSurname })
                     .frame(width: 250, height: 35, alignment: .leading)
                     .padding(.horizontal, 5)
                     .background(Color.F.black)
                     .cornerRadius(6)
                     .onAppear { self.textFocus.id = .loginUserName }
 
-                TextInput(title: "Nachname", text: $vm.user.content.surname, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .loginUserSurname, isSecure: false, format: nil, isEditable: true, onEnterAction: { self.textFocus.id = .loginUserPwd })
+                TextInput(title: "Nachname", text: $vm.user.content.surname, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaExtraLight, size: 16), alignment: .left, isFocused: textFocus.id == .loginUserSurname, isSecure: false, format: nil, isEditable: !vm.filesLoading, onEnterAction: { self.textFocus.id = .loginUserPwd })
                     .frame(width: 250, height: 35, alignment: .leading)
                     .padding(.horizontal, 5)
                     .background(Color.F.black)
                     .cornerRadius(6)
 
-                TextInput(title: "Schlüssel", text: $vm.user.content.pwd, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaLight, size: 16), alignment: .left, isFocused: textFocus.id == .loginUserPwd, isSecure: true, format: nil, isEditable: true, onEnterAction: {
+                TextInput(title: "Schlüssel", text: $vm.user.content.pwd, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaLight, size: 16), alignment: .left, isFocused: textFocus.id == .loginUserPwd, isSecure: true, format: nil, isEditable: !vm.filesLoading, onEnterAction: {
                     self.vm.login()
                 })
                     .frame(width: 250, height: 35, alignment: .leading)
@@ -59,7 +59,7 @@ struct LoginView: View {
                     .frame(width: 250, height: 35)
                     .minimumScaleFactor(0.5)
 
-                TextInput(title: "Schlüssel", text: $vm.user.content.pwd, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaLight, size: 16), alignment: .left, isFocused: textFocus.id == .loginUserPwd, isSecure: true, format: nil, isEditable: true, onEnterAction: {
+                TextInput(title: "Schlüssel", text: $vm.user.content.pwd, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaLight, size: 16), alignment: .left, isFocused: textFocus.id == .loginUserPwd, isSecure: true, format: nil, isEditable: !vm.filesLoading, onEnterAction: {
                     self.vm.login()
                 })
                     .frame(width: 250, height: 35, alignment: .leading)
@@ -73,6 +73,9 @@ struct LoginView: View {
                 .frame(maxWidth: 250, maxHeight: 50)
                 .foregroundColor(Color.F.red)
                 .opacity($vm.errorMsg.wrappedValue != "" ? 1 : 0)
+
+            ActivityIndicator(isAnimating: $vm.filesLoading)
+                .frame(width: 50, height: 50)
 
             Spacer()
         }

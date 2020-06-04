@@ -18,15 +18,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         Logger.run()
         AppModel.shared.loadUser()
-        AppModel.shared.$state
-            .debounce(for: 0.1, scheduler: RunLoop.main)
-            .dropFirst()
-            .map { $0 != .auth }
-            .removeDuplicates()
-            .sink(receiveValue: { _ in
-                self.expandWindow()
-            })
-            .store(in: &disposeBag)
 
         let mainWindow = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 500, height: 600),
@@ -59,7 +50,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private var moveWindowDebouncer: Debouncer?
     func windowDidMove(_ notification: Notification) {
-        if let window = window, AppModel.shared.state != .auth {
+        if let window = window, AppModel.shared.areUserFilesReady {
             if moveWindowDebouncer == nil {
                 moveWindowDebouncer = Debouncer(seconds: 5)
             }
@@ -71,7 +62,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func windowDidEndLiveResize(_ notification: Notification) {
-        if let window = window, AppModel.shared.state != .auth {
+        if let window = window, AppModel.shared.areUserFilesReady {
             logInfo(tag: .APP, msg: "window, wid = \(window.frame.width), hei = \(window.frame.height)")
             window.storeFrame()
         }

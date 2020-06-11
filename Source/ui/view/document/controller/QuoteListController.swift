@@ -17,6 +17,8 @@ class QuoteListController: ViewModel {
     @Published var filterEnabled: Bool = false
     @Published var quotes: [Quote] = []
     @Published var selectedQuote: Quote?
+    @Published var selectedQuoteIndex: String = "1"
+    var quoteTextSelection: NSRange = NSRange(location: 0, length: 0)
 
     var quotesFilterPublisher: AnyCancellable?
     var selectedQuoteIndexPublisher: AnyCancellable?
@@ -28,16 +30,18 @@ class QuoteListController: ViewModel {
     func update(_ conspectus: Conspectus) {
         if let b = conspectus as? Book {
             book = b
-            quotes = b.quoteColl.quotes
+            quotes = b.quoteColl.quotes.sorted { $0 < $1 }
 
             quotesFilterPublisher?.cancel()
             quotesFilterPublisher = book.$quotesFilter
                 .debounce(for: 1, scheduler: RunLoop.main)
+                .dropFirst()
                 .sink { filter in
 
                     if filter.count >= 3 {
                         self.quotes = self.book.quoteColl.quotes.filter { $0.getDescription().hasSubstring(filter) }
-                        self.book.quoteColl.selectedQuoteIndex = "1"
+                        self.book.quoteColl.selectedQuoteIndex = 0
+                        self.selectedQuoteIndex = "1"
                     } else {
                         self.quotes = self.book.quoteColl.quotes
                     }
@@ -45,13 +49,15 @@ class QuoteListController: ViewModel {
                     self.searchText = filter
                 }
 
+            selectedQuoteIndex = (book.quoteColl.selectedQuoteIndex + 1).description
             selectedQuoteIndexPublisher?.cancel()
-            selectedQuoteIndexPublisher = book.quoteColl.$selectedQuoteIndex
-                .map { value in
+            selectedQuoteIndexPublisher = $selectedQuoteIndex
+                .map { value -> Int in
                     let index = Int(value) ?? 0
                     return index > 0 ? index - 1 : 0
                 }
                 .sink { index in
+                    self.book.quoteColl.selectedQuoteIndex = index
                     self.selectedQuote = index < self.quotes.count ? self.quotes[index] : nil
                 }
         }
@@ -60,8 +66,9 @@ class QuoteListController: ViewModel {
     func showNextQuote() {
         guard let q = selectedQuote, q.isValid else { return }
 
-        if let curInd = Int(book.quoteColl.selectedQuoteIndex), curInd < quotes.count {
-            book.quoteColl.selectedQuoteIndex = (curInd + 1).description
+        if book.quoteColl.selectedQuoteIndex < quotes.count - 1 {
+            book.quoteColl.selectedQuoteIndex += 1
+            selectedQuoteIndex = (book.quoteColl.selectedQuoteIndex + 1).description
             scrollerController.scrollPosition = 0
         }
     }
@@ -69,8 +76,10 @@ class QuoteListController: ViewModel {
     func showPrevQuote() {
         guard let q = selectedQuote, q.isValid else { return }
 
-        if let curInd = Int(book.quoteColl.selectedQuoteIndex), curInd > 1 {
-            book.quoteColl.selectedQuoteIndex = (curInd - 1).description
+        if book.quoteColl.selectedQuoteIndex > 0 {
+            book.quoteColl.selectedQuoteIndex -= 1
+            selectedQuoteIndex = (book.quoteColl.selectedQuoteIndex + 1).description
+            scrollerController.scrollPosition = 0
         }
     }
 
@@ -81,25 +90,33 @@ class QuoteListController: ViewModel {
         book.quoteColl.createQuote()
         quotes = book.quoteColl.quotes
         book.quotesFilter = ""
-        book.quoteColl.selectedQuoteIndex = "1"
+        book.quoteColl.selectedQuoteIndex = 0
+        selectedQuoteIndex = "1"
+        scrollerController.scrollPosition = 0
     }
 
-    func isSelectedQuoteFirst() -> Bool {
-        book.quoteColl.selectedQuoteIndex == "1"
+    func canSelectPrev() -> Bool {
+        book.quoteColl.selectedQuoteIndex > 0
     }
 
-    func isSelectedQuoteLast() -> Bool {
-        book.quoteColl.selectedQuoteIndex == book.quoteColl.quotes.count.description
+    func canSelectNext() -> Bool {
+        book.quoteColl.selectedQuoteIndex < quotes.count - 1
     }
 
     func removeQuote(_ q: Quote) {
         book.quoteColl.removeQuote(q)
         quotes = book.quoteColl.quotes
         book.quotesFilter = ""
-        book.quoteColl.selectedQuoteIndex = "1"
+        if book.quoteColl.selectedQuoteIndex >= quotes.count {
+            book.quoteColl.selectedQuoteIndex = quotes.count - 1
+            selectedQuoteIndex = (book.quoteColl.selectedQuoteIndex + 1).description
+        }
+        selectedQuote = book.quoteColl.selectedQuoteIndex < quotes.count ? self.quotes[book.quoteColl.selectedQuoteIndex] : nil
+        scrollerController.scrollPosition = 0
     }
 
     func formatQuoteText(_ q: Quote) {
-        q.text = q.text.replacingOccurrences(of: "\n", with: " ")
+        let range = Range(quoteTextSelection, in: q.text)
+        q.text = TextFormatter.format(q.text, range: range)
     }
 }

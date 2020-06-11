@@ -102,8 +102,8 @@ struct AuthorHeader: View {
                             .lineLimit(1)
                             .font(Font.custom(.pragmaticaExtraLight, size: 30))
                             .foregroundColor(Color.F.white)
-                        .padding(.trailing, 2)
-                        .padding(.leading, -1)
+                            .padding(.trailing, 2)
+                            .padding(.leading, -1)
                     }
 
                     Text(content.surname)
@@ -180,7 +180,7 @@ struct BookHeader: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .center, spacing: 0) {
             Text("Gelöscht am \(state.changedDate)")
                 .lineLimit(1)
                 .font(Font.custom(.mono, size: 13))
@@ -188,18 +188,30 @@ struct BookHeader: View {
                 .frame(width: Constants.docViewAndScrollerWidth, height: 20)
                 .opacity(state.isRemoved ? 1 : 0)
 
-            HStack(alignment: .lastTextBaseline, spacing: 10) {
+            HStack(alignment: .bottom, spacing: 10) {
                 Button("", action: vm.close)
                     .buttonStyle(IconButtonStyle(iconName: "close", iconColor: Color.F.black, bgColor: Color.F.white))
-
+                    .offset(y: -4)
                 Spacer().frame(width: 10)
 
-                TextInput(title: "Titel", text: $book.content.title, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .center, isFocused: textFocus.id == .headerBookTitle, isSecure: false, format: nil, isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerBookWritten })
-                    .saturation(0)
+                if state.isEditing {
+                    TextInput(title: "Titel", text: $book.content.title, textColor: NSColor.F.white, font: NSFont(name: .pragmaticaBold, size: 30), alignment: .center, isFocused: textFocus.id == .headerBookTitle, isSecure: false, format: nil, isEditable: state.isEditing, onEnterAction: { self.textFocus.id = .headerBookWritten })
+                        .saturation(0)
+                    .frame(width: Constants.docViewWidth - 133, height: 30, alignment: .center)
+                } else {
+                    Text(book.content.title)
+                        .lineLimit(1)
+                        .multilineTextAlignment(.center)
+                        .font(Font.custom(.pragmaticaBold, size: 30))
+                        .foregroundColor(Color.F.white)
+                        .minimumScaleFactor(0.5)
+                        .frame(width: Constants.docViewWidth - 133, height: 30, alignment: .center)
+                }
 
                 Toggle("", isOn: $state.isEditing)
                     .toggleStyle(RoundToggleStyle(onColor: Color(book.genus), disabled: state.isRemoved))
                     .disabled(state.isRemoved)
+                    .offset(y: -4)
             }
             .offset(x: 0, y: 4)
             .padding(.horizontal, 15)

@@ -92,4 +92,9 @@ class DocInfoController: ObservableObject {
                 }
         }
     }
+
+    func formatBookInfo() {
+        guard let bookContent = (owner as? Book)?.content else { return }
+        bookContent.info = TextFormatter.format(bookContent.info, range: nil)
+    }
 }

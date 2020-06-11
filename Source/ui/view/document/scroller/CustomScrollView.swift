@@ -43,7 +43,7 @@ struct CustomScrollView<Content>: View where Content: View {
 
             }.frame(width: Constants.docViewScrollerWidth, height: window.size.height, alignment: .topLeading)
                 .offset(x: Constants.docViewWidth)
-        }
+        }.zIndex(-1)
     }
 }
 

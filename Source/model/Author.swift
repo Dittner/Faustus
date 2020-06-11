@@ -122,7 +122,7 @@ class Author: Conspectus, BooksOwner, ObservableObject {
         super.deserializeLinkedFiles()
         if let dict = fileData {
             if let booksIDs = dict["books"] as? [UID] {
-                booksColl.books = booksIDs.map { bibliography.read($0) as? Book }.compactMap { $0 }
+                booksColl.books = booksIDs.map { bibliography.read($0) as? Book }.compactMap { $0 }.sorted { $0 > $1 }
             }
         }
 

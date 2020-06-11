@@ -48,7 +48,7 @@ class BookColl: ObservableObject {
             }
         }
 
-        books = coll
+        books = coll.sorted { $0 > $1 }
         _ = owner.store(forced: true)
     }
 
@@ -83,6 +83,7 @@ class BookColl: ObservableObject {
                 b.content.author = owner
                 _ = b.store()
             }
+            books = books.sorted { $0 > $1 }
             _ = owner.store(forced: true)
         }
     }
@@ -91,7 +92,7 @@ class BookColl: ObservableObject {
 class QuoteColl: ObservableObject {
     var owner: Book!
     @Published var quotes: [Quote] = []
-    @Published var selectedQuoteIndex: String = "1" //begin with 1
+    @Published var selectedQuoteIndex: Int = 0
 
     func removeQuote(_ quoteToRemove: Quote) {
         for (ind, quote) in quotes.enumerated() {
@@ -113,8 +114,12 @@ class QuoteColl: ObservableObject {
         }
     }
 
+    private var lastCreatedQuote: Quote?
     func createQuote() {
-        quotes.insert(Quote(owner: owner), at: 0)
+        let q = Quote(owner: owner)
+        q.title = lastCreatedQuote?.title ?? (quotes.count > 0 ? quotes[quotes.count - 1].title : "")
+        lastCreatedQuote = q
+        quotes.insert(q, at: 0)
     }
 }
 

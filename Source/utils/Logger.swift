@@ -70,7 +70,7 @@ class Logger {
         #endif
 
         let home = FileManager.default.homeDirectoryForCurrentUser
-        print("hom = \(home.description)")
+        print("home dir = \(home.description)")
 
         info(tag: .APP, msg: aboutLog)
         removeExpiredLogs()

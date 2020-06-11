@@ -34,6 +34,8 @@ enum FocusID: Int {
     case authorChooserSearch
     case linkChooserSearch
     case quoteSearch
+    case quotePageStart
+    case quotePageEnd
 }
 
 class TextFocus: ObservableObject {
@@ -157,6 +159,7 @@ struct TextArea: NSViewRepresentable {
     let isEditable: Bool
     var highlightedText: String = ""
     var firstLineHeadIndent: CGFloat
+    public let onSelectionChange: ((_ range: NSRange) -> Void)?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -235,6 +238,11 @@ struct TextArea: NSViewRepresentable {
             guard let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
         }
+        
+        func textView(_ textView: NSTextView, willChangeSelectionFromCharacterRange oldSelectedCharRange: NSRange, toCharacterRange newSelectedCharRange: NSRange) -> NSRange {
+            parent.onSelectionChange?(newSelectedCharRange)
+            return newSelectedCharRange
+        }
     }
 
     class CustomNSTextView: NSTextView {
@@ -255,9 +263,10 @@ struct MultilineInput: View {
     public let isEditing: Bool
     public var highlightedText: String = ""
     public var firstLineHeadIndent: CGFloat = 0
+    public var onSelectionChange: ((_ range: NSRange) -> Void)? = nil
 
     var body: some View {
-        TextArea(text: $text, textColor: textColor, font: font, isEditable: isEditing && !modalViewObservable.isShown, highlightedText: highlightedText, firstLineHeadIndent: firstLineHeadIndent)
+        TextArea(text: $text, textColor: textColor, font: font, isEditable: isEditing && !modalViewObservable.isShown, highlightedText: highlightedText, firstLineHeadIndent: firstLineHeadIndent, onSelectionChange: onSelectionChange)
             .layoutPriority(-1)
             .saturation(0)
             .colorScheme(.light)

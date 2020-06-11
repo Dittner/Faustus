@@ -39,7 +39,7 @@ struct InfoPanel: View {
                             self.controller.removeParentTag()
                         }
                     })
-                    
+
                     Spacer()
                 }
 
@@ -114,6 +114,11 @@ struct BookInfoPanel: View {
 
                 MultilineInput(text: $content.info, width: BookInfoPanel.rightColumnWidth, textColor: NSColor.F.black, font: font, isEditing: state.isEditing)
                     .background(state.isEditing ? Color.F.whiteBG : Color.F.white)
+
+                if state.isEditing {
+                    Button("", action: { self.controller.formatBookInfo() })
+                        .buttonStyle(IconButtonStyle(iconName: "format", iconColor: Color.F.black, bgColor: Color.F.white, width: 30, height: 30))
+                }
             }
         }
     }

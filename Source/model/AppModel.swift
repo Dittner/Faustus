@@ -218,7 +218,9 @@ class AsyncIterator<Element> {
     }
 
     func iterate() -> PassthroughSubject<Element, Never> {
-        iterateNext()
+        DispatchQueue.main.async {
+            self.iterateNext()
+        }
         return notifier
     }
 

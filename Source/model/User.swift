@@ -108,7 +108,7 @@ class User: Conspectus, BooksOwner, ObservableObject {
         super.deserializeLinkedFiles()
         if let dict = fileData {
             if let booksID = dict["books"] as? [UID] {
-                booksColl.books = booksID.map { bibliography.read($0) as? Book }.compactMap { $0 }
+                booksColl.books = booksID.map { bibliography.read($0) as? Book }.compactMap { $0 }.sorted { $0 > $1 }
             }
         }
 

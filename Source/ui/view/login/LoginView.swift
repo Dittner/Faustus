@@ -77,7 +77,7 @@ struct LoginView: View {
             ActivityIndicator(isAnimating: $vm.filesLoading)
                 .frame(width: 50, height: 50)
 
-            Spacer()
+            Spacer().frame(height: 200)
         }
     }
 }

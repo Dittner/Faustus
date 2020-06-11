@@ -461,7 +461,7 @@ struct QuoteToolsView: View {
     var body: some View {
         HStack(alignment: .bottom, spacing: 1) {
             if controller.quotes.count > 0 {
-                TextInput(title: "", text: $controller.book.quoteColl.selectedQuoteIndex, textColor: NSColor.F.black, font: NSFont(name: .pragmatica, size: 21), alignment: .right, isFocused: false, isSecure: false, format: "[0-9]{0,5}", isEditable: true, onEnterAction: nil)
+                TextInput(title: "", text: $controller.selectedQuoteIndex, textColor: NSColor.F.black, font: NSFont(name: .pragmatica, size: 21), alignment: .right, isFocused: false, isSecure: false, format: "[0-9]{0,5}", isEditable: true, onEnterAction: nil)
                     .frame(width: 175)
                     .saturation(0)
                     .colorScheme(.light)
@@ -518,6 +518,8 @@ struct QuoteListView: View {
     @ObservedObject var controller: QuoteListController
     @ObservedObject var chooser: ConspectusChooser
     @ObservedObject var state: ConspectusState
+    let nextBtnStyle = IconButtonStyle(iconName: "next", iconColor: Color.F.whiteBG, bgColor: Color.F.black, width: 60, height: 30)
+    let prevBtnStyle = IconButtonStyle(iconName: "next", iconColor: Color.F.black, bgColor: Color.F.whiteBG, width: 60, height: 30)
 
     init(_ controller: QuoteListController, chooser: ConspectusChooser) {
         self.controller = controller
@@ -527,31 +529,18 @@ struct QuoteListView: View {
     }
 
     var body: some View {
-        VStack(alignment: .trailing, spacing: 0) {
+        VStack(alignment: .trailing, spacing: 2) {
             HStack(alignment: .center, spacing: 0) {
-                SelectableText(text: "ZURÜCK", color: Color.F.book)
-                    .font(Font.custom(.mono, size: 16))
-                    .padding(.leading, 0)
-                    .padding(.trailing, Constants.quoteTextTrailing)
-                    .frame(height: 30)
-                    .background(Color.F.clear)
-                    .opacity(controller.isSelectedQuoteFirst() ? 0 : 1)
-                    .onTapGesture {
-                        self.controller.showPrevQuote()
-                    }
+                Button("", action: { self.controller.showPrevQuote() })
+                    .buttonStyle(prevBtnStyle)
+                    .rotationEffect(Angle(degrees: -180))
+                    .opacity(controller.canSelectPrev() ? 1 : 0)
 
                 Spacer()
 
-                SelectableText(text: "WEITER", color: Color.F.book)
-                    .font(Font.custom(.mono, size: 16))
-                    .padding(.trailing, 0)
-                    .padding(.trailing, Constants.quoteTextTrailing)
-                    .frame(height: 30)
-                    .background(Color.F.clear)
-                    .opacity(controller.isSelectedQuoteLast() ? 0 : 1)
-                    .onTapGesture {
-                        self.controller.showNextQuote()
-                    }
+                Button("", action: { self.controller.showNextQuote() })
+                    .buttonStyle(nextBtnStyle)
+                    .opacity(controller.canSelectNext() ? 1 : 0)
             }
 
             if controller.selectedQuote != nil {
@@ -564,37 +553,25 @@ struct QuoteListView: View {
             }
 
             Spacer()
-            
+
             HStack(alignment: .center, spacing: 0) {
-                SelectableText(text: "ZURÜCK", color: Color.F.book)
-                    .font(Font.custom(.mono, size: 16))
-                    .padding(.leading, 0)
-                    .padding(.trailing, Constants.quoteTextTrailing)
-                    .frame(height: 30)
-                    .background(Color.F.clear)
-                    .opacity(controller.isSelectedQuoteFirst() ? 0 : 1)
-                    .onTapGesture {
-                        self.controller.showPrevQuote()
-                    }
+                Button("", action: { self.controller.showPrevQuote() })
+                    .buttonStyle(prevBtnStyle)
+                    .rotationEffect(Angle(degrees: -180))
+                    .opacity(controller.canSelectPrev() ? 1 : 0)
 
                 Spacer()
 
-                SelectableText(text: "WEITER", color: Color.F.book)
-                    .font(Font.custom(.mono, size: 16))
-                    .padding(.trailing, 0)
-                    .padding(.trailing, Constants.quoteTextTrailing)
-                    .frame(height: 30)
-                    .background(Color.F.clear)
-                    .opacity(controller.isSelectedQuoteLast() ? 0 : 1)
-                    .onTapGesture {
-                        self.controller.showNextQuote()
-                    }
-            }
+                Button("", action: { self.controller.showNextQuote() })
+                    .buttonStyle(nextBtnStyle)
+                    .opacity(controller.canSelectNext() ? 1 : 0)
+            }.padding(.bottom, 5)
         }
     }
 }
 
 struct QuoteCell: View {
+    @EnvironmentObject var textFocus: TextFocus
     @ObservedObject var quote: Quote
     @ObservedObject var quoteLinkColl: LinkColl
     @ObservedObject var chooser: ConspectusChooser
@@ -642,7 +619,7 @@ struct QuoteCell: View {
                         .foregroundColor(Color.F.black05)
                         .frame(height: 30)
 
-                    EditableText("", text: $quote.startPage, textColor: NSColor.F.black05, font: QuoteCell.nsTitleFont, alignment: .right, isEditing: isEditing, format: "[1-9][0-9]{0,4}")
+                    EditableText("", text: $quote.startPage, textColor: NSColor.F.black05, font: QuoteCell.nsTitleFont, alignment: .right, isEditing: isEditing, isFocused: self.textFocus.id == .quotePageStart, format: "[1-9][0-9]{0,4}", onEnterAction: { self.textFocus.id = .quotePageEnd })
                         .saturation(0)
                         .frame(width: pageInputWidthFrom(text: quote.startPage, isEditing: isEditing), height: 30)
 
@@ -652,19 +629,26 @@ struct QuoteCell: View {
                         .opacity($quote.endPage.wrappedValue.count == 0 && !isEditing ? 0 : 1)
                         .frame(height: 30)
 
-                    EditableText("", text: $quote.endPage, textColor: NSColor.F.black05, font: QuoteCell.nsTitleFont, alignment: .left, isEditing: isEditing, format: "[1-9][0-9]{0,4}")
+                    EditableText("", text: $quote.endPage, textColor: NSColor.F.black05, font: QuoteCell.nsTitleFont, alignment: .left, isEditing: isEditing, isFocused: self.textFocus.id == .quotePageEnd, format: "[1-9][0-9]{0,4}", onEnterAction: { self.textFocus.id = .quotePageStart })
                         .saturation(0)
                         .frame(width: 70, height: 30)
 
                     Spacer()
 
-                    EditableText("Titel", text: $quote.title, textColor: NSColor.F.black05, font: QuoteCell.nsTitleFont, alignment: .right, isEditing: isEditing)
+                    EditableText("Untertitel", text: $quote.title, textColor: NSColor.F.black05, font: QuoteCell.nsTitleFont, alignment: .right, isEditing: isEditing)
                         .saturation(0)
                         .frame(width: 500, height: 30).offset(x: 1, y: 1)
                 }
-            }.padding(.bottom, 30)
+            }.padding(.bottom, 20)
 
-            MultilineInput(text: $quote.text, width: Constants.docViewWidth - Constants.docViewLeading - Constants.quoteTextTrailing, textColor: NSColor.F.black, font: QuoteCell.nsTextFont, isEditing: self.isEditing, highlightedText: quoteListController.searchText, firstLineHeadIndent: 50)
+            MultilineInput(text: $quote.text,
+                           width: Constants.docViewWidth - Constants.docViewLeading - Constants.quoteTextTrailing,
+                           textColor: NSColor.F.black,
+                           font: QuoteCell.nsTextFont,
+                           isEditing: self.isEditing,
+                           highlightedText: quoteListController.searchText,
+                           firstLineHeadIndent: 50,
+                           onSelectionChange: { range in self.quoteListController.quoteTextSelection = range })
 
             // user comments
             if quoteLinkColl.links.count > 0 {
@@ -710,8 +694,9 @@ struct EditableText: View {
     private let textColor: NSColor
     private let font: NSFont
     private let alignment: NSTextAlignment
+    private let onEnterAction: (() -> Void)?
 
-    init(_ title: String, text: Binding<String>, textColor: NSColor, font: NSFont, alignment: NSTextAlignment, isEditing: Bool, isFocused: Bool = false, format: String? = nil) {
+    init(_ title: String, text: Binding<String>, textColor: NSColor, font: NSFont, alignment: NSTextAlignment, isEditing: Bool, isFocused: Bool = false, format: String? = nil, onEnterAction: (() -> Void)? = nil) {
         self.title = title
         _text = text
         self.isEditing = isEditing
@@ -720,11 +705,12 @@ struct EditableText: View {
         self.alignment = alignment
         self.format = format
         self.isFocused = isFocused
+        self.onEnterAction = onEnterAction
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            TextInput(title: title, text: $text, textColor: textColor, font: font, alignment: alignment, isFocused: isFocused, isSecure: false, format: format, isEditable: isEditing, onEnterAction: nil)
+            TextInput(title: title, text: $text, textColor: textColor, font: font, alignment: alignment, isFocused: isFocused, isSecure: false, format: format, isEditable: isEditing, onEnterAction: onEnterAction)
                 .saturation(0)
                 .padding(.horizontal, 0)
                 .allowsHitTesting(isEditing)

@@ -11,6 +11,7 @@ import SwiftUI
 
 struct SearchView: View {
     @EnvironmentObject var vm: SearchViewModel
+    let nextBtnStyle = IconButtonStyle(iconName: "next", iconColor: Color.F.whiteBG, bgColor: Color.F.black, width: 30, height: 30)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -25,6 +26,11 @@ struct SearchView: View {
                     .padding(.horizontal, -5)
                     .saturation(0)
                     .colorScheme(.light)
+
+                Button("", action: { self.vm.startToFilterFlag = true })
+                    .offset(x: -2, y: 4)
+                    .buttonStyle(nextBtnStyle)
+                    .opacity(self.vm.startToFilterFlag == false ? 1 : 0)
             }
             .offset(x: 0, y: 11)
             .frame(height: 50)
@@ -45,11 +51,34 @@ struct SearchView: View {
             if vm.result.count > 0 {
                 ScrollView(.vertical, showsIndicators: true) {
                     VStack(alignment: .leading, spacing: 1) {
-                        ForEach(vm.result, id: \.id) { conspectus in
+                        ForEach(vm.pageContent, id: \.id) { conspectus in
                             ConspectusRow(action: { _ in self.vm.select(conspectus: conspectus) }, conspectus: conspectus)
                         }
                     }
                 }
+            }
+
+            if vm.totalPages > 1 {
+                HStack(alignment: .center, spacing: 0) {
+                    Spacer()
+
+                    Button("", action: { self.vm.prevPage() })
+                        .buttonStyle(nextBtnStyle)
+                        .rotationEffect(Angle(degrees: -180))
+
+                    Text("\(vm.curPage+1)/\(vm.totalPages)")
+                        .font(Font.custom(.mono, size: 18))
+                        .foregroundColor(Color.F.gray)
+                        .frame(width: 100, height: 30)
+
+                    Button("", action: { self.vm.nextPage() })
+                        .buttonStyle(nextBtnStyle)
+
+                    Spacer()
+                }
+                .padding(.trailing, 15)
+                .frame(height: 50)
+                .background(Color.F.black)
             }
         }
 

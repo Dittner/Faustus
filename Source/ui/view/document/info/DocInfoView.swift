@@ -117,7 +117,12 @@ struct BookInfoPanel: View {
 
                 if state.isEditing {
                     Button("", action: { self.controller.formatBookInfo() })
-                        .buttonStyle(IconButtonStyle(iconName: "format", iconColor: Color.F.black, bgColor: Color.F.white, width: 30, height: 30))
+                    .buttonStyle(IconButtonStyle(iconName: "format", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
+                    .contextMenu {
+                        Button("Remove space duplicates", action: { self.controller.removeSpaceDuplicates() })
+                        Button("Remove word wrapping", action: { self.controller.removeWordWrapping() })
+                        Button("Replace hyphen with dash", action: { self.controller.replaceHyphenWithDash() })
+                    }
                 }
             }
         }

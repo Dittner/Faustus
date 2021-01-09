@@ -33,7 +33,7 @@ enum SearchFilter {
             return nil
         }
     }
-    
+
     func toIcon() -> String {
         switch self {
         case .authors:
@@ -55,23 +55,45 @@ enum SearchFilter {
 final class SearchViewModel: ViewModel {
     @Published var selectedFilter: SearchFilter = .authors
     @Published var filterText: String = ""
+    @Published var startToFilterFlag: Bool = true
     @Published var result: [Conspectus] = []
+    @Published var pageContent: [Conspectus] = []
+    @Published var curPage: Int = 0
+    @Published var totalPages: Int = 0
+    let pageSize: Int = 10
 
     private var disposeBag: Set<AnyCancellable> = []
 
     init() {
         logInfo(tag: .APP, msg: "SearchViewModel init")
 
-        Publishers.CombineLatest3($selectedFilter, $filterText.debounce(for: 0.5, scheduler: RunLoop.main), model.bibliography.objectWillChange)
-            .map { filter, filterText, conspectusList -> (SearchFilter, String, [Conspectus]) in
+        $filterText
+            .dropFirst()
+            .sink { _ in
+                self.startToFilterFlag = false
+            }.store(in: &disposeBag)
+
+        $result
+            .dropFirst()
+            .sink { list in
+                self.curPage = 0
+                self.totalPages = Int((Double(list.count) / Double(self.pageSize)).rounded())
+            }.store(in: &disposeBag)
+
+        Publishers.CombineLatest3($selectedFilter, $startToFilterFlag.filter { $0 != false }, model.bibliography.objectWillChange)
+            .map { filter, _, conspectusList -> (SearchFilter, String, [Conspectus]) in
                 if filter == .removed {
-                    return (filter, filterText, conspectusList.filter { $0.state.isRemoved })
+                    return (filter, self.filterText, conspectusList.filter { $0.state.isRemoved })
                 } else {
-                    return (filter, filterText, conspectusList.filter { !$0.state.isRemoved && $0.genus == filter.toGenus()! })
+                    return (filter, self.filterText, conspectusList.filter { !$0.state.isRemoved && $0.genus == filter.toGenus()! })
                 }
             }
             .map { filter, filterText, conspectusList -> (SearchFilter, [Conspectus]) in
-                filterText.isEmpty ? (filter, conspectusList) : (filter, conspectusList.filter { $0.getDescription().hasSubstring(filterText) })
+                if filter == .quotes {
+                    return filterText.count > 2 ? (filter, conspectusList.filter { $0.getDescription().hasSubstring(filterText) }) : (filter, [])
+                } else {
+                    return filterText.isEmpty ? (filter, conspectusList) : (filter, conspectusList.filter { $0.getDescription().hasSubstring(filterText) })
+                }
             }
             .map { filter, conspectusList in
                 if filter == .authors {
@@ -98,17 +120,43 @@ final class SearchViewModel: ViewModel {
                     }
                 }
 
+                logInfo(tag: .APP, msg: "Searching!!!")
                 return conspectusList
             }
             .assign(to: \.result, on: self)
             .store(in: &disposeBag)
+
+        Publishers.CombineLatest($result, $curPage.removeDuplicates())
+            .map { result, curPage in
+                if result.count <= self.pageSize {
+                    return result
+                } else {
+                    let endPos = min((curPage + 1) * self.pageSize, result.count)
+                    return Array(result[(curPage * self.pageSize) ..< endPos])
+                }
+            }
+            .assign(to: \.pageContent, on: self)
+            .store(in: &disposeBag)
     }
 
     func select(conspectus: Conspectus) {
-        if let q = conspectus as? Quote {
+        if let q = conspectus as? Quote {            
+            q.book.quoteColl.selectQuote(q)
             model.select(q.book)
         } else {
             model.select(conspectus)
+        }
+    }
+
+    func nextPage() {
+        if curPage < totalPages - 1 {
+            curPage += 1
+        }
+    }
+
+    func prevPage() {
+        if curPage > 0 {
+            curPage -= 1
         }
     }
 }

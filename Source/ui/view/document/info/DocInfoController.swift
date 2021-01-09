@@ -95,6 +95,25 @@ class DocInfoController: ObservableObject {
 
     func formatBookInfo() {
         guard let bookContent = (owner as? Book)?.content else { return }
-        bookContent.info = TextFormatter.format(bookContent.info, range: nil)
+        var res = ""
+        res = TextFormatter.removeSpaceDuplicates(bookContent.info, selection: nil)
+        res = TextFormatter.replaceHyphenWithDash(res, selection: nil)
+        res = TextFormatter.removeWordWrapping(res, selection: nil)
+        bookContent.info = res
+    }
+    
+    func removeSpaceDuplicates() {
+        guard let bookContent = (owner as? Book)?.content else { return }
+        bookContent.info = TextFormatter.removeSpaceDuplicates(bookContent.info, selection: nil)
+    }
+    
+    func replaceHyphenWithDash() {
+        guard let bookContent = (owner as? Book)?.content else { return }
+        bookContent.info = TextFormatter.replaceHyphenWithDash(bookContent.info, selection: nil)
+    }
+    
+    func removeWordWrapping() {
+        guard let bookContent = (owner as? Book)?.content else { return }
+        bookContent.info = TextFormatter.removeWordWrapping(bookContent.info, selection: nil)
     }
 }

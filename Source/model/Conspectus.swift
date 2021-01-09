@@ -121,7 +121,7 @@ class LinkColl: ObservableObject {
                     }
                 }
 
-                _ = owner.store(forced: true)
+                owner.store(forced: true)
 
                 break
             }
@@ -136,7 +136,7 @@ class LinkColl: ObservableObject {
             for link in deletingLinks {
                 link.linkColl.removeLink(from: owner)
             }
-            _ = owner.store(forced: true)
+            owner.store(forced: true)
         }
     }
 
@@ -144,7 +144,7 @@ class LinkColl: ObservableObject {
         if links.first(where: { $0.id == c.id }) == nil {
             links.append(c)
             c.linkColl.addLink(to: owner)
-            _ = owner.store(forced: true)
+            owner.store(forced: true)
         }
     }
 }

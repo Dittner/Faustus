@@ -9,11 +9,36 @@
 import Foundation
 
 class TextFormatter {
-    static func format(_ text: String, range: Range<String.Index>?) -> String {
+    static func removeSpaceDuplicates(_ text: String, selection: NSRange?) -> String {
         var res = text
-        res = res.replacingOccurrences(of: "-\n", with: "  ", options: .caseInsensitive, range: range)
+        let range = selection != nil ? Range(selection!, in: res) : nil
+
+        res = res.replacingOccurrences(of: " {2,}", with: " ", options: .regularExpression, range: range)
+        return res
+    }
+    
+    static func replaceHyphenWithDash(_ text: String, selection: NSRange?) -> String {
+        var res = text
+        let range = selection != nil ? Range(selection!, in: res) : nil
+
+        res = res.replacingOccurrences(of: " -", with: " —", options: .regularExpression, range: range)
+        res = res.replacingOccurrences(of: "\n-", with: "\n—", options: .regularExpression, range: range)
+        res = res.replacingOccurrences(of: " –", with: " —", options: .regularExpression, range: range)
+        res = res.replacingOccurrences(of: "\n–", with: "\n—", options: .regularExpression, range: range)
+        return res
+    }
+    
+    static func removeWordWrapping(_ text: String, selection: NSRange?) -> String {
+        var res = text
+        var range = selection != nil ? Range(selection!, in: res) : nil
+
+        res = res.replacingOccurrences(of: "-\n", with: "", options: .caseInsensitive, range: range)
+        if res.count != text.count, let selection = selection {
+            let r = NSRange(location: selection.location, length: selection.length - (text.count - res.count))
+            range = Range(r, in: res)
+        }
+
         res = res.replacingOccurrences(of: "\n", with: " ", options: .caseInsensitive, range: range)
-        res = res.replacingOccurrences(of: " {2,}", with: " ", options: .regularExpression, range: nil)
         return res
     }
 }

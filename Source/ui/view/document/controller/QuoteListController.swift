@@ -116,7 +116,31 @@ class QuoteListController: ViewModel {
     }
 
     func formatQuoteText(_ q: Quote) {
-        let range = Range(quoteTextSelection, in: q.text)
-        q.text = TextFormatter.format(q.text, range: range)
+        var res = ""
+        res = TextFormatter.removeSpaceDuplicates(q.text, selection: quoteTextSelection)
+        res = TextFormatter.replaceHyphenWithDash(res, selection: quoteTextSelection)
+        res = TextFormatter.removeWordWrapping(res, selection: quoteTextSelection)
+        q.text = res
+    }
+    
+    func removeSpaceDuplicates(_ q: Quote) {
+        q.text = TextFormatter.removeSpaceDuplicates(q.text, selection: quoteTextSelection)
+    }
+    
+    func replaceHyphenWithDash(_ q: Quote) {
+        q.text = TextFormatter.replaceHyphenWithDash(q.text, selection: quoteTextSelection)
+    }
+    
+    func removeWordWrapping(_ q: Quote) {
+        q.text = TextFormatter.removeWordWrapping(q.text, selection: quoteTextSelection)
+    }
+    
+    func sortQuotes() {
+        book.quoteColl.quotes = book.quoteColl.quotes.sorted { $0 < $1 }
+        quotes = book.quoteColl.quotes
+        book.quotesFilter = ""
+        book.quoteColl.selectedQuoteIndex = 0
+        selectedQuoteIndex = "1"
+        scrollerController.scrollPosition = 0
     }
 }

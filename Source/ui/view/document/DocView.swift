@@ -502,6 +502,14 @@ struct QuoteToolsView: View {
             if state.isEditing {
                 Button("", action: { self.controller.formatQuoteText(self.controller.selectedQuote!) })
                     .buttonStyle(IconButtonStyle(iconName: "format", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
+                    .contextMenu {
+                        Button("Remove space duplicates", action: { self.controller.removeSpaceDuplicates(self.controller.selectedQuote!) })
+                        Button("Remove word wrapping", action: { self.controller.removeWordWrapping(self.controller.selectedQuote!) })
+                        Button("Replace hyphen with dash", action: { self.controller.replaceHyphenWithDash(self.controller.selectedQuote!) })
+                    }
+
+                Button("", action: { self.controller.sortQuotes() })
+                    .buttonStyle(IconButtonStyle(iconName: "sort", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
 
                 Button("", action: { self.chooser.chooseLink(self.controller.selectedQuote!) })
                     .buttonStyle(IconButtonStyle(iconName: "link", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
@@ -571,7 +579,6 @@ struct QuoteListView: View {
 }
 
 struct QuoteCell: View {
-    @EnvironmentObject var textFocus: TextFocus
     @ObservedObject var quote: Quote
     @ObservedObject var quoteLinkColl: LinkColl
     @ObservedObject var chooser: ConspectusChooser
@@ -619,7 +626,7 @@ struct QuoteCell: View {
                         .foregroundColor(Color.F.black05)
                         .frame(height: 30)
 
-                    EditableText("", text: $quote.startPage, textColor: NSColor.F.black05, font: QuoteCell.nsTitleFont, alignment: .right, isEditing: isEditing, isFocused: self.textFocus.id == .quotePageStart, format: "[1-9][0-9]{0,4}", onEnterAction: { self.textFocus.id = .quotePageEnd })
+                    EditableText("", text: $quote.startPage, textColor: NSColor.F.black05, font: QuoteCell.nsTitleFont, alignment: .right, isEditing: isEditing, isFocused: false, format: "[1-9][0-9]{0,4}")
                         .saturation(0)
                         .frame(width: pageInputWidthFrom(text: quote.startPage, isEditing: isEditing), height: 30)
 
@@ -629,7 +636,7 @@ struct QuoteCell: View {
                         .opacity($quote.endPage.wrappedValue.count == 0 && !isEditing ? 0 : 1)
                         .frame(height: 30)
 
-                    EditableText("", text: $quote.endPage, textColor: NSColor.F.black05, font: QuoteCell.nsTitleFont, alignment: .left, isEditing: isEditing, isFocused: self.textFocus.id == .quotePageEnd, format: "[1-9][0-9]{0,4}", onEnterAction: { self.textFocus.id = .quotePageStart })
+                    EditableText("", text: $quote.endPage, textColor: NSColor.F.black05, font: QuoteCell.nsTitleFont, alignment: .left, isEditing: isEditing, isFocused: false, format: "[1-9][0-9]{0,4}")
                         .saturation(0)
                         .frame(width: 70, height: 30)
 

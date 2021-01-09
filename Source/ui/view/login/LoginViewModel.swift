@@ -9,6 +9,7 @@
 import Combine
 import CryptoKit
 import SwiftUI
+import AppKit
 
 final class LoginViewModel: ViewModel {
     public var user: User!
@@ -27,6 +28,7 @@ final class LoginViewModel: ViewModel {
         let status = user.validate()
         if status == .ok {
             errorMsg = ""
+            
             let appDelegate = NSApplication.shared.delegate as! AppDelegate
             appDelegate.window?.makeFirstResponder(nil)
             print("LogedIn")

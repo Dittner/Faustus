@@ -69,7 +69,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     @IBAction func menuSave(_ sender: Any) {
-        _ = AppModel.shared.selectedConspectus.store()
+        AppModel.shared.selectedConspectus.store()
     }
 
     @IBAction func toggleEditState(_ sender: Any) {

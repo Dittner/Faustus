@@ -34,8 +34,6 @@ enum FocusID: Int {
     case authorChooserSearch
     case linkChooserSearch
     case quoteSearch
-    case quotePageStart
-    case quotePageEnd
 }
 
 class TextFocus: ObservableObject {

@@ -27,7 +27,7 @@ struct RootView: View {
                     .frame(minWidth: 500, idealWidth: 500, maxWidth: 500, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)
 
             } else {
-                BlurAppBG()
+                //BlurAppBG()
                 HStack(alignment: .top, spacing: 0) {
                     SearchView()
                         .frame(minWidth: 200, idealWidth: panelsWidth, maxWidth: .infinity, minHeight: 0, idealHeight: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -38,6 +38,7 @@ struct RootView: View {
                     HistoryView()
                         .frame(minWidth: 200, idealWidth: panelsWidth, maxWidth: .infinity, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .center)
                 }.frame(minWidth: 1550, idealWidth: 1550, maxWidth: .infinity, minHeight: 700, idealHeight: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .background(Color.F.lightDark)
 
                 if vm.keyLinesShown {
                     GeometryReader { geo in

@@ -37,29 +37,29 @@ class BookColl: ObservableObject {
         for b in coll {
             if !books.contains(b) {
                 b.content.author = owner
-                _ = b.store()
+                b.store()
             }
         }
 
         for b in books {
             if !coll.contains(b) {
                 b.content.author = nil
-                _ = b.store()
+                b.store()
             }
         }
 
         books = coll.sorted { $0 > $1 }
-        _ = owner.store(forced: true)
+        owner.store(forced: true)
     }
 
     func removeBook(_ bookToRemove: Book) {
         bookToRemove.content.author = nil
-        _ = bookToRemove.store()
+        bookToRemove.store()
 
         for (ind, book) in books.enumerated() {
             if book == bookToRemove {
-                _ = books.remove(at: ind)
-                _ = owner.store(forced: true)
+                books.remove(at: ind)
+                owner.store(forced: true)
                 break
             }
         }
@@ -69,10 +69,10 @@ class BookColl: ObservableObject {
         if books.count > 0 {
             for book in books {
                 book.content.author = nil
-                _ = book.store()
+                book.store()
             }
             books = []
-            _ = owner.store(forced: true)
+            owner.store(forced: true)
         }
     }
 
@@ -81,10 +81,10 @@ class BookColl: ObservableObject {
             books.append(b)
             if b.content.author != owner {
                 b.content.author = owner
-                _ = b.store()
+                b.store()
             }
             books = books.sorted { $0 > $1 }
-            _ = owner.store(forced: true)
+            owner.store(forced: true)
         }
     }
 }
@@ -99,6 +99,16 @@ class QuoteColl: ObservableObject {
             if quote == quoteToRemove {
                 let q = quotes.remove(at: ind)
                 q.linkColl.removeAllLinks()
+                owner.store(forced: true)
+                break
+            }
+        }
+    }
+    
+    func selectQuote(_ q: Quote) {
+        for (ind, quote) in quotes.enumerated() {
+            if quote == q {
+                selectedQuoteIndex = ind
                 break
             }
         }
@@ -110,7 +120,7 @@ class QuoteColl: ObservableObject {
                 q.remove()
             }
             quotes = []
-            _ = owner.store(forced: true)
+            owner.store(forced: true)
         }
     }
 

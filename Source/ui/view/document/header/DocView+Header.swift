@@ -46,7 +46,7 @@ struct UserHeader: View {
 
             HStack(alignment: .lastTextBaseline, spacing: 0) {
                 Button("") {
-                    _ = self.user.store()
+                    self.user.store()
                 }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: Color.F.black))
                     .opacity(state.hasChanges ? 1 : 0)
 
@@ -126,7 +126,7 @@ struct AuthorHeader: View {
             GeometryReader { geometry in
                 Group {
                     Button("") {
-                        _ = self.author.store()
+                        self.author.store()
                     }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: self.state.isRemoved ? Color.F.red : Color.F.black))
                         .opacity(self.state.hasChanges ? 1 : 0)
                         .offset(x: 15, y: 10)
@@ -220,7 +220,7 @@ struct BookHeader: View {
             GeometryReader { geometry in
                 Group {
                     Button("") {
-                        _ = self.book.store()
+                        self.book.store()
                     }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: self.state.isRemoved ? Color.F.red : Color.F.black))
                         .opacity(self.state.hasChanges ? 1 : 0)
                         .offset(x: 15, y: 10)
@@ -317,7 +317,7 @@ struct TagHeader: View {
 
             HStack(alignment: .lastTextBaseline, spacing: 0) {
                 Button("") {
-                    _ = self.tag.store()
+                    self.tag.store()
                 }.buttonStyle(IconButtonStyle(iconName: "store", iconColor: Color.F.white, bgColor: state.isRemoved ? Color.F.red : Color.F.black))
                     .opacity(state.hasChanges ? 1 : 0)
 

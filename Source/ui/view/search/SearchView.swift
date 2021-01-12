@@ -11,7 +11,7 @@ import SwiftUI
 
 struct SearchView: View {
     @EnvironmentObject var vm: SearchViewModel
-    let nextBtnStyle = IconButtonStyle(iconName: "next", iconColor: Color.F.whiteBG, bgColor: Color.F.black, width: 30, height: 30)
+    let nextBtnStyle = IconButtonStyle(iconName: "next", iconColor: Color.F.whiteBG, bgColor: Color.F.black, width: 50, height: 30)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {

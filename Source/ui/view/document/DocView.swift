@@ -110,6 +110,8 @@ struct DocView: View {
                         TagLinksView(self.vm.tagTreeController, chooser: self.vm.chooser)
                     } else if vm.selectedSection == .links {
                         LinkListView(self.vm.linkListViewController)
+                    } else if vm.selectedSection == .quotesIndex {
+                        QuotesIndexView(self.vm)
                     } else if vm.selectedSection == .quotes {
                         QuoteListView(self.vm.quoteListController, chooser: self.vm.chooser)
                     }
@@ -128,6 +130,7 @@ enum DocViewSection: String {
     case tags
     case books
     case links
+    case quotesIndex
     case quotes
 
     func toTitle() -> String {
@@ -140,6 +143,8 @@ enum DocViewSection: String {
             return "BÜCHER"
         case .links:
             return "LINKS"
+        case .quotesIndex:
+            return "VERZEICHNIS"
         case .quotes:
             return "ZITATE"
         }
@@ -461,15 +466,16 @@ struct QuoteToolsView: View {
     var body: some View {
         HStack(alignment: .bottom, spacing: 1) {
             if controller.quotes.count > 0 {
-                TextInput(title: "", text: $controller.selectedQuoteIndex, textColor: NSColor.F.black, font: NSFont(name: .pragmatica, size: 21), alignment: .right, isFocused: false, isSecure: false, format: "[0-9]{0,5}", isEditable: true, onEnterAction: nil)
-                    .frame(width: 175)
+                TextInput(title: "", text: $controller.selectedQuoteIndex, textColor: NSColor.F.black, font: NSFont(name: .mono, size: 21), alignment: .right, isFocused: false, isSecure: false, format: "[0-9]{0,5}", isEditable: true, onEnterAction: nil)
+                    .frame(width: 55)
                     .saturation(0)
                     .colorScheme(.light)
 
-                Text("/ \(controller.quotes.count)")
-                    .font(Font.custom(.pragmatica, size: 21))
+                Text("/\(controller.quotes.count)")
+                    .font(Font.custom(.mono, size: 21))
                     .foregroundColor(Color.F.black)
                     .frame(width: 70, alignment: .topLeading)
+                    .offset(x: -3, y: 0)
             }
 
             Spacer()
@@ -519,6 +525,91 @@ struct QuoteToolsView: View {
             }
         }
         .frame(height: 30)
+    }
+}
+
+struct QuotesIndexView: View {
+    @ObservedObject var controller: QuoteListController
+    private let vm:DocViewModel
+
+    init(_ vm: DocViewModel) {
+        self.vm = vm
+        self.controller = vm.quoteListController
+        logInfo(tag: .UI, msg: "QuotesIndexView init with \(controller.quotes.count)")
+    }
+
+    func selectQuote(q: Quote) {
+        q.book.quoteColl.selectQuote(q)
+        controller.update(q.book)
+        vm.selectedSection = .quotes
+    }
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 10) {
+            ForEach(controller.quotes, id: \.id) { quote in
+                QuotesIndexRow(action: { _ in self.selectQuote(q: quote) }, q: quote)
+            }
+        }
+    }
+}
+
+struct QuotesIndexRow: View {
+    let action: (Quote) -> Void
+    private let quote: Quote
+    private let pages: String
+    private let title: String
+    private let text: String
+
+    init(action: @escaping (Quote) -> Void, q: Quote) {
+        self.action = action
+        self.quote = q
+        pages = q.endPage.isEmpty ? q.startPage : "\(q.startPage)–\(q.endPage)"
+        title = q.title
+        text = q.text
+    }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 0) {
+            Text(self.pages)
+                .allowsHitTesting(false)
+                .lineLimit(1)
+                .layoutPriority(1)
+                .font(QuoteCell.titleFont)
+                .foregroundColor(Color.F.black05)
+                .frame(width: 100, alignment: .center)
+
+            VStack(alignment: .leading, spacing: 5) {
+                if self.title.isEmpty {
+                    SelectableText(text: self.text, color: Color.F.black)
+                        .font(QuoteCell.titleFont)
+                        .padding(.leading, 0)
+                        .padding(.top, 0)
+                        .frame(height: 50)
+                        .onTapGesture {
+                            self.action(self.quote)
+                        }
+                } else {
+                    SelectableText(text: self.title, color: Color.F.black)
+                        .font(QuoteCell.titleFont)
+                        .padding(.leading, 0)
+                        .padding(.top, 0)
+                        .onTapGesture {
+                            self.action(self.quote)
+                        }
+
+                    Text("\(self.text)")
+                        .allowsHitTesting(false)
+                        .font(Font.custom(.pragmaticaLight, size: 14))
+                        .foregroundColor(Color.F.black05)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.bottom, 8)
+                }
+
+                Separator(color: Color.F.black01, width: .infinity)
+            }
+
+        }
     }
 }
 

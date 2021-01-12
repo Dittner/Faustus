@@ -60,7 +60,7 @@ final class SearchViewModel: ViewModel {
     @Published var pageContent: [Conspectus] = []
     @Published var curPage: Int = 0
     @Published var totalPages: Int = 0
-    let pageSize: Int = 10
+    let pageSize: Int = 20
 
     private var disposeBag: Set<AnyCancellable> = []
 
@@ -140,7 +140,7 @@ final class SearchViewModel: ViewModel {
     }
 
     func select(conspectus: Conspectus) {
-        if let q = conspectus as? Quote {            
+        if let q = conspectus as? Quote {
             q.book.quoteColl.selectQuote(q)
             model.select(q.book)
         } else {

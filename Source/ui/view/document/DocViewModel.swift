@@ -83,7 +83,7 @@ final class DocViewModel: ViewModel {
         case .author:
             return [.info, .tags, .books, .links]
         case .book:
-            return [.info, .tags, .links, .quotes]
+            return [.info, .tags, .links, .quotesIndex, .quotes]
         case .quote:
             return []
         case .user:

@@ -32,13 +32,13 @@ class AppModel: ObservableObject {
 
     func loadUser() {
         let userFileUrls = DocumentsStorage.getURLs(dir: .user, filesWithExtension: "faustus")
-        if userFileUrls.count > 0, let userFromFile = User(from: userFileUrls[0]) {
+        if userFileUrls.count > 0, let userFromFile = User(from: userFileUrls[0], useEncryption: false) {
             logInfo(tag: .IO, msg: "the user profile has been read")
             user = userFromFile
 
         } else {
             logInfo(tag: .IO, msg: "the user has not yet a profile")
-            user = User(location: .user)
+            user = User(location: .user, useEncryption: false)
         }
         selectedConspectus = user
     }

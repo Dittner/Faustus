@@ -19,6 +19,7 @@ enum StorageDirectory: String {
 class DocumentsStorage {
     static var documentsURL: URL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     static var projectURL: URL = documentsURL.appendingPathComponent(StorageDirectory.project.rawValue)
+    static var cryptor: Cryptor!
 
     open class func getUrl(of dir: StorageDirectory) -> URL {
         return projectURL.appendingPathComponent(dir.rawValue)
@@ -39,9 +40,18 @@ class DocumentsStorage {
         }
     }
 
-    open class func readFile(from url: URL) -> [String: Any]? {
+    open class func readFile(from url: URL, useEncryption: Bool) -> [String: Any]? {
         do {
-            let data = try Data(contentsOf: url)
+            var data = try Data(contentsOf: url)
+            if useEncryption {
+                do {
+                    data = try cryptor!.decrypt(data)
+                } catch {
+                    logErr(tag: .IO, msg: "DocumentsStorage.encrypt data failed: \(error.localizedDescription)")
+                    return nil
+                }
+            }
+
             do {
                 if let dict = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                     if dict["id"] as? UID != nil {
@@ -65,6 +75,24 @@ class DocumentsStorage {
         } catch {
             logErr(tag: .IO, msg: "DocumentsStorage.readFile failed: \(error.localizedDescription)")
             return nil
+        }
+    }
+
+    open class func writeFile(to fileUrl: URL, dict: [String: Any], useEncryption: Bool) -> Bool {
+        do {
+            let data = try JSONSerialization.data(withJSONObject: dict, options: .fragmentsAllowed)
+            if useEncryption {
+                let encrypted = try cryptor!.encrypt(data)
+                try encrypted.write(to: fileUrl)
+            } else {
+                try data.write(to: fileUrl)
+            }
+
+            logInfo(tag: .IO, msg: "file with url = \(fileUrl) has been stored!")
+            return true
+        } catch {
+            logErr(tag: .IO, msg: "Unable to write file with url: \(fileUrl), error: \(error.localizedDescription)")
+            return false
         }
     }
 

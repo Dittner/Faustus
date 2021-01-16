@@ -191,6 +191,7 @@ class Conspectus: Comparable, Equatable {
     let state: ConspectusState
     let linkColl: LinkColl
     let bibliography: Bibliography
+    let useEncryption: Bool
 
     private var disposeBag: Set<AnyCancellable> = []
 
@@ -198,9 +199,10 @@ class Conspectus: Comparable, Equatable {
         return lhs.id == rhs.id
     }
 
-    init?(from url: URL) {
-        if let dict = DocumentsStorage.readFile(from: url) {
+    init?(from url: URL, useEncryption: Bool = true) {
+        if let dict = DocumentsStorage.readFile(from: url, useEncryption: useEncryption) {
             id = dict["id"] as! UID
+            self.useEncryption = useEncryption
             fileUrl = url
             fileData = dict
             state = ConspectusState()
@@ -218,8 +220,9 @@ class Conspectus: Comparable, Equatable {
         didInit()
     }
 
-    init(location: StorageDirectory) {
+    init(location: StorageDirectory, useEncryption: Bool = true) {
         id = UID()
+        self.useEncryption = useEncryption
         state = ConspectusState()
 
         state.isNew = true
@@ -241,13 +244,14 @@ class Conspectus: Comparable, Equatable {
         didInit()
     }
 
-    init(fileData: [String: Any]?) {
+    init(fileData: [String: Any]?, useEncryption: Bool = true) {
         if let dict = fileData, let uid = dict["id"] as? UID {
             id = uid
         } else {
             id = UID()
         }
 
+        self.useEncryption = useEncryption
         state = ConspectusState()
         state.isNew = false
         state.isEditing = false
@@ -360,15 +364,10 @@ class Conspectus: Comparable, Equatable {
 
     private func write(dict: [String: Any]) -> Bool {
         guard let fileUrl = fileUrl else { return false }
-        do {
-            let data = try JSONSerialization.data(withJSONObject: dict, options: .fragmentsAllowed)
-            try data.write(to: fileUrl)
-
+        if DocumentsStorage.writeFile(to: fileUrl, dict: dict, useEncryption: useEncryption) {
             fileData = dict
-            logInfo(tag: .IO, msg: "file with url = \(fileUrl) has been stored!")
             return true
-        } catch {
-            logErr(tag: .IO, msg: "Unable to write file with url: \(fileUrl), error: \(error.localizedDescription)")
+        } else {
             return false
         }
     }

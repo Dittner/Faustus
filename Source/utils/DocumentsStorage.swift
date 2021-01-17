@@ -9,6 +9,7 @@
 import Foundation
 enum StorageDirectory: String {
     case project = "Faustus"
+    case dropbox = "Dropbox"
     case logs
     case user
     case authors
@@ -17,21 +18,28 @@ enum StorageDirectory: String {
 }
 
 class DocumentsStorage {
-    static var documentsURL: URL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-    static var projectURL: URL = documentsURL.appendingPathComponent(StorageDirectory.project.rawValue)
-    static var cryptor: Cryptor!
+    static var shared:DocumentsStorage!
+    
+    let documentsURL: URL
+    var cryptor: Cryptor!
+    let projectURL: URL
+    
+    init(documentsURL:URL) {
+        self.documentsURL = documentsURL
+        self.projectURL = documentsURL.appendingPathComponent(StorageDirectory.project.rawValue)
+    }
 
-    open class func getUrl(of dir: StorageDirectory) -> URL {
+    func getUrl(of dir: StorageDirectory) -> URL {
         return projectURL.appendingPathComponent(dir.rawValue)
     }
 
-    open class func existDir(_ dir: StorageDirectory) -> Bool {
+    func existDir(_ dir: StorageDirectory) -> Bool {
         let dirPath = dir.rawValue
         var isDir: ObjCBool = true
         return FileManager.default.fileExists(atPath: projectURL.appendingPathComponent(dirPath).path, isDirectory: &isDir)
     }
 
-    open class func createDir(_ dir: StorageDirectory) {
+    func createDir(_ dir: StorageDirectory) {
         let dirPath = dir.rawValue
         do {
             try FileManager.default.createDirectory(atPath: projectURL.appendingPathComponent(dirPath).path, withIntermediateDirectories: true, attributes: nil)
@@ -40,7 +48,7 @@ class DocumentsStorage {
         }
     }
 
-    open class func readFile(from url: URL, useEncryption: Bool) -> [String: Any]? {
+    func readFile(from url: URL, useEncryption: Bool) -> [String: Any]? {
         do {
             var data = try Data(contentsOf: url)
             if useEncryption {
@@ -78,7 +86,7 @@ class DocumentsStorage {
         }
     }
 
-    open class func writeFile(to fileUrl: URL, dict: [String: Any], useEncryption: Bool) -> Bool {
+    func writeFile(to fileUrl: URL, dict: [String: Any], useEncryption: Bool) -> Bool {
         do {
             let data = try JSONSerialization.data(withJSONObject: dict, options: .fragmentsAllowed)
             if useEncryption {
@@ -96,7 +104,7 @@ class DocumentsStorage {
         }
     }
 
-    open class func getURLs(dir: StorageDirectory, filesWithExtension: String) -> [URL] {
+    func getURLs(dir: StorageDirectory, filesWithExtension: String) -> [URL] {
         let dirPath = dir.rawValue
         do {
             return try FileManager.default.contentsOfDirectory(at: projectURL.appendingPathComponent(dirPath), includingPropertiesForKeys: nil).filter { $0.pathExtension == filesWithExtension }
@@ -106,7 +114,7 @@ class DocumentsStorage {
         }
     }
 
-    open class func deleteFile(from url: URL) {
+    func deleteFile(from url: URL) {
         do {
             try FileManager.default.trashItem(at: url, resultingItemURL: nil)
             logInfo(tag: .IO, msg: "DocumentsStorage.deleteFile from url: \(url.description) has success")

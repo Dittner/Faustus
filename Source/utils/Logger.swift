@@ -50,12 +50,12 @@ class Logger {
     }
 
     init() {
-        if !DocumentsStorage.existDir(.logs) { DocumentsStorage.createDir(.logs) }
+        if !DocumentsStorage.shared.existDir(.logs) { DocumentsStorage.shared.createDir(.logs) }
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH-mm-ss"
 
         let logsFilePath = StorageDirectory.logs.rawValue + "/" + formatter.string(from: Date()) + ".clientLog"
-        logFileURL = DocumentsStorage.projectURL.appendingPathComponent(logsFilePath)
+        logFileURL = DocumentsStorage.shared.projectURL.appendingPathComponent(logsFilePath)
 
         var aboutLog: String = "Faustus Logs\n"
         let ver: String = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
@@ -107,7 +107,7 @@ class Logger {
 
     private func removeExpiredLogs() {
         do {
-            let urls = DocumentsStorage.getURLs(dir: .logs, filesWithExtension: "clientLog")
+            let urls = DocumentsStorage.shared.getURLs(dir: .logs, filesWithExtension: "clientLog")
             let curDateTime = Int(Date().timeIntervalSinceReferenceDate)
             let expireTimeInSecs = curDateTime - keepLogsInDays * 24 * 60 * 60
             var countOfExpiredFiles: Int = 0

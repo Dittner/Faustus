@@ -200,7 +200,7 @@ class Conspectus: Comparable, Equatable {
     }
 
     init?(from url: URL, useEncryption: Bool = true) {
-        if let dict = DocumentsStorage.readFile(from: url, useEncryption: useEncryption) {
+        if let dict = DocumentsStorage.shared.readFile(from: url, useEncryption: useEncryption) {
             id = dict["id"] as! UID
             self.useEncryption = useEncryption
             fileUrl = url
@@ -233,7 +233,7 @@ class Conspectus: Comparable, Equatable {
         state.changedDate = DateTimeUtils.localize(now)
         state.changedTime = now.timeIntervalSince1970
 
-        fileUrl = DocumentsStorage.projectURL.appendingPathComponent(location.rawValue + "/" + id.description + ".faustus")
+        fileUrl = DocumentsStorage.shared.projectURL.appendingPathComponent(location.rawValue + "/" + id.description + ".faustus")
 
         bibliography = AppModel.shared.bibliography
         linkColl = LinkColl()
@@ -364,7 +364,7 @@ class Conspectus: Comparable, Equatable {
 
     private func write(dict: [String: Any]) -> Bool {
         guard let fileUrl = fileUrl else { return false }
-        if DocumentsStorage.writeFile(to: fileUrl, dict: dict, useEncryption: useEncryption) {
+        if DocumentsStorage.shared.writeFile(to: fileUrl, dict: dict, useEncryption: useEncryption) {
             fileData = dict
             return true
         } else {
@@ -383,7 +383,7 @@ class Conspectus: Comparable, Equatable {
     func destroy() {
         state.isDestroyed = true
         if let fileUrl = fileUrl {
-            DocumentsStorage.deleteFile(from: fileUrl)
+            DocumentsStorage.shared.deleteFile(from: fileUrl)
         }
         linkColl.removeAllLinks()
         bibliography.remove(self)

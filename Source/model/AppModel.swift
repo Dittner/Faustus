@@ -22,16 +22,16 @@ class AppModel: ObservableObject {
     private var disposeBag: Set<AnyCancellable> = []
 
     init() {
-        if !DocumentsStorage.existDir(.user) { DocumentsStorage.createDir(.user) }
-        if !DocumentsStorage.existDir(.authors) { DocumentsStorage.createDir(.authors) }
-        if !DocumentsStorage.existDir(.books) { DocumentsStorage.createDir(.books) }
-        if !DocumentsStorage.existDir(.tags) { DocumentsStorage.createDir(.tags) }
+        if !DocumentsStorage.shared.existDir(.user) { DocumentsStorage.shared.createDir(.user) }
+        if !DocumentsStorage.shared.existDir(.authors) { DocumentsStorage.shared.createDir(.authors) }
+        if !DocumentsStorage.shared.existDir(.books) { DocumentsStorage.shared.createDir(.books) }
+        if !DocumentsStorage.shared.existDir(.tags) { DocumentsStorage.shared.createDir(.tags) }
 
         bibliography = Bibliography()
     }
 
     func loadUser() {
-        let userFileUrls = DocumentsStorage.getURLs(dir: .user, filesWithExtension: "faustus")
+        let userFileUrls = DocumentsStorage.shared.getURLs(dir: .user, filesWithExtension: "faustus")
         if userFileUrls.count > 0, let userFromFile = User(from: userFileUrls[0], useEncryption: false) {
             logInfo(tag: .IO, msg: "the user profile has been read")
             user = userFromFile
@@ -49,7 +49,7 @@ class AppModel: ObservableObject {
     }
 
     private func loadAuthors() {
-        let authorFileUrls = DocumentsStorage.getURLs(dir: .authors, filesWithExtension: "faustus")
+        let authorFileUrls = DocumentsStorage.shared.getURLs(dir: .authors, filesWithExtension: "faustus")
         logInfo(tag: .IO, msg: "Author files = \(authorFileUrls.count)")
 
         let iterator = AsyncIterator<URL>(authorFileUrls)
@@ -64,7 +64,7 @@ class AppModel: ObservableObject {
     }
 
     private func loadBooks() {
-        let bookFileUrls = DocumentsStorage.getURLs(dir: .books, filesWithExtension: "faustus")
+        let bookFileUrls = DocumentsStorage.shared.getURLs(dir: .books, filesWithExtension: "faustus")
         logInfo(tag: .IO, msg: "Books files = \(bookFileUrls.count)")
         
         let iterator = AsyncIterator<URL>(bookFileUrls)
@@ -79,7 +79,7 @@ class AppModel: ObservableObject {
     }
 
     private func loadTags() {
-        let tagFileUrls = DocumentsStorage.getURLs(dir: .tags, filesWithExtension: "faustus")
+        let tagFileUrls = DocumentsStorage.shared.getURLs(dir: .tags, filesWithExtension: "faustus")
         logInfo(tag: .IO, msg: "Tags files = \(tagFileUrls.count)")
         
         let iterator = AsyncIterator<URL>(tagFileUrls)

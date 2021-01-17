@@ -77,7 +77,13 @@ struct LoginView: View {
             ActivityIndicator(isAnimating: $vm.filesLoading)
                 .frame(width: 50, height: 50)
 
-            Spacer().frame(height: 200)
+            Spacer().frame(height: 150)
+            
+            Text(vm.projectDir)
+                .font(Font.custom(.mono, size: 13))
+                .foregroundColor(Color.F.black)
+            
+            Spacer().frame(height: 20)
         }
     }
 }

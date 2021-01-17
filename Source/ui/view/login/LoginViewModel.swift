@@ -13,13 +13,14 @@ import AppKit
 
 final class LoginViewModel: ViewModel {
     public var user: User!
-
+    public let projectDir:String
     private var disposeBag: Set<AnyCancellable> = []
     @Published var errorMsg: String = ""
     @Published var filesLoading: Bool = false
 
     init() {
         logInfo(tag: .APP, msg: "LoginViewModel init")
+        projectDir = DocumentsStorage.shared.projectURL.relativePath
         user = model.user
         print("user name = \(model.user.content.name)")
     }
@@ -33,7 +34,7 @@ final class LoginViewModel: ViewModel {
             appDelegate.window?.makeFirstResponder(nil)
             print("LoggedIn")
             user.content.isLoggedIn = true
-            DocumentsStorage.cryptor = AESCryptor(pwd: user.content.pwd)
+            DocumentsStorage.shared.cryptor = AESCryptor(pwd: user.content.pwd)
             model.loadUserFiles()
             filesLoading = true
         } else {

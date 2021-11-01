@@ -124,100 +124,161 @@ struct TextInput: NSViewRepresentable {
     }
 }
 
-struct TextArea: NSViewRepresentable {
-    static func getLineHight(fontSize: CGFloat) -> CGFloat {
-        fontSize < 21 ? 1.25 : 1.5
-    }
-
-    static func getLineHightExtra(fontSize: CGFloat) -> CGFloat {
-        fontSize < 21 ? 0.05 : 0
-    }
-
-    static func textHeightFrom(text: String, width: CGFloat, font: NSFont, isShown: Bool, minHeight: CGFloat = 30, firstLineHeadIndent: CGFloat) -> CGFloat {
-        guard isShown else { return 0 }
-
-        //TextInput.tf.stringValue = text.isEmpty ? "Ag" : text
-        TextInput.tf.font = font
-        TextInput.tf.lineBreakMode = .byWordWrapping
-
-        let attributedStr = NSMutableAttributedString(string: text)
-        attributedStr.addAttribute(NSAttributedString.Key.font, value: font, range: NSRange(location: 0, length: text.count))
-        let style = TextArea.getStyle(font: font, firstLineHeadIndent: firstLineHeadIndent)
-        attributedStr.addAttribute(NSAttributedString.Key.paragraphStyle, value: style, range: NSRange(location: 0, length: text.count))
-
-        TextInput.tf.attributedStringValue = attributedStr
-        
-        return max(minHeight, TextInput.tf.sizeThatFits(CGSize(width: width, height: .infinity)).height * (1 + getLineHightExtra(fontSize: font.pointSize)))
-    }
-
+struct MultilineInput: View {
+    @EnvironmentObject var modalViewObservable: ModalViewObservable
+    @ObservedObject private var notifier = HeightDidChangeNotifier()
     @Binding var text: String
-    @State private var isEnabled: Bool = false
+    public let width: CGFloat
+    public let textColor: NSColor
+    public let font: NSFont
+    public let isEditing: Bool
+    public var minHeight: CGFloat = 60
+    public var horizontalPadding: CGFloat = 0
+    public var highlightedText: String = ""
+    public var fontLineHeight: CGFloat = 30
+    public var firstLineHeadIndent: CGFloat = 0
+    public var onSelectionChange: ((_ range: NSRange) -> Void)? = nil
+    public var onBeginTyping: (() -> Void)? = nil
+    public var onEndTyping: (() -> Void)? = nil
+
+    var body: some View {
+        TextArea(text: $text, height: $notifier.height, width: width, textColor: textColor, font: font, isEditable: isEditing, highlightedText: highlightedText, firstLineHeadIndent: firstLineHeadIndent, lineHeight: fontLineHeight, onSelectionChange: onSelectionChange, onBeginTyping: onBeginTyping, onEndTyping: onEndTyping)
+            .layoutPriority(-1)
+            .saturation(0)
+            .colorScheme(.light)
+            .offset(x: -5, y: -1)
+            .padding(.horizontal, horizontalPadding)
+            .frame(width: width, height: max(minHeight - 5, notifier.height), alignment: .topLeading)
+            .onTapGesture(count: 2) {
+                if !self.isEditing {
+                    notify(msg: "in die Zwischenablage kopiert")
+                    let pasteBoard = NSPasteboard.general
+                    pasteBoard.clearContents()
+                    pasteBoard.setString(self.text, forType: .string)
+                }
+            }
+    }
+}
+
+class HeightDidChangeNotifier: ObservableObject {
+    @Published var height: CGFloat = 0
+}
+
+struct TextArea: NSViewRepresentable {
+    @Binding var text: String
+    @Binding var height: CGFloat
+    let width: CGFloat
     let textColor: NSColor
     let font: NSFont
     let isEditable: Bool
-    var highlightedText: String = ""
-    var firstLineHeadIndent: CGFloat
-    public let onSelectionChange: ((_ range: NSRange) -> Void)?
+    let highlightedText: String
+    let firstLineHeadIndent: CGFloat
+    let lineHeight: CGFloat?
+    let onSelectionChange: ((_ range: NSRange) -> Void)?
+    let onBeginTyping: (() -> Void)?
+    let onEndTyping: (() -> Void)?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
 
     func makeNSView(context: Context) -> CustomNSTextView {
-        print("TextArea init")
         let tv = CustomNSTextView()
         tv.delegate = context.coordinator
         tv.textColor = textColor
         tv.font = font
+        tv.allowsUndo = true
         tv.isEditable = isEditable
         tv.isSelectable = isEditable
-        tv.allowsUndo = true
-        let style = TextArea.getStyle(font: font, firstLineHeadIndent: firstLineHeadIndent)
-        tv.defaultParagraphStyle = style
-        tv.backgroundColor = NSColor.F.black.withAlphaComponent(0)
+        tv.defaultParagraphStyle = getStyle()
+        tv.backgroundColor = NSColor.F.clear
         tv.isVerticallyResizable = false
+        tv.canDrawSubviewsIntoLayer = true
         tv.string = "Ag"
         return tv
     }
 
-    static func getStyle(font: NSFont, firstLineHeadIndent: CGFloat) -> NSMutableParagraphStyle {
+    func getStyle() -> NSMutableParagraphStyle {
         let style = NSMutableParagraphStyle()
         style.alignment = .left
-        style.lineHeightMultiple = TextArea.getLineHight(fontSize: font.pointSize)
         style.firstLineHeadIndent = firstLineHeadIndent
         style.lineBreakMode = .byWordWrapping
+        style.lineSpacing = 0
+
+        if let lineHeight = lineHeight {
+            style.minimumLineHeight = lineHeight
+            style.maximumLineHeight = lineHeight
+            style.lineHeightMultiple = lineHeight
+        }
 
         return style
     }
 
     func updateNSView(_ textArea: CustomNSTextView, context: Context) {
-        context.coordinator.parent = self
         textArea.isEditable = isEditable
         textArea.isSelectable = isEditable
-
-        if textArea.string != text || textArea.curHighlightedText != highlightedText {
+        // need update parent, otherwise will be updated text from prev binding
+        context.coordinator.parent = self
+        if textArea.curHighlightedText != highlightedText {
             textArea.curHighlightedText = highlightedText
-            textArea.string = text
+        }
 
-            let attributedStr = NSMutableAttributedString(string: text)
+        let updatedText: String = isEditable ? text : text.replacingOccurrences(of: "_", with: "\u{200B}", options: NSString.CompareOptions.literal, range: nil)
+        if textArea.string != updatedText {
+            textArea.string = updatedText
+        }
 
-            attributedStr.addAttribute(NSAttributedString.Key.font, value: font, range: NSRange(location: 0, length: text.count))
+        if textArea.font != font {
+            textArea.font = font
+        }
 
-            let style = TextArea.getStyle(font: font, firstLineHeadIndent: firstLineHeadIndent)
+        textArea.textStorage?.addAttribute(NSAttributedString.Key.font, value: font, range: NSRange(location: 0, length: text.count))
+        textArea.textStorage?.addAttribute(NSAttributedString.Key.foregroundColor, value: textColor, range: NSRange(location: 0, length: text.count))
+        textArea.textStorage?.addAttribute(NSAttributedString.Key.backgroundColor, value: NSColor.F.clear, range: NSRange(location: 0, length: text.count))
 
-            attributedStr.addAttribute(NSAttributedString.Key.paragraphStyle, value: style, range: NSRange(location: 0, length: text.count))
+        let style = getStyle()
 
-            textArea.defaultParagraphStyle = style
+        textArea.textStorage?.addAttribute(NSAttributedString.Key.paragraphStyle, value: style, range: NSRange(location: 0, length: text.count))
 
-            if !highlightedText.isEmpty {
-                let ranges = text.ranges(of: highlightedText, options: .caseInsensitive)
-                for r in ranges {
-                    attributedStr.addAttribute(NSAttributedString.Key.backgroundColor, value: NSColor.F.dark, range: NSRange(r, in: highlightedText))
-                    attributedStr.addAttribute(NSAttributedString.Key.foregroundColor, value: NSColor.F.white, range: NSRange(r, in: highlightedText))
+        textArea.defaultParagraphStyle = style
+
+        if !highlightedText.isEmpty {
+            let ranges = text.ranges(of: highlightedText, options: .caseInsensitive)
+            for r in ranges {
+                textArea.textStorage?.addAttribute(NSAttributedString.Key.backgroundColor, value: NSColor.F.dark, range: NSRange(r, in: highlightedText))
+                textArea.textStorage?.addAttribute(NSAttributedString.Key.foregroundColor, value: NSColor.F.white, range: NSRange(r, in: highlightedText))
+            }
+        }
+
+        if text.count > 2, let regex = try? NSRegularExpression(pattern: "__(.*?)__", options: .caseInsensitive) {
+            let results = regex.matches(in: text, options: [], range: NSMakeRange(0, text.count))
+            results.forEach { result in
+                let r = result.range
+                if r.length > 1 {
+                    textArea.textStorage?.addAttribute(NSAttributedString.Key.font, value: font.bold(), range: NSRange(location: r.location, length: r.length))
                 }
             }
+        }
 
-            textArea.textStorage?.setAttributedString(attributedStr)
+        if text.count > 2, let regex = try? NSRegularExpression(pattern: "_(.*?)_", options: .caseInsensitive) {
+            let results = regex.matches(in: text, options: [], range: NSMakeRange(0, text.count))
+            results.forEach { result in
+                let r = result.range
+                if r.length > 1 {
+                    textArea.textStorage?.addAttribute(NSAttributedString.Key.font, value: font.italics(), range: NSRange(location: r.location, length: r.length))
+                }
+            }
+        }
+
+        updateHeight(textArea)
+    }
+
+    func updateHeight(_ textArea: CustomNSTextView) {
+        textArea.textContainer?.containerSize.width = width
+        let updatedHeight = textArea.contentSize.height
+        if height != updatedHeight {
+            print("updatedHeight = ", updatedHeight)
+            height = updatedHeight
         }
     }
 
@@ -233,52 +294,38 @@ struct TextArea: NSViewRepresentable {
         }
 
         func textDidChange(_ notification: Notification) {
-            guard let textView = notification.object as? NSTextView else { return }
+            guard let textView = notification.object as? CustomNSTextView else { return }
             parent.text = textView.string
         }
         
+        func textDidBeginEditing(_ notification: Notification) {
+            parent.onBeginTyping?()
+        }
+        
+        func textDidEndEditing(_ notification: Notification) {
+            parent.onEndTyping?()
+        }
+
         func textView(_ textView: NSTextView, willChangeSelectionFromCharacterRange oldSelectedCharRange: NSRange, toCharacterRange newSelectedCharRange: NSRange) -> NSRange {
             parent.onSelectionChange?(newSelectedCharRange)
             return newSelectedCharRange
         }
     }
-
-    class CustomNSTextView: NSTextView {
-        var curHighlightedText: String = ""
-
-        override func paste(_ sender: Any?) {
-            pasteAsPlainText(sender)
-        }
-    }
 }
 
-struct MultilineInput: View {
-    @EnvironmentObject var modalViewObservable: ModalViewObservable
-    @Binding var text: String
-    public let width: CGFloat
-    public let textColor: NSColor
-    public let font: NSFont
-    public let isEditing: Bool
-    public var highlightedText: String = ""
-    public var firstLineHeadIndent: CGFloat = 0
-    public var onSelectionChange: ((_ range: NSRange) -> Void)? = nil
+class CustomNSTextView: NSTextView {
+    var curHighlightedText: String = ""
 
-    var body: some View {
-        TextArea(text: $text, textColor: textColor, font: font, isEditable: isEditing && !modalViewObservable.isShown, highlightedText: highlightedText, firstLineHeadIndent: firstLineHeadIndent, onSelectionChange: onSelectionChange)
-            .layoutPriority(-1)
-            .saturation(0)
-            .colorScheme(.light)
-            .offset(y: -1)
-            .padding(.leading, -5)
-            .padding(.trailing, 0)
-            .frame(width: width, height: TextArea.textHeightFrom(text: text, width: width - 5, font: font, isShown: true, firstLineHeadIndent: firstLineHeadIndent), alignment: .topLeading)
-            .onTapGesture(count: 2) {
-                if !self.isEditing {
-                    notify(msg: "in die Zwischenablage kopiert")
-                    let pasteBoard = NSPasteboard.general
-                    pasteBoard.clearContents()
-                    pasteBoard.setString(self.text, forType: .string)
-                }
-            }
+    override func paste(_ sender: Any?) {
+        pasteAsPlainText(sender)
+    }
+
+    var contentSize: CGSize {
+        guard let layoutManager = layoutManager, let textContainer = textContainer else {
+            return .zero
+        }
+
+        layoutManager.ensureLayout(for: textContainer)
+        return layoutManager.usedRect(for: textContainer).size
     }
 }

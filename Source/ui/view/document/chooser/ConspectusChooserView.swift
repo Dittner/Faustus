@@ -57,7 +57,7 @@ struct ChooserHeader: View {
                 .frame(width: 50)
 
             TextInput(title: "", text: $chooser.filterText, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 21), alignment: .left, isFocused: false, isSecure: false, format: nil, isEditable: true, onEnterAction: nil)
-                .frame(width: 250, height: 50, alignment: .leading)
+                .frame(width: 200, height: 50, alignment: .leading)
                 .padding(.horizontal, -5)
                 .saturation(0)
                 .colorScheme(.light)
@@ -76,7 +76,7 @@ struct ChooserHeader: View {
                 .onTapGesture {
                     self.chooser.mode = .commenting
                 }
-                .frame(width: 300, alignment: .trailing)
+                .frame(width: 250, alignment: .trailing)
                 .opacity(self.chooser.mode == .chooseLinkAmongUserBooksComment ? 1 : 0)
         }
     }
@@ -179,12 +179,20 @@ struct TagsChooserSubView: View {
 
 struct UserCommentsChooserSubView: View {
     @ObservedObject var chooser: ConspectusChooser
+    
+    init(chooser: ConspectusChooser) {
+        self.chooser = chooser
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if self.chooser.mode == .commenting {
-                MultilineInput(text: $chooser.userCommentText, width: Constants.docViewWidth - Constants.docViewLeading - 120, textColor: NSColor.F.black, font: QuoteCell.nsTextFont, isEditing: true)
-
+                MultilineInput(text: $chooser.userCommentText,
+                               width: Constants.docViewWidth - Constants.docViewLeading - 120,
+                               textColor: NSColor.F.black,
+                               font: QuoteCell.nsTextFont,
+                               isEditing: true, horizontalPadding: 10)
+                
             } else if self.chooser.mode == .chooseLinkAmongUserBooksComment {
                 ForEach(chooser.userBookComments, id: \.id) { comment in
                     ConspectusRow(action: { event in

@@ -100,7 +100,7 @@ class Logger {
             do {
                 try log.write(to: url, atomically: false, encoding: .utf8)
             } catch {
-                print("Failed write logs to disk")
+                print("Failed write logs on the disk")
             }
         }
     }

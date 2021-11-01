@@ -151,8 +151,7 @@ struct ConspectusRow: View {
                     .offset(y: -2)
 
                 VStack(alignment: .center, spacing: 0) {
-                    Rectangle()
-                        .foregroundColor(self.genusColor)
+                    Spacer()
                         .allowsHitTesting(false)
                         .frame(width: 20, height: 1)
                         .padding(.bottom, self.notifier.subTitle.isEmpty ? 13 : 8)

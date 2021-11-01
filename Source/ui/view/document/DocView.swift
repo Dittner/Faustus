@@ -91,7 +91,7 @@ struct DocView: View {
                         ConspectusChooserView(chooser: self.chooser)
                             .offset(x: Constants.docViewLeading - Constants.docViewPadding)
                             .padding(.bottom, 15)
-                    } else if self.chooser.owner == self.vm.quoteListController.selectedQuote && self.chooser.mode == .chooseLink {
+                    } else if self.chooser.owner == self.vm.quoteListController.selectedQuote && self.chooser.mode != .inactive {
                         ConspectusChooserView(chooser: self.chooser)
                             .offset(x: Constants.docViewLeading - Constants.docViewPadding)
                     }
@@ -100,9 +100,9 @@ struct DocView: View {
                         if self.vm.selectedConspectus is Book {
                             BookInfoPanel(self.vm.infoController)
                         } else if self.vm.selectedConspectus is Tag {
-                            InfoPanel(self.vm.infoController)
+                            InfoPanel(self.vm.infoController, scrollController: self.vm.scrollController)
                         } else {
-                            InfoPanel(self.vm.infoController)
+                            InfoPanel(self.vm.infoController, scrollController: self.vm.scrollController)
                         }
                     } else if vm.selectedSection == .books {
                         BookListView(self.vm.bookListViewController, chooser: self.vm.chooser)
@@ -113,7 +113,7 @@ struct DocView: View {
                     } else if vm.selectedSection == .quotesIndex {
                         QuotesIndexView(self.vm)
                     } else if vm.selectedSection == .quotes {
-                        QuoteListView(self.vm.quoteListController, chooser: self.vm.chooser)
+                        QuoteListView(self.vm.quoteListController, scrollController: self.vm.scrollController, chooser: self.vm.chooser)
                     }
                 }
                 .padding(.top, 15)
@@ -530,11 +530,11 @@ struct QuoteToolsView: View {
 
 struct QuotesIndexView: View {
     @ObservedObject var controller: QuoteListController
-    private let vm:DocViewModel
+    private let vm: DocViewModel
 
     init(_ vm: DocViewModel) {
         self.vm = vm
-        self.controller = vm.quoteListController
+        controller = vm.quoteListController
         logInfo(tag: .UI, msg: "QuotesIndexView init with \(controller.quotes.count)")
     }
 
@@ -562,7 +562,7 @@ struct QuotesIndexRow: View {
 
     init(action: @escaping (Quote) -> Void, q: Quote) {
         self.action = action
-        self.quote = q
+        quote = q
         pages = q.endPage.isEmpty ? q.startPage : "\(q.startPage)–\(q.endPage)"
         title = q.title
         text = q.text
@@ -608,7 +608,6 @@ struct QuotesIndexRow: View {
 
                 Separator(color: Color.F.black01, width: .infinity)
             }
-
         }
     }
 }
@@ -619,10 +618,12 @@ struct QuoteListView: View {
     @ObservedObject var state: ConspectusState
     let nextBtnStyle = IconButtonStyle(iconName: "next", iconColor: Color.F.whiteBG, bgColor: Color.F.black, width: 60, height: 30)
     let prevBtnStyle = IconButtonStyle(iconName: "next", iconColor: Color.F.black, bgColor: Color.F.whiteBG, width: 60, height: 30)
+    let scrollController:CustomScrollViewController
 
-    init(_ controller: QuoteListController, chooser: ConspectusChooser) {
+    init(_ controller: QuoteListController, scrollController:CustomScrollViewController, chooser: ConspectusChooser) {
         self.controller = controller
         self.chooser = chooser
+        self.scrollController = scrollController
         state = controller.book.state
         logInfo(tag: .UI, msg: "QuoteListView init with \(controller.quotes.count)")
     }
@@ -648,7 +649,7 @@ struct QuoteListView: View {
                     Spacer()
                 }.padding(.bottom, 10)
 
-                QuoteCell(quote: controller.selectedQuote!, isEditing: self.state.isEditing, chooser: self.chooser, quoteListController: self.controller)
+                QuoteCell(quote: controller.selectedQuote!, isEditing: self.state.isEditing, scrollController: self.scrollController, chooser: self.chooser, quoteListController: self.controller)
             }
 
             Spacer()
@@ -679,13 +680,17 @@ struct QuoteCell: View {
     static let nsTitleFont: NSFont = NSFont(name: .pragmaticaLightItalics, size: 18)
     static var nsTextFont: NSFont = NSFont(name: .georgia, size: 21)
     static var textFont: Font = Font.custom(.georgia, size: 21)
+    static var nsTextBoldFont: NSFont = NSFont(name: .georgiaBold, size: 21)
+    static var nsTextItalicFont: NSFont = NSFont(name: .georgiaItalics, size: 21)
 
     private let isEditing: Bool
+    private let scrollController: CustomScrollViewController
 
-    init(quote: Quote, isEditing: Bool, chooser: ConspectusChooser, quoteListController: QuoteListController) {
+    init(quote: Quote, isEditing: Bool, scrollController:CustomScrollViewController, chooser: ConspectusChooser, quoteListController: QuoteListController) {
         self.quote = quote
         quoteLinkColl = quote.linkColl
         self.isEditing = isEditing
+        self.scrollController = scrollController
         self.chooser = chooser
         self.quoteListController = quoteListController
         // print("QuoteCell quote id = \(quote.id)")
@@ -710,6 +715,9 @@ struct QuoteCell: View {
                         .font(QuoteCell.titleFont)
                         .foregroundColor(Color.F.black05)
                         .frame(height: 30)
+                        .padding(.horizontal, 10)
+                        .drawingGroup()
+                        .offset(x: 10)
 
                 } else {
                     Text("S.")
@@ -740,13 +748,15 @@ struct QuoteCell: View {
             }.padding(.bottom, 20)
 
             MultilineInput(text: $quote.text,
-                           width: Constants.docViewWidth - Constants.docViewLeading - Constants.quoteTextTrailing,
-                           textColor: NSColor.F.black,
-                           font: QuoteCell.nsTextFont,
-                           isEditing: self.isEditing,
-                           highlightedText: quoteListController.searchText,
-                           firstLineHeadIndent: 50,
-                           onSelectionChange: { range in self.quoteListController.quoteTextSelection = range })
+                            width: Constants.docViewWidth - Constants.docViewLeading - Constants.quoteTextTrailing,
+                            textColor: NSColor.F.black,
+                            font: QuoteCell.nsTextFont,
+                            isEditing: self.isEditing,
+                            highlightedText: quoteListController.searchText,
+                            firstLineHeadIndent: 50,
+                            onSelectionChange: { range in self.quoteListController.quoteTextSelection = range },
+                            onBeginTyping: {self.scrollController.animateWhenContentHeightIsChanging = true},
+                            onEndTyping: {self.scrollController.animateWhenContentHeightIsChanging = false})
 
             // user comments
             if quoteLinkColl.links.count > 0 {
@@ -760,6 +770,8 @@ struct QuoteCell: View {
                     })
                 }
             }
+            
+            Spacer()
         }
         .colorScheme(.light)
         .padding(.leading, Constants.docViewLeading - Constants.docViewPadding)
@@ -810,6 +822,7 @@ struct EditableText: View {
         VStack(alignment: .leading, spacing: 0) {
             TextInput(title: title, text: $text, textColor: textColor, font: font, alignment: alignment, isFocused: isFocused, isSecure: false, format: format, isEditable: isEditing, onEnterAction: onEnterAction)
                 .saturation(0)
+                .colorScheme(.light)
                 .padding(.horizontal, 0)
                 .allowsHitTesting(isEditing)
 

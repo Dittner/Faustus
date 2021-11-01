@@ -16,6 +16,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var disposeBag: Set<AnyCancellable> = []
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let dropboxUrl = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(StorageDirectory.dropbox.rawValue)
+        
+        var isDir: ObjCBool = true
+        let hasDropboxProjectDir = FileManager.default.fileExists(atPath: dropboxUrl.appendingPathComponent(StorageDirectory.project.rawValue).path, isDirectory: &isDir)
+        
+        
+        DocumentsStorage.shared = DocumentsStorage(documentsURL: hasDropboxProjectDir ? dropboxUrl : documentsURL)
+        
         Logger.run()
         AppModel.shared.loadUser()
 

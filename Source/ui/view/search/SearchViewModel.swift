@@ -77,10 +77,11 @@ final class SearchViewModel: ViewModel {
             .dropFirst()
             .sink { list in
                 self.curPage = 0
-                self.totalPages = Int((Double(list.count) / Double(self.pageSize)).rounded())
+                self.totalPages = Int((Double(list.count) / Double(self.pageSize)).rounded(.up))
             }.store(in: &disposeBag)
 
         Publishers.CombineLatest3($selectedFilter, $startToFilterFlag.filter { $0 != false }, model.bibliography.objectWillChange)
+            .debounce(for: 0.2, scheduler: RunLoop.main)
             .map { filter, _, conspectusList -> (SearchFilter, String, [Conspectus]) in
                 if filter == .removed {
                     return (filter, self.filterText, conspectusList.filter { $0.state.isRemoved })
@@ -120,7 +121,6 @@ final class SearchViewModel: ViewModel {
                     }
                 }
 
-                logInfo(tag: .APP, msg: "Searching!!!")
                 return conspectusList
             }
             .assign(to: \.result, on: self)

@@ -12,26 +12,36 @@ import SwiftUI
 class CustomScrollViewController: ViewModel {
     @Published var contentHeight: CGFloat = CGFloat.zero {
         didSet {
-            let difference = oldValue - contentHeight
-            if abs(difference) < 80 && abs(difference) > 0 && windowHeight > 0 && windowHeight < contentHeight && owner != nil && owner.state.isEditing {
-                withAnimation(.easeInOut(duration: 1.0)) {
-                    updateScrollPosition(with: difference / scrollFactor)
-                }
+            storeDebouncer.debounce {
+                self.checkInNeedToUpdateScrollPosition()
             }
         }
     }
 
-    @Published var windowHeight: CGFloat = CGFloat.zero{
+    var storeDebouncer: Debouncer = Debouncer(seconds: 0.1)
+    var lastContentHeight: CGFloat = 0
+    func checkInNeedToUpdateScrollPosition() {
+        let difference = lastContentHeight - contentHeight
+        lastContentHeight = contentHeight
+        if animateWhenContentHeightIsChanging {
+            withAnimation(.easeInOut(duration: 0.5)) {
+                updateScrollPosition(with: difference / scrollFactor)
+            }
+        }
+    }
+
+    @Published var windowHeight: CGFloat = CGFloat.zero {
         didSet {
             if contentHeight < windowHeight {
                 scrollPosition = CGFloat.zero
             }
         }
     }
-    
+
     @Published var scrollPosition = CGFloat.zero
     @Published var scaleY: CGFloat = 1
     @Published var owner: Conspectus!
+    public var animateWhenContentHeightIsChanging: Bool = false
 
     let scrollFactor: CGFloat = 15
     static var scrollPositionCache: [UID: CGFloat] = [:]

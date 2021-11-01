@@ -12,11 +12,12 @@ import SwiftUI
 struct InfoPanel: View {
     @ObservedObject private var controller: DocInfoController
     @ObservedObject var state: ConspectusState
-
+    let scrollController: CustomScrollViewController
     private let font = NSFont(name: .pragmaticaLight, size: 18)
 
-    init(_ controller: DocInfoController) {
+    init(_ controller: DocInfoController, scrollController: CustomScrollViewController) {
         self.controller = controller
+        self.scrollController = scrollController
         state = controller.owner.state
         print("InfoPanel init, id: \(controller.owner.id), hasPrentTag: \(controller.parentTag != nil)")
     }
@@ -46,8 +47,17 @@ struct InfoPanel: View {
                 Spacer().frame(height: 5)
             }
 
-            MultilineInput(text: $controller.info, width: Constants.docViewWidth - Constants.docViewLeading, textColor: NSColor.F.black, font: font, isEditing: state.isEditing)
+            MultilineInput(text: $controller.info,
+                           width: Constants.docViewWidth - Constants.docViewLeading,
+                           textColor: NSColor.F.black,
+                           font: font,
+                           isEditing: state.isEditing,
+                           onBeginTyping: { self.scrollController.animateWhenContentHeightIsChanging = true },
+                           onEndTyping: { self.scrollController.animateWhenContentHeightIsChanging = false })
                 .background(state.isEditing ? Color.F.whiteBG : Color.F.white)
+            
+            Spacer()
+
         }.padding(.leading, Constants.docViewLeading - Constants.docViewPadding)
     }
 }
@@ -99,7 +109,7 @@ struct BookInfoPanel: View {
                     .frame(width: FormInput.titleWidth, height: 30, alignment: .trailing)
                     .background(Color.F.whiteBG)
 
-                MultilineInput(text: $content.reference, width: BookInfoPanel.rightColumnWidth, textColor: NSColor.F.black, font: font, isEditing: state.isEditing)
+                MultilineInput(text: $content.reference, width: BookInfoPanel.rightColumnWidth, textColor: NSColor.F.black, font: font, isEditing: state.isEditing, horizontalPadding: 4)
                     .background(state.isEditing ? Color.F.whiteBG : Color.F.white)
 
             }.padding(.top, 5)
@@ -112,19 +122,21 @@ struct BookInfoPanel: View {
                     .frame(width: FormInput.titleWidth, height: 30, alignment: .trailing)
                     .background(Color.F.whiteBG)
 
-                MultilineInput(text: $content.info, width: BookInfoPanel.rightColumnWidth, textColor: NSColor.F.black, font: font, isEditing: state.isEditing)
+                MultilineInput(text: $content.info, width: BookInfoPanel.rightColumnWidth, textColor: NSColor.F.black, font: font, isEditing: state.isEditing, horizontalPadding: 4)
                     .background(state.isEditing ? Color.F.whiteBG : Color.F.white)
 
                 if state.isEditing {
                     Button("", action: { self.controller.formatBookInfo() })
-                    .buttonStyle(IconButtonStyle(iconName: "format", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
-                    .contextMenu {
-                        Button("Remove space duplicates", action: { self.controller.removeSpaceDuplicates() })
-                        Button("Remove word wrapping", action: { self.controller.removeWordWrapping() })
-                        Button("Replace hyphen with dash", action: { self.controller.replaceHyphenWithDash() })
-                    }
+                        .buttonStyle(IconButtonStyle(iconName: "format", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
+                        .contextMenu {
+                            Button("Remove space duplicates", action: { self.controller.removeSpaceDuplicates() })
+                            Button("Remove word wrapping", action: { self.controller.removeWordWrapping() })
+                            Button("Replace hyphen with dash", action: { self.controller.replaceHyphenWithDash() })
+                        }
                 }
             }
+            
+            Spacer()
         }
     }
 }

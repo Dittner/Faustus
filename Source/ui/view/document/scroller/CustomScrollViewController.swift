@@ -26,6 +26,7 @@ class CustomScrollViewController: ViewModel {
         if animateWhenContentHeightIsChanging {
             withAnimation(.easeInOut(duration: 0.5)) {
                 updateScrollPosition(with: difference / scrollFactor)
+                animateWhenContentHeightIsChanging = false
             }
         }
     }

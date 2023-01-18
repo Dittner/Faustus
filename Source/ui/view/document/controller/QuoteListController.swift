@@ -13,7 +13,6 @@ class QuoteListController: ViewModel {
     let scrollerController: CustomScrollViewController
 
     var book: Book!
-    @Published var searchText: String = ""
     @Published var filterEnabled: Bool = false
     @Published var quotes: [Quote] = []
     @Published var selectedQuote: Quote?
@@ -22,6 +21,7 @@ class QuoteListController: ViewModel {
 
     var quotesFilterPublisher: AnyCancellable?
     var selectedQuoteIndexPublisher: AnyCancellable?
+    var selectedQuotePublisher: AnyCancellable?
 
     init(scrollerController: CustomScrollViewController) {
         self.scrollerController = scrollerController
@@ -31,34 +31,58 @@ class QuoteListController: ViewModel {
         if let b = conspectus as? Book {
             book = b
             quotes = b.quoteColl.quotes.sorted { $0 < $1 }
+            selectedQuoteIndex = (book.quoteColl.selectedQuoteIndex + 1).description
 
             quotesFilterPublisher?.cancel()
             quotesFilterPublisher = book.$quotesFilter
-                .debounce(for: 1, scheduler: RunLoop.main)
-                .dropFirst()
+                .debounce(for: 0.5, scheduler: RunLoop.main)
+                // .dropFirst()
                 .sink { filter in
-
-                    if filter.count >= 3 {
-                        self.quotes = self.book.quoteColl.quotes.filter { $0.getDescription().hasSubstring(filter) }
-                        self.book.quoteColl.selectedQuoteIndex = 0
-                        self.selectedQuoteIndex = "1"
-                    } else {
-                        self.quotes = self.book.quoteColl.quotes
+                    self.quotes = filter.count >= 3 ? self.book.quoteColl.quotes.filter { $0.getDescription().hasSubstring(filter) } : self.book.quoteColl.quotes
+                    let selectedQuote = self.book.quoteColl.selectedQuoteIndex < self.book.quoteColl.quotes.count ? self.book.quoteColl.quotes[self.book.quoteColl.selectedQuoteIndex] : nil
+                    var selectedQuoteIndex = 0
+                    for (ind, quote) in self.quotes.enumerated() {
+                        if quote == selectedQuote {
+                            selectedQuoteIndex = ind
+                            break
+                        }
                     }
 
-                    self.searchText = filter
+                    self.selectedQuoteIndex = (selectedQuoteIndex + 1).description
+                    self.filterEnabled = filter.count >= 3
                 }
 
-            selectedQuoteIndex = (book.quoteColl.selectedQuoteIndex + 1).description
             selectedQuoteIndexPublisher?.cancel()
             selectedQuoteIndexPublisher = $selectedQuoteIndex
-                .map { value -> Int in
-                    let index = Int(value) ?? 0
-                    return index > 0 ? index - 1 : 0
-                }
+                .debounce(for: 0.1, scheduler: RunLoop.main)
                 .sink { index in
-                    self.book.quoteColl.selectedQuoteIndex = index
-                    self.selectedQuote = index < self.quotes.count ? self.quotes[index] : nil
+                    let indexInt = (Int(index) ?? 1) - 1
+                    self.selectedQuote = indexInt < self.quotes.count ? self.quotes[indexInt] : nil
+                    for (ind, quote) in self.book.quoteColl.quotes.enumerated() {
+                        if quote == self.selectedQuote {
+                            
+                            if self.book.quoteColl.selectedQuoteIndex != ind {
+                                self.book.quoteColl.selectedQuoteIndex = ind
+                            }
+                            break
+                        }
+                    }
+                }
+
+            selectedQuotePublisher?.cancel()
+            selectedQuotePublisher = book.quoteColl.$selectedQuoteIndex
+                .debounce(for: 0.1, scheduler: RunLoop.main)
+                .sink { index in
+                    let selectedQuote = index < self.book.quoteColl.quotes.count ? self.book.quoteColl.quotes[index] : nil
+
+                    for (ind, quote) in self.quotes.enumerated() {
+                        if quote == selectedQuote {
+                            if self.selectedQuoteIndex != (ind + 1).description {
+                                self.selectedQuoteIndex = (ind + 1).description
+                            }
+                            break
+                        }
+                    }
                 }
         }
     }
@@ -66,9 +90,8 @@ class QuoteListController: ViewModel {
     func showNextQuote() {
         guard let q = selectedQuote, q.isValid else { return }
 
-        if book.quoteColl.selectedQuoteIndex < quotes.count - 1 {
-            book.quoteColl.selectedQuoteIndex += 1
-            selectedQuoteIndex = (book.quoteColl.selectedQuoteIndex + 1).description
+        if canSelectNext() {
+            selectedQuoteIndex = ((Int(selectedQuoteIndex) ?? 0) + 1).description
             scrollerController.scrollPosition = 0
         }
     }
@@ -76,9 +99,8 @@ class QuoteListController: ViewModel {
     func showPrevQuote() {
         guard let q = selectedQuote, q.isValid else { return }
 
-        if book.quoteColl.selectedQuoteIndex > 0 {
-            book.quoteColl.selectedQuoteIndex -= 1
-            selectedQuoteIndex = (book.quoteColl.selectedQuoteIndex + 1).description
+        if canSelectPrev() {
+            selectedQuoteIndex = ((Int(selectedQuoteIndex) ?? 2) - 1).description
             scrollerController.scrollPosition = 0
         }
     }
@@ -96,11 +118,11 @@ class QuoteListController: ViewModel {
     }
 
     func canSelectPrev() -> Bool {
-        book.quoteColl.selectedQuoteIndex > 0
+        selectedQuoteIndex != "1"
     }
 
     func canSelectNext() -> Bool {
-        book.quoteColl.selectedQuoteIndex < quotes.count - 1
+        selectedQuoteIndex != quotes.count.description
     }
 
     func removeQuote(_ q: Quote) {
@@ -111,7 +133,7 @@ class QuoteListController: ViewModel {
             book.quoteColl.selectedQuoteIndex = quotes.count - 1
             selectedQuoteIndex = (book.quoteColl.selectedQuoteIndex + 1).description
         }
-        selectedQuote = book.quoteColl.selectedQuoteIndex < quotes.count ? self.quotes[book.quoteColl.selectedQuoteIndex] : nil
+        selectedQuote = book.quoteColl.selectedQuoteIndex < quotes.count ? quotes[book.quoteColl.selectedQuoteIndex] : nil
         scrollerController.scrollPosition = 0
     }
 
@@ -122,19 +144,23 @@ class QuoteListController: ViewModel {
         res = TextFormatter.removeWordWrapping(res, selection: quoteTextSelection)
         q.text = res
     }
-    
+
     func removeSpaceDuplicates(_ q: Quote) {
         q.text = TextFormatter.removeSpaceDuplicates(q.text, selection: quoteTextSelection)
     }
-    
+
     func replaceHyphenWithDash(_ q: Quote) {
         q.text = TextFormatter.replaceHyphenWithDash(q.text, selection: quoteTextSelection)
     }
-    
+
     func removeWordWrapping(_ q: Quote) {
         q.text = TextFormatter.removeWordWrapping(q.text, selection: quoteTextSelection)
     }
     
+    func removeHyphenWithSpaces(_ q: Quote) {
+        q.text = TextFormatter.removeHyphenWithSpaces(q.text, selection: quoteTextSelection)
+    }
+
     func sortQuotes() {
         book.quoteColl.quotes = book.quoteColl.quotes.sorted { $0 < $1 }
         quotes = book.quoteColl.quotes

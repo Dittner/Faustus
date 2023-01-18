@@ -21,6 +21,12 @@ import SwiftUI
 //    print("File does not exist")
 // }
 
+var str = "даже по- зволить себе, I ca- n't let you"
+let res = str.replacingOccurrences(of: "([А-я])- ", with: "$1", options: .regularExpression)
+
+
+    
+
 let subject = PassthroughSubject<String, Never>()
 var disposeBag: Set<AnyCancellable> = []
     subject

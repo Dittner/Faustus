@@ -142,6 +142,9 @@ final class SearchViewModel: ViewModel {
     func select(conspectus: Conspectus) {
         if let q = conspectus as? Quote {
             q.book.quoteColl.selectQuote(q)
+            if selectedFilter == .quotes && filterText.count > 0 {
+                q.book.quotesFilter = filterText
+            }
             model.select(q.book)
         } else {
             model.select(conspectus)

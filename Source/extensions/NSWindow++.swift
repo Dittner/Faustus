@@ -43,4 +43,8 @@ extension NSWindow {
 
 extension Notification.Name {
     static let didWheelScroll = Notification.Name("didWheelScroll")
+    static let scrollUp = Notification.Name("scrollUp")
+    static let scrollDown = Notification.Name("scrollDown")
+    static let nextQuote = Notification.Name("nextQuote")
+    static let prevQuote = Notification.Name("prevQuote")
 }

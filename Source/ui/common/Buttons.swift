@@ -63,6 +63,7 @@ struct RoundToggleStyle: ToggleStyle {
     var disabled: Bool = false
     let width: CGFloat = 50
     let height: CGFloat = 30
+    let circleDiameter: CGFloat = 26
 
     func makeBody(configuration: Self.Configuration) -> some View {
         ZStack(alignment: .center) {
@@ -74,7 +75,7 @@ struct RoundToggleStyle: ToggleStyle {
                 Circle()
                     .stroke(lineWidth: 1)
                     .fill(Color.F.white)
-                    .frame(width: 25, height: 25)
+                    .frame(width: circleDiameter, height: circleDiameter)
                     .offset(x: configuration.isOn ? 10 : -10, y: 0)
             } else {
                 RoundedRectangle(cornerRadius: 2)
@@ -82,7 +83,7 @@ struct RoundToggleStyle: ToggleStyle {
 
                 Circle()
                     .fill(Color.F.black)
-                    .frame(width: 25, height: 25)
+                    .frame(width: circleDiameter, height: circleDiameter)
                     .offset(x: configuration.isOn ? 10 : -10, y: 0)
             }
         }

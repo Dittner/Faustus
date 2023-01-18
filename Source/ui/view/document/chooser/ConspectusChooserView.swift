@@ -14,7 +14,7 @@ struct ConspectusChooserView: View {
     var body: some View {
         VStack(alignment: .center, spacing: 0) {
             if chooser.selectedFilter != .tags || chooser.showFilterBar {
-                ChooserHeader(chooser: chooser).frame(width: Constants.docViewWidth - Constants.docViewLeading - 100)
+                ChooserHeader(chooser: chooser).frame(width: Constants.docViewAndScrollerWidth + 2*Constants.docViewPadding - 2*Constants.docViewLeading - 10)
                 Separator(color: Color.F.black, width: .infinity).padding(.horizontal, 15)
             }
 
@@ -39,7 +39,7 @@ struct ConspectusChooserView: View {
 
             ChooserFooter(controller: chooser)
         }
-        .frame(width: Constants.docViewWidth - Constants.docViewLeading - 100, height: 500)
+        .frame(width: Constants.docViewAndScrollerWidth + 2*Constants.docViewPadding - 2*Constants.docViewLeading, height: 500)
         .background(Color.F.grayBG)
         .cornerRadius(10)
         .shadow(color: Color.F.black025, radius: 1, x: 0, y: 1)
@@ -61,6 +61,8 @@ struct ChooserHeader: View {
                 .padding(.horizontal, -5)
                 .saturation(0)
                 .colorScheme(.light)
+            
+            Spacer()
 
             if chooser.showFilterBar {
                 FilterTabBar(selectedFilter: $chooser.selectedFilter, iconColor: Color.F.dark, bgColor: Color.F.whiteBG, selectedIconColor: Color.F.whiteBG, selectBgColor: Color.F.dark, enabledFilters: [.authors, .books, .tags, .comments])
@@ -68,6 +70,8 @@ struct ChooserHeader: View {
             } else {
                 Spacer()
             }
+            
+            Spacer()
 
             SelectableText(text: "Kommentieren", color: Color.F.black)
                 .font(Font.custom(.mono, size: 16))
@@ -179,6 +183,7 @@ struct TagsChooserSubView: View {
 
 struct UserCommentsChooserSubView: View {
     @ObservedObject var chooser: ConspectusChooser
+    static var nsTextFont: NSFont = NSFont(name: .georgia, size: 21)
     
     init(chooser: ConspectusChooser) {
         self.chooser = chooser
@@ -188,10 +193,10 @@ struct UserCommentsChooserSubView: View {
         VStack(alignment: .leading, spacing: 0) {
             if self.chooser.mode == .commenting {
                 MultilineInput(text: $chooser.userCommentText,
-                               width: Constants.docViewWidth - Constants.docViewLeading - 120,
+                               width: Constants.docViewWidth - 2*Constants.docViewLeading,
                                textColor: NSColor.F.black,
-                               font: QuoteCell.nsTextFont,
-                               isEditing: true, horizontalPadding: 10)
+                               font: UserCommentsChooserSubView.nsTextFont,
+                               isEditing: true, horizontalPadding: 20, fontLineHeight: 30)
                 
             } else if self.chooser.mode == .chooseLinkAmongUserBooksComment {
                 ForEach(chooser.userBookComments, id: \.id) { comment in

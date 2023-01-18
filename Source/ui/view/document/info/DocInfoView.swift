@@ -52,8 +52,7 @@ struct InfoPanel: View {
                            textColor: NSColor.F.black,
                            font: font,
                            isEditing: state.isEditing,
-                           onBeginTyping: { self.scrollController.animateWhenContentHeightIsChanging = true },
-                           onEndTyping: { self.scrollController.animateWhenContentHeightIsChanging = false })
+                           onBeginTyping: { self.scrollController.animateWhenContentHeightIsChanging = true })
                 .background(state.isEditing ? Color.F.whiteBG : Color.F.white)
             
             Spacer()

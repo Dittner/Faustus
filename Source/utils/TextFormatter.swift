@@ -16,7 +16,7 @@ class TextFormatter {
         res = res.replacingOccurrences(of: " {2,}", with: " ", options: .regularExpression, range: range)
         return res
     }
-    
+
     static func replaceHyphenWithDash(_ text: String, selection: NSRange?) -> String {
         var res = text
         let range = selection != nil ? Range(selection!, in: res) : nil
@@ -27,7 +27,7 @@ class TextFormatter {
         res = res.replacingOccurrences(of: "\n–", with: "\n—", options: .regularExpression, range: range)
         return res
     }
-    
+
     static func removeWordWrapping(_ text: String, selection: NSRange?) -> String {
         var res = text
         var range = selection != nil ? Range(selection!, in: res) : nil
@@ -39,6 +39,13 @@ class TextFormatter {
         }
 
         res = res.replacingOccurrences(of: "\n", with: " ", options: .caseInsensitive, range: range)
+        return res
+    }
+
+    static func removeHyphenWithSpaces(_ text: String, selection: NSRange?) -> String {
+        var res = text
+        let range = selection != nil ? Range(selection!, in: res) : nil
+        res = res.replacingOccurrences(of: "([А-я])- ", with: "$1", options: .regularExpression, range: range)
         return res
     }
 }

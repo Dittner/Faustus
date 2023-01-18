@@ -21,7 +21,7 @@ struct SearchView: View {
                     .foregroundColor(Color.F.black)
                     .frame(width: 50)
 
-                TextInput(title: "", text: $vm.filterText, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 21), alignment: .left, isFocused: false, isSecure: false, format: nil, isEditable: true, onEnterAction: nil)
+                TextInput(title: "", text: $vm.filterText, textColor: NSColor.F.black, font: NSFont(name: .pragmaticaLight, size: 21), alignment: .left, isFocused: false, isSecure: false, format: nil, isEditable: true, onEnterAction: { self.vm.startToFilterFlag = true })
                     .frame(height: 50, alignment: .leading)
                     .padding(.horizontal, -5)
                     .saturation(0)

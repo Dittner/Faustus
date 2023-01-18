@@ -59,7 +59,7 @@ struct DocView: View {
                         self.vm.selectedConspectus.state.isEditing = true
                         self.vm.chooser.chooseBooks(self.vm.selectedConspectus)
                     })
-                        .buttonStyle(IconButtonStyle(iconName: "middlePlus", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
+                    .buttonStyle(IconButtonStyle(iconName: "middlePlus", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
 
                 } else if vm.selectedSection == .tags {
                     Spacer()
@@ -67,9 +67,10 @@ struct DocView: View {
                         self.vm.selectedConspectus.state.isEditing = true
                         self.vm.chooser.chooseTags(self.vm.selectedConspectus)
                     })
-                        .buttonStyle(IconButtonStyle(iconName: "middlePlus", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
+                    .buttonStyle(IconButtonStyle(iconName: "middlePlus", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
 
                 } else if vm.selectedSection == .quotes {
+                    Spacer().frame(width: Constants.docViewWidth/2 - 475)
                     QuoteToolsView(self.vm.quoteListController, chooser: self.vm.chooser)
                 } else {
                     Spacer()
@@ -116,8 +117,7 @@ struct DocView: View {
                         QuoteListView(self.vm.quoteListController, scrollController: self.vm.scrollController, chooser: self.vm.chooser)
                     }
                 }
-                .padding(.top, 15)
-                .padding(.leading, Constants.docViewPadding)
+                .padding(.top, 0)
             }
         }
         .background(DocViewBG(conspectus: vm.selectedConspectus))
@@ -309,7 +309,7 @@ struct BookListView: View {
             }
         }.padding(.leading, Constants.docViewLeading - Constants.docViewPadding)
             .padding(.trailing, 0)
-            .padding(.top, 0)
+            .padding(.top, 10)
     }
 }
 
@@ -455,6 +455,8 @@ struct QuoteToolsView: View {
     @ObservedObject var controller: QuoteListController
     @ObservedObject var chooser: ConspectusChooser
     @ObservedObject var state: ConspectusState
+    let nextBtnStyle = IconButtonStyle(iconName: "next", iconColor: Color.F.black, bgColor: Color.F.white, width: 25, height: 25)
+    let prevBtnStyle = IconButtonStyle(iconName: "next", iconColor: Color.F.black, bgColor: Color.F.white, width: 25, height: 25)
 
     init(_ controller: QuoteListController, chooser: ConspectusChooser) {
         self.controller = controller
@@ -466,16 +468,25 @@ struct QuoteToolsView: View {
     var body: some View {
         HStack(alignment: .bottom, spacing: 1) {
             if controller.quotes.count > 0 {
-                TextInput(title: "", text: $controller.selectedQuoteIndex, textColor: NSColor.F.black, font: NSFont(name: .mono, size: 21), alignment: .right, isFocused: false, isSecure: false, format: "[0-9]{0,5}", isEditable: true, onEnterAction: nil)
+                Button("", action: { self.controller.showPrevQuote() })
+                    .buttonStyle(prevBtnStyle)
+                    .rotationEffect(Angle(degrees: -180))
+                    .opacity(controller.canSelectPrev() ? 1 : 0.5)
+                
+                TextInput(title: "", text: $controller.selectedQuoteIndex, textColor: NSColor.F.black, font: NSFont(name: .mono, size: 20), alignment: .right, isFocused: false, isSecure: false, format: "[0-9]{0,5}", isEditable: true, onEnterAction: nil)
                     .frame(width: 55)
                     .saturation(0)
                     .colorScheme(.light)
 
                 Text("/\(controller.quotes.count)")
-                    .font(Font.custom(.mono, size: 21))
+                    .font(Font.custom(.mono, size: 20))
                     .foregroundColor(Color.F.black)
-                    .frame(width: 70, alignment: .topLeading)
+                    .frame(width: 65, alignment: .topLeading)
                     .offset(x: -3, y: 0)
+
+                Button("", action: { self.controller.showNextQuote() })
+                    .buttonStyle(nextBtnStyle)
+                    .opacity(controller.canSelectNext() ? 1 : 0.5)
             }
 
             Spacer()
@@ -497,22 +508,42 @@ struct QuoteToolsView: View {
                     self.controller.book.quotesFilter = ""
                 }
             })
-                .buttonStyle(IconButtonStyle(iconName: "middleSearch", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
+            .buttonStyle(IconButtonStyle(iconName: "middleSearch",
+                                         iconColor: self.controller.book.quotesFilter == "" ? Color.F.black : Color.F.red,
+                                         bgColor: Color.F.grayBG,
+                                         width: 30, height: 30))
 
             Button("", action: {
                 self.state.isEditing = true
                 self.controller.createQuote()
             })
-                .buttonStyle(IconButtonStyle(iconName: "middlePlus", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
+            .buttonStyle(IconButtonStyle(iconName: "middlePlus", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
 
             if state.isEditing {
-                Button("", action: { self.controller.formatQuoteText(self.controller.selectedQuote!) })
-                    .buttonStyle(IconButtonStyle(iconName: "format", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
-                    .contextMenu {
+                MenuButton(
+                    label:
+                    ZStack(alignment: .center) {
+                        RoundedRectangle(cornerRadius: 2)
+                            .foregroundColor(Color.F.grayBG)
+
+                        Image("format")
+                            .renderingMode(.template)
+                            .allowsHitTesting(false)
+                            .foregroundColor(Color.F.black)
+
+                        TriangleView().offset(x: 11, y: 11)
+                    }
+                    .frame(width: 30, height: 30)
+                    ,
+                    content: {
                         Button("Remove space duplicates", action: { self.controller.removeSpaceDuplicates(self.controller.selectedQuote!) })
                         Button("Remove word wrapping", action: { self.controller.removeWordWrapping(self.controller.selectedQuote!) })
+                        Button("Remove hyphen with space", action: { self.controller.removeHyphenWithSpaces(self.controller.selectedQuote!) })
                         Button("Replace hyphen with dash", action: { self.controller.replaceHyphenWithDash(self.controller.selectedQuote!) })
-                    }
+                    })
+                    .menuButtonStyle(BorderlessButtonMenuButtonStyle())
+                    .foregroundColor(Color.F.grayBG)
+                    .frame(width: 30, height: 30)
 
                 Button("", action: { self.controller.sortQuotes() })
                     .buttonStyle(IconButtonStyle(iconName: "sort", iconColor: Color.F.black, bgColor: Color.F.grayBG, width: 30, height: 30))
@@ -616,11 +647,9 @@ struct QuoteListView: View {
     @ObservedObject var controller: QuoteListController
     @ObservedObject var chooser: ConspectusChooser
     @ObservedObject var state: ConspectusState
-    let nextBtnStyle = IconButtonStyle(iconName: "next", iconColor: Color.F.whiteBG, bgColor: Color.F.black, width: 60, height: 30)
-    let prevBtnStyle = IconButtonStyle(iconName: "next", iconColor: Color.F.black, bgColor: Color.F.whiteBG, width: 60, height: 30)
-    let scrollController:CustomScrollViewController
+    let scrollController: CustomScrollViewController
 
-    init(_ controller: QuoteListController, scrollController:CustomScrollViewController, chooser: ConspectusChooser) {
+    init(_ controller: QuoteListController, scrollController: CustomScrollViewController, chooser: ConspectusChooser) {
         self.controller = controller
         self.chooser = chooser
         self.scrollController = scrollController
@@ -630,42 +659,14 @@ struct QuoteListView: View {
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 2) {
-            HStack(alignment: .center, spacing: 0) {
-                Button("", action: { self.controller.showPrevQuote() })
-                    .buttonStyle(prevBtnStyle)
-                    .rotationEffect(Angle(degrees: -180))
-                    .opacity(controller.canSelectPrev() ? 1 : 0)
-
-                Spacer()
-
-                Button("", action: { self.controller.showNextQuote() })
-                    .buttonStyle(nextBtnStyle)
-                    .opacity(controller.canSelectNext() ? 1 : 0)
-            }
-
             if controller.selectedQuote != nil {
                 HStack(alignment: .center, spacing: 0) {
                     CompactLinksSubView(controller.selectedQuote!, isEditing: self.state.isEditing)
                     Spacer()
-                }.padding(.bottom, 10)
+                }.padding(.bottom, 0)
 
                 QuoteCell(quote: controller.selectedQuote!, isEditing: self.state.isEditing, scrollController: self.scrollController, chooser: self.chooser, quoteListController: self.controller)
             }
-
-            Spacer()
-
-            HStack(alignment: .center, spacing: 0) {
-                Button("", action: { self.controller.showPrevQuote() })
-                    .buttonStyle(prevBtnStyle)
-                    .rotationEffect(Angle(degrees: -180))
-                    .opacity(controller.canSelectPrev() ? 1 : 0)
-
-                Spacer()
-
-                Button("", action: { self.controller.showNextQuote() })
-                    .buttonStyle(nextBtnStyle)
-                    .opacity(controller.canSelectNext() ? 1 : 0)
-            }.padding(.bottom, 5)
         }
     }
 }
@@ -676,17 +677,17 @@ struct QuoteCell: View {
     @ObservedObject var chooser: ConspectusChooser
     @ObservedObject var quoteListController: QuoteListController
 
-    static let titleFont: Font = Font.custom(.pragmaticaLightItalics, size: 18)
-    static let nsTitleFont: NSFont = NSFont(name: .pragmaticaLightItalics, size: 18)
-    static var nsTextFont: NSFont = NSFont(name: .georgia, size: 21)
-    static var textFont: Font = Font.custom(.georgia, size: 21)
-    static var nsTextBoldFont: NSFont = NSFont(name: .georgiaBold, size: 21)
-    static var nsTextItalicFont: NSFont = NSFont(name: .georgiaItalics, size: 21)
+    static let titleFont: Font = Font.custom(.pragmaticaLightItalics, size: 21)
+    static let nsTitleFont: NSFont = NSFont(name: .pragmaticaLightItalics, size: 21)
+    static var nsTextFont: NSFont = NSFont(name: .georgia, size: 26)
+    static var textFont: Font = Font.custom(.georgia, size: 26)
+    static var nsTextBoldFont: NSFont = NSFont(name: .georgiaBold, size: 26)
+    static var nsTextItalicFont: NSFont = NSFont(name: .georgiaItalics, size: 26)
 
     private let isEditing: Bool
     private let scrollController: CustomScrollViewController
 
-    init(quote: Quote, isEditing: Bool, scrollController:CustomScrollViewController, chooser: ConspectusChooser, quoteListController: QuoteListController) {
+    init(quote: Quote, isEditing: Bool, scrollController: CustomScrollViewController, chooser: ConspectusChooser, quoteListController: QuoteListController) {
         self.quote = quote
         quoteLinkColl = quote.linkColl
         self.isEditing = isEditing
@@ -701,7 +702,7 @@ struct QuoteCell: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .bottom, spacing: 0) {
                 if !isEditing {
                     Text("S. " + quote.startPage + (quote.endPage.count > 0 ? "–\(quote.endPage)" : ""))
@@ -743,20 +744,19 @@ struct QuoteCell: View {
 
                     EditableText("Untertitel", text: $quote.title, textColor: NSColor.F.black05, font: QuoteCell.nsTitleFont, alignment: .right, isEditing: isEditing)
                         .saturation(0)
-                        .frame(width: 500, height: 30).offset(x: 1, y: 1)
+                        .frame(width: Constants.docViewWidth - 300, height: 30).offset(x: 1, y: 1)
                 }
             }.padding(.bottom, 20)
 
             MultilineInput(text: $quote.text,
-                            width: Constants.docViewWidth - Constants.docViewLeading - Constants.quoteTextTrailing,
-                            textColor: NSColor.F.black,
-                            font: QuoteCell.nsTextFont,
-                            isEditing: self.isEditing,
-                            highlightedText: quoteListController.searchText,
-                            firstLineHeadIndent: 50,
-                            onSelectionChange: { range in self.quoteListController.quoteTextSelection = range },
-                            onBeginTyping: {self.scrollController.animateWhenContentHeightIsChanging = true},
-                            onEndTyping: {self.scrollController.animateWhenContentHeightIsChanging = false})
+                           width: Constants.docViewWidth - Constants.docViewLeading - Constants.quoteTextTrailing,
+                           textColor: NSColor.F.black,
+                           font: QuoteCell.nsTextFont,
+                           isEditing: self.isEditing,
+                           highlightedText: quoteListController.book.quotesFilter,
+                           firstLineHeadIndent: Constants.quoteTextNewLineIndent,
+                           onSelectionChange: { range in self.quoteListController.quoteTextSelection = range },
+                           onBeginTyping: { self.scrollController.animateWhenContentHeightIsChanging = true })
 
             // user comments
             if quoteLinkColl.links.count > 0 {
@@ -770,7 +770,7 @@ struct QuoteCell: View {
                     })
                 }
             }
-            
+
             Spacer()
         }
         .colorScheme(.light)

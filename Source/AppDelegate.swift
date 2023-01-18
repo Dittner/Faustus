@@ -15,16 +15,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var window: NSWindow?
     private var disposeBag: Set<AnyCancellable> = []
 
+    private var docViewModel: DocViewModel!
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let dropboxUrl = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(StorageDirectory.dropbox.rawValue)
-        
+
         var isDir: ObjCBool = true
         let hasDropboxProjectDir = FileManager.default.fileExists(atPath: dropboxUrl.appendingPathComponent(StorageDirectory.project.rawValue).path, isDirectory: &isDir)
-        
-        
+
         DocumentsStorage.shared = DocumentsStorage(documentsURL: hasDropboxProjectDir ? dropboxUrl : documentsURL)
-        
+
         Logger.run()
         AppModel.shared.loadUser()
 
@@ -33,6 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered, defer: false)
 
+        docViewModel = DocViewModel()
         mainWindow.contentView = CustomWindow(rootView: RootView()
             .environmentObject(TextFocus())
             .environmentObject(ModalViewObservable())
@@ -40,7 +41,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             .environmentObject(LoginViewModel())
             .environmentObject(SearchViewModel())
             .environmentObject(HistoryViewModel())
-            .environmentObject(DocViewModel()))
+            .environmentObject(docViewModel))
         mainWindow.makeKeyAndOrderFront(nil)
         mainWindow.titlebarAppearsTransparent = true
         mainWindow.isMovableByWindowBackground = true
@@ -50,6 +51,33 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         mainWindow.delegate = self
 
         window = mainWindow
+
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) {
+            if self.keyDown(with: $0) {
+                return nil // needed to get rid of purr sound
+            } else {
+                return $0
+            }
+        }
+    }
+
+    private func keyDown(with event: NSEvent) -> Bool {
+        if AppModel.shared.selectedConspectus.state.isEditing { return false }
+
+        switch event.keyCode {
+        case 123:
+            docViewModel.quoteListController.showPrevQuote()
+        case 124:
+            docViewModel.quoteListController.showNextQuote()
+        case 125:
+            docViewModel.scrollController.updateScrollPosition(with: -10)
+        case 126:
+            docViewModel.scrollController.updateScrollPosition(with: 10)
+        default:
+            return false
+        }
+
+        return window?.firstResponder == nil || window?.firstResponder is NSWindow
     }
 
     func expandWindow() {

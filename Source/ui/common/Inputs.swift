@@ -132,10 +132,10 @@ struct MultilineInput: View {
     public let textColor: NSColor
     public let font: NSFont
     public let isEditing: Bool
-    public var minHeight: CGFloat = 60
+    public var minHeight: CGFloat = 80
     public var horizontalPadding: CGFloat = 0
     public var highlightedText: String = ""
-    public var fontLineHeight: CGFloat = 30
+    public var fontLineHeight: CGFloat = 40
     public var firstLineHeadIndent: CGFloat = 0
     public var onSelectionChange: ((_ range: NSRange) -> Void)? = nil
     public var onBeginTyping: (() -> Void)? = nil
@@ -223,7 +223,8 @@ struct TextArea: NSViewRepresentable {
             textArea.curHighlightedText = highlightedText
         }
 
-        let updatedText: String = isEditable ? text : text.replacingOccurrences(of: "_", with: "\u{200B}", options: NSString.CompareOptions.literal, range: nil)
+        var updatedText: String = isEditable ? text : text.replacingOccurrences(of: "_", with: "\u{200B}", options: .literal, range: nil)
+        updatedText = isEditable ? updatedText : updatedText.replacingOccurrences(of: "=", with: "━", options: .literal, range: nil)
         if textArea.string != updatedText {
             textArea.string = updatedText
         }

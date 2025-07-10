@@ -1,0 +1,132 @@
+ID
+index
+
+NAME
+Index
+
+YEAR
+2024
+
+ABOUT
+Shortkeys, Markdown
+
+MARKDOWN
+## Shortkeys
+Start/Finish editing file: `Ctrl + Shift + E`
+Uppercase of selected text: `Ctrl + Shift + U`
+Lowercase of selected text: `Ctrl + Shift + L`
+Remove line under cursor: `Ctrl + Shift + X`
+Wrap selected text with code block: `Ctrl + Shift + \``
+Remove line breaks of selected text: `Ctrl + Shift + R`
+Duplicate line: `Ctrl + Shift + D`
+Add 4-space-indents: `Tab`
+
+
+## Markdown
+To see raw text, turn on edit mode.
+### Headers
+# h1
+## h2
+### h3
+#### h4
+##### h5
+###### h6
+
+
+$### List
+_Ordered list_
+```ol
+1. A
++ B
++ C
+2. D
+```
+```note
+E
+```
++ F
++ G
+
+#### But
+1) Text A
+2) Text B
+
+_Unordered list_
++ Item __A__
++ Item __B__
+
+
+### Emphasis
+##### Alt + Shift + E
+А́а́ Е́е́ И́и́ О́о́ У́у́ Ы́ы́ Э́э́ Ю́ю́ Я́я́
+
+
+$### Formatting
+`Mark`, __bold__ and _italic_ formatting
+
+#### To ignore formating use symbol '/':
+(http://www.opojaz.ru/method/method/_intro.html)
+/_/_intro.html/_/_
+
+
+$### Comment
+HAL 9000
+> HAL 9000 (or simply HAL or Hal) is a fictional artificial intelligence character and the main antagonist in the Space Odyssey series. First appearing in the 1968 film 2001: A Space Odyssey, HAL (Heuristically Programmed Algorithmic Computer) is a sentient artificial general intelligence computer that controls the systems of the Discovery One spacecraft and interacts with the ship's astronaut crew.
+
+$### Quote
+BEGIN
+```poem
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud `exercitation` ullamco laboris nisi ut aliquip ex ea commodo consequat.
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+```
+END
+
+BEGIN
+```poem
+Lorem ipsum dolor sit amet
+_consectetur_ __adipiscing__ `elit`
+sed do eiusmod tempor incididunt
+```
+END
+
+BEGIN
+```note
+Lorem ipsum dolor sit amet
+_consectetur_ __adipiscing__ `elit`
+sed do eiusmod tempor incididunt
+
+__Nested poem block__
+```poem
+Lorem ipsum dolor sit amet
+_consectetur_ __adipiscing__ `elit`
+sed do eiusmod tempor incididunt
+```
+```
+END
+
+
+$### Epigraph
+BEGIN
+```epi
+Lorem ipsum dolor sit _amet_ __consectetur__ `adipiscing` elitsed do eiusmod tempor incididunt
+(Author)
+```
+END
+
+
+$### Alignment
+=> _Center_ Aligned Text
+==> _Right_ Aligned Text
+
+
+### Link
+[Source](https://github.com/Dittner)
+[](https://github.com/Dittner)
+
+
+$### image
+
+![screenshot](/index/dittner/img/chaplin.jpg)(Chaplin)
+
+=> Centered Image
+=> ![screenshot](/index/dittner/img/chaplin.jpg)(Chaplin)

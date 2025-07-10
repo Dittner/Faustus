@@ -1,0 +1,259 @@
+:root {
+  --LineHeight: 1.6;
+  --font-family: -apple-system,'system-ui','system-ui',sans-serif;
+  --font-family-mono: Menlo,source-code-pro,Monaco,'Courier New',monospace;
+  --font-family-article: 'verdana',-apple-system,'system-ui','system-ui',sans-serif;
+}
+
+@font-face {
+  font-family: 'verdana';
+  src: url('resources/fonts/Verdana.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'verdana';
+  src: url('resources/fonts/VerdanaPro-SemiBold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'verdana';
+  src: url('resources/fonts/VerdanaPro-Italic.ttf') format('truetype');
+  font-weight: normal;
+  font-style: italic;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'verdana';
+  src: url('resources/fonts/VerdanaPro-SemiBoldItalic.ttf') format('truetype');
+  font-weight: bold;
+  font-style: italic;
+  font-display: block;
+}
+
+.def {
+  font-family: var(--font-family) !important;
+}
+
+.article {
+  font-family: var(--font-family-article) !important;
+}
+
+.mono {
+  font-family: var(--font-family-mono) !important;
+}
+
+* {
+  box-sizing:border-box;
+  -webkit-box-sizing:border-box;
+  -moz-box-sizing:border-box;
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: auto;
+  font-size: 16px;
+  text-size-adjust: 100%;
+  line-height: var(--LineHeight);
+  justify-content: space-between;
+  font-family: var(--font-family) !important;
+  /* -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: antialiased !important; */
+}
+
+@media screen and (max-width: 1000px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+@media screen and (max-width: 900px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  html {
+    font-size: 12px;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  outline: none;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  caret-shape: auto;
+  /*add scroll track to all screens*/
+  /*overflow-y: scroll;*/
+}
+
+body, p, a, b, i, h1, h2, h3, h4, h5, h6, blockquote {
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+}
+
+::selection {
+  color: #111111;
+  background: #c7a0df;
+}
+
+/******************************/
+/*-------- SCROLLBAR ---------*/
+/******************************/
+
+.rtl {
+  direction: rtl;
+  overflow: auto;
+}
+
+.ltr {
+  direction: ltr;
+}
+
+.listScrollbar {
+  display: block;
+  overflow: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: none;
+}
+
+.listScrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.listScrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.listScrollbar::-webkit-scrollbar-thumb {
+  background: #66666650;
+  background-clip: content-box;
+  
+}
+
+.listScrollbar::-webkit-scrollbar-thumb:hover {
+  background: #666666;
+  background-clip: content-box;
+}
+
+
+/******************************/
+/*---------- INPUT -----------*/
+/******************************/
+
+input {
+  font-size: 1rem;
+  min-height: 35px;
+  border-radius: unset;
+  outline: unset;
+  background: unset;
+  border: unset;
+}
+
+textarea {
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.6;
+  min-height: 50px;
+  margin: 0;
+  box-sizing: border-box;
+  background: none;
+  border: none;
+  resize: none;
+  outline: none;
+  overflow: hidden;
+  scroll-behavior: auto;
+  overscroll-behavior: none;
+}
+
+/******************************/
+/*--------- BUTTON ---------*/
+/******************************/
+
+button {
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 1rem;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  font-weight: 400;
+  border: none;
+  min-height: 35px;
+  background: none;
+  text-align: center;
+  text-decoration: none;
+  white-space: pre;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  font-size: 1rem;
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-weight: 500;
+  border: none;
+  min-height: 35px;
+  background: none;
+  text-align: center;
+  text-decoration: none;
+  white-space: pre;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+/******************************/
+/*------ Material Icons ------*/
+/******************************/
+
+@font-face {
+  font-family: 'MaterialIcons';
+  font-style: normal;
+  font-weight: 400;
+  src: url('resources/fonts/MaterialIcons.ttf') format('truetype');
+}
+
+.material_icon {
+  font-family: 'MaterialIcons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;  /* Preferred icon size */
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+
+  /* Support for all WebKit browsers. */
+  -webkit-font-smoothing: antialiased;
+  /* Support for Safari and Chrome. */
+  text-rendering: optimizeLegibility;
+
+  /* Support for Firefox. */
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Support for IE. */
+  -webkit-font-feature-settings: 'liga';
+}

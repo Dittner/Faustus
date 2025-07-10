@@ -1,0 +1,37 @@
+services:
+  index-web-client:
+    container_name: index-web-client
+    build:
+      context: ./frontend/index
+      dockerfile: Dockerfile
+      target: dev
+      args:
+        - INDEX_API_URL=http://localhost:3001/api/index
+    restart: unless-stopped
+    volumes:
+      - ./frontend/index/src:/app/src
+    ports:
+      - 3000:3000
+    networks:
+      - network
+
+  index-api:
+    container_name: index-api
+    build:
+      context: ./backend/indexapi
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    # command: uv run uvicorn main:app --host 127.0.0.1 --port 3456
+    environment:
+      - UVICORN_RELOAD=true
+    volumes:
+      - ./backend/indexapi:/app
+    ports:
+      - 3001:80
+    tty: true
+    networks:
+      - network
+
+networks:
+  network:
+    driver: bridge

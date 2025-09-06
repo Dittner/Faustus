@@ -5,15 +5,13 @@
 */ssl
 .log*
 *.lock
+__pycache__
 
-backend/indexapi/data
-backend/indexapi/.python-version
-backend/indexapi/pyproject.toml
+index-api/data
 
-frontend/index/dist
-frontend/index/node_modules
-frontend/index/package-lock.json
-
+index-web/dist
+index-web/node_modules
+index-web/package-lock.json
 
 
 

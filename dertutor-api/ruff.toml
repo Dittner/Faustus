@@ -1,0 +1,55 @@
+target-version = "py313"
+line-length = 150
+indent-width = 4
+
+lint.select = [
+    "ALL", # include all the rules, including new ones
+]
+
+lint.ignore = [
+    "ANN201", # Missing return type annotation for public function
+    "ANN202", # Missing return type annotation for private function
+    "ANN204", # Missing return type annotation for special method
+    "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
+    "COM812", # To avoid unexpected behavior
+    "RET505", # superfluous-else-return
+    "T201", # remove-print
+    "D100", # ignore missing docs
+    "D202", # No blank lines allowed after function docstring (found 1)
+    "D205", # 1 blank line required between summary line and description
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D106",
+    "D107",
+    "D400",
+    "D401",
+    "D415",
+    "D203", # incorrect-blank-line-before-class
+    "D211", # no-blank-line-before-class
+    "D212", # multi-line-summary-first-line
+    "D213", # multi-line-summary-second-line
+    "EM101", # Exception must not use a string literal, assign to variable first
+    "E402",   # false positives for local imports
+    "E501",   # line too long
+    "ERA001", #Found commented-out codeRuff
+    "FIX002", # too verbose descriptions of todos
+    "G004", # Logging statement uses f-string
+    "INP001", # File `alembic/env.py` is part of an implicit namespace package. Add an `__init__.py
+    "Q000", # Double quotes are preferred 
+    "TRY003", # external messages in exceptions are too verbose
+    "TD002",
+    "TD003",
+    
+    "UP043", # Unnecessary default type argumentsRuff
+    
+]
+
+exclude = [
+    "tests"
+]
+
+[format]
+quote-style = "single"

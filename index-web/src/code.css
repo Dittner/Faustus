@@ -1,0 +1,174 @@
+pre.code-dark,
+pre.code-night,
+pre.code-light {
+    line-height: 1.7;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 0;
+    font-family: var(--font-family-mono);
+    font-size: 1.2rem;
+}
+
+code.md-dark,
+code.md-light,
+code.md-night {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    line-height: inherit;
+    background: 0 0;
+    border: none;
+    text-align: left;
+    white-space: pre-wrap;
+    word-spacing: normal;
+    word-break: normal;
+    word-wrap: normal;
+    -webkit-hyphens: none;
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    hyphens: none;
+    padding: 0;
+    margin: 0;
+    outline: none;
+}
+
+code.md-light span,
+code.md-dark span,
+code.md-night span {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+
+/******************************/
+/*--------- LIGHT -----------*/
+/******************************/
+pre.code-light {
+    background-color: #f9f8f7;
+}
+
+code.md-light {
+    color: #222222;
+}
+
+code.md-light span.num {
+    color: #a72828;
+}
+
+code.md-light span.str {
+    color: #327800;
+}
+
+code.md-light span.op {
+    color: #222222;
+}
+
+code.md-light span.fn {
+    color: #016190;
+}
+
+code.md-light span.cl {
+    color: #016190;
+}
+
+code.md-light span.tag,
+code.md-light span.kw,
+code.md-light span.kt {
+    color: #6e2375;
+}
+
+code.md-light span.cmt {
+    color: #999999;
+}
+
+code.md-light span.dec {
+    color: #7e8a13;
+}
+
+
+/******************************/
+/*--------- DARK -----------*/
+/******************************/
+pre.code-dark {
+    background-color: #25272b;
+}
+code.md-dark {
+    color: #c0c8cf;
+}
+
+code.md-dark span.num {
+    color: #e2777a;
+}
+
+code.md-dark span.str {
+    color: #86bebe;
+}
+
+code.md-dark span.fn,
+code.md-dark span.cl {
+    color: #6da3c9;
+}
+
+code.md-dark span.op,
+code.md-dark span.kw {
+    color: #938eb7;
+}
+
+code.md-dark span.tag,
+code.md-dark span.kt {
+    color: #c394c7;
+}
+
+code.md-dark span.cmt {
+    color: #717783;
+}
+
+code.md-dark span.dec {
+    color: #a8ad89;
+}
+
+/******************************/
+/*--------- NIGHT -----------*/
+/******************************/
+pre.code-night {
+    background-color: #161616;
+}
+
+code.md-night {
+    color: #b1b7c3;
+}
+
+code.md-night span.num {
+    color: #c1746d;
+}
+
+code.md-night span.str {
+    color: #81b4b4;
+}
+
+code.md-night span.op {
+    color: #7f7aab;
+}
+
+code.md-night span.fn,
+code.md-night span.cl {
+    color: #6991b9;
+}
+
+code.md-night span.kw {
+    color: #8683a9;
+}
+
+code.md-night span.tag,
+code.md-night span.kt {
+    color: #b48fc1;
+}
+
+code.md-night span.cmt {
+    color: #717783;
+}
+
+code.md-night span.dec {
+    color: #9ca48f;
+}

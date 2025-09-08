@@ -1,6 +1,8 @@
 ## Intro
-__Faustus__ – group of frontend application:
-+ Index module – notes manager app written with [FlinkerDom](https://github.com/Dittner/FlinkerDom) library.
+__Faustus__ – group of apps:
++ index-web module – notes manager written with [FlinkerDom](https://github.com/Dittner/FlinkerDom) library.
++ index-api - fastapi backend, stores notes
++ dertutor-api - fastapi/Postgres/SQLAlchemy backend, stores en/de-vocabularies/lessons/tests
 
 ## License
 MIT

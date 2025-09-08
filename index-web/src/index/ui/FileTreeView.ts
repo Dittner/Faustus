@@ -1,8 +1,8 @@
+import { link, spacer, span, vlist, vstack } from "flinker-dom"
 import { globalContext } from "../../App"
 import { LayoutLayer } from "../../global/Application"
 import { MaterialIcon } from "../../global/MaterialIcon"
 import { theme } from "../../global/ThemeManager"
-import { link, spacer, span, vlist, vstack } from "flinker-dom"
 import { TextFile } from "../domain/IndexModel"
 import { IndexContext } from "../IndexContext"
 import { Icon, RedBtn } from "./controls/Button"
@@ -61,7 +61,7 @@ export const FileTreeView = () => {
 
 interface Node {
   key: string
-  type: 'author' | 'dir' | 'file' | 'page'
+  type: 'author' | 'dir' | 'file' | 'header'
   depth: number
   isSelected: boolean
   title: string
@@ -73,10 +73,10 @@ const FileLink = (n: Node) => {
     .react(s => {
       s.href = n.link
       s.width = '100%'
-      s.textColor = n.isSelected ? theme().menuSelectedItem : n.type === 'page' ? theme().blue : theme().menuItem
+      s.textColor = n.isSelected ? theme().menuSelectedItem : n.type === 'header' ? theme().menuHeader : theme().menuItem
       s.fontWeight = n.isSelected ? 'bold' : theme().defFontWeight
       s.paddingLeft = ((n.depth - 1) * 25) + 'px'
-      s.paddingVertical = '5px'
+      s.paddingVertical = '3px'
       s.lineHeight = '1.1'
       s.textDecoration = 'none'
       s.minHeight = '0'
@@ -89,7 +89,7 @@ const FileLink = (n: Node) => {
       s.boxSizing = 'border-box'
     })
     .whenHovered(s => {
-      s.textColor = n.isSelected ? theme().menuSelectedItem : theme().menuHoveredItem
+      s.textColor = n.isSelected ? theme().menuSelectedItem : n.type === 'header' ? theme().menuHoveredHeader : theme().menuHoveredItem
     })
     .onClick((e) => {
       e.preventDefault() //avoid page reloading
@@ -153,7 +153,7 @@ const fileToNodes = (from: TextFile, openedDirectoriesIds: string[], openedDirec
           pn.depth = openedDirectoryDepth + 1 + headerLevel
           pn.link = f.link + '#' + index
           pn.title = pageTitle
-          pn.type = 'page'
+          pn.type = 'header'
 
           res.push(pn)
         }

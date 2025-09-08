@@ -48,7 +48,7 @@ export class Editor {
 
   private applyTextChanges() {
     if (this.selectedPage) {
-      this.selectedPage.text = this.startFormatting(this.$inputBuffer.value)
+      this.selectedPage.text = this.$inputBuffer.value
     }
   }
 
@@ -108,8 +108,7 @@ export class Editor {
       else if (this.ctx.$selectedFile.value?.isEditing && e.keyCode === 70) {
         e.preventDefault()
         e.stopPropagation()
-        const text = this.startFormatting(this.$inputBuffer.value)
-        this.$inputBuffer.value = text
+        this.$inputBuffer.value = this.startFormatting(this.$inputBuffer.value)
       }
     }
   }
@@ -154,43 +153,64 @@ export class Editor {
   //--------------------------------------
   //  maxEmptyLines
   //--------------------------------------
-  readonly maxEmptyLines: NumberProtocol = { value: 3 }
+  readonly MAX_EMPTY_LINES = 2
 
-  startFormatting(text: string): string {
-    let res = ''
+  startFormatting(value: string): string {
+    let text = this.removeExtraSpacesAtTheBeginning(value)
+    text = this.removeExtraSpacesAtTheEnd(text)
+    text = this.reduceEmptyLines(text)
 
-    let blocks = text.replace(/^```code\s*\n(((?!```)(.|\n))+)\n```/gm, '<CODE>$1<CODE>').split('<CODE>')
+    const res: string[] = []
+    const textBuffer: string[] = []
+    const codeBuffer: string[] = []
+    let codeCounter = 0
 
-    blocks.forEach((b, i) => {
-      if (i % 2 !== 0) {
-        res += '```code\n' + this.replaceQuotes(b) + '\n```'
+    const realizeBuffers = () => {
+      if (textBuffer.length > 0) {
+        let blockText = textBuffer.join('\n')
+        blockText = this.removeExtraSpacesInTheMiddle(blockText)
+        blockText = this.replaceHyphenWithDash(blockText)
+        blockText = this.removeHyphenAndSpace(blockText)
+        blockText = this.replaceQuotes(blockText)
+        res.push(blockText)
+        textBuffer.length = 0
+      }
+      if (codeBuffer.length > 0) {
+        let code = codeBuffer.join('\n')
+        code = this.replaceQuotes(code)
+        res.push(code)
+        codeBuffer.length = 0
+      }
+    }
+
+    const rows = text.split('\n')
+    rows.forEach(r => {
+      if (r.match(/^```code *$/)) {
+        codeCounter++
+        codeBuffer.push(r)
+        if (codeCounter === 1) realizeBuffers()
+      }
+      else if (r.match(/^``` *$/) && codeCounter > 0) {
+        codeCounter--
+        codeBuffer.push(r)
+        if (codeCounter === 0) realizeBuffers()
+      } else if (r.match(/^>>> */) && codeCounter === 0) {
+        realizeBuffers()
+        codeBuffer.push(r)
+        realizeBuffers()
+      } else if (codeCounter > 0) {
+        codeBuffer.push(r)
       } else {
-        const bashCodeBlocks = b.replace(/^>>>\s?([^\n]+\n?)/gm, '<CODE>$1<CODE>').split('<CODE>')
-        bashCodeBlocks.forEach((bb, j) => {
-          if (j % 2 !== 0) {
-            res += '>>> ' + this.replaceQuotes(bb)
-          } else {
-            let blockText = bb
-            if (i == 0 && j === 0) blockText = this.removeExtraSpacesAtTheBeginning(blockText)
-            else if (i === blocks.length - 1 && j === bashCodeBlocks.length - 1)
-              blockText = this.removeExtraSpacesAtTheEnd(blockText)
-            
-            blockText = this.removeExtraSpacesInTheMiddle(blockText)
-            blockText = this.replaceHyphenWithDash(blockText)
-            blockText = this.removeHyphenAndSpace(blockText)
-            blockText = this.replaceQuotes(blockText)
-            blockText = this.reduceEmptyLines(blockText)
-            res += blockText
-          }
-        })
+        textBuffer.push(r)
       }
     })
 
-    return res
+    realizeBuffers()
+    return res.join('\n')
   }
 
   removeExtraSpacesAtTheBeginning(s: string): string {
-    return s.replace(/^[\n| ]+/, '')
+    return s.replace(/^[\n ]+/, '')
   }
 
   removeExtraSpacesAtTheEnd(s: string): string {
@@ -222,13 +242,14 @@ export class Editor {
 
   replaceQuotes(s: string): string {
     return s
-      .replace(/[”„“«»]/g, '"')
+      .replace(/[”„“]/g, '"')
       .replace(/…/g, '...')
   }
 
   reduceEmptyLines(s: string): string {
-    const max = this.maxEmptyLines.value
-    return s.replace(new RegExp(`\n{${max},}`, 'g'), '\n'.repeat(max))
+    return s
+      .replace(/\n\s+\n/g, '\n\n')
+      .replace(new RegExp(`\n{${this.MAX_EMPTY_LINES},}`, 'g'), '\n'.repeat(this.MAX_EMPTY_LINES))
   }
 
   replaceWith() {

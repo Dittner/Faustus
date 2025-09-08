@@ -126,7 +126,6 @@ const TextArea = () => {
 
   return textarea()
     .react(s => {
-      console.log('TextEditor didUpdateProps')
       s.className = 'listScrollbar'
       s.width = '100%'
       s.bgColor = theme().appBg
@@ -249,7 +248,6 @@ class TextEditorController {
     if (beginOfTheLineIndex === -1) beginOfTheLineIndex = 0
     let endOfTheLineIndex = ta.value.indexOf('\n', ta.selectionStart)
     if (endOfTheLineIndex === -1) endOfTheLineIndex = ta.value.length
-    //console.log('TextEditorController:duplicateLine, range:', beginOfTheLineIndex, endOfTheLineIndex)
 
     const line = beginOfTheLineIndex === 0 ?
       '\n' + ta.value.slice(beginOfTheLineIndex, endOfTheLineIndex) :

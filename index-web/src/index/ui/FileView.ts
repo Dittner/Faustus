@@ -1,7 +1,7 @@
+import { div, hstack, image, observer, p, spacer, vlist, vstack } from "flinker-dom"
 import { globalContext } from "../../App"
 import { MaterialIcon } from "../../global/MaterialIcon"
 import { theme } from "../../global/ThemeManager"
-import { div, hstack, image, observer, p, spacer, vlist, vstack } from "flinker-dom"
 import { InfoPage, Page, TextFile } from "../domain/IndexModel"
 import { IndexContext } from "../IndexContext"
 import { RedBtn } from "./controls/Button"
@@ -75,6 +75,15 @@ const FileBtnBar = (file: TextFile) => {
           s.text = 'Add File'
         })
         .onClick(() => ctx.createNewFile())
+
+      RedBtn()
+        .observe(file)
+        .react(s => {
+          s.text = 'Raw'
+          s.popUp = 'Switch to raw/markdown mode'
+          s.isSelected = file.showRawText
+        })
+        .onClick(() => file.showRawText = !file.showRawText)
     })
 }
 
@@ -271,7 +280,7 @@ const ArticleFileInfo = (info: InfoPage) => {
 
 const PageList = (file: TextFile) => {
   return vlist<Page>()
-    .observe(file)
+    .observe(file, "affectsChildrenProps")
     .react(s => {
       s.className = 'article'
       s.textColor = theme().text
@@ -324,6 +333,7 @@ const PageView = (page: Page, index: number) => {
           s.text = page.text
           s.fontSize = page.file && (page.file.info.fontSize || theme().defFontSize)
           s.apiUrl = globalContext.restApi.assetsUrl
+          s.showRawText = page.file.showRawText
           //s.fontFamily = isCode ? 'var(--font-family)' : 'var(--font-family-article)'
         })
     })

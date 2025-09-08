@@ -1,10 +1,10 @@
-import { GlobalContext } from '../../global/GlobalContext'
 import { RXObservable, RXObservableEntity } from 'flinker'
+import { globalContext } from '../../App'
+import { GlobalContext } from '../../global/GlobalContext'
 import { generateUID, sortByKeys } from '../../global/Utils'
+import RootInfo from '../../resources/RootInfo.txt?raw'
 import { IndexContext } from '../IndexContext'
 import { RestApiError } from '../infrastructure/backend/RestApi'
-import { globalContext } from '../../App'
-import RootInfo from '../../resources/RootInfo.txt?raw'
 
 interface Serializable {
   serialize: () => string
@@ -37,6 +37,7 @@ export class TextFile extends RXObservableEntity<TextFile> {
   info: InfoPage
   isDamaged = false
   isDirectory = false
+
   parent: TextFile | undefined = undefined
 
   get name(): string { return this.info.name }
@@ -83,6 +84,18 @@ export class TextFile extends RXObservableEntity<TextFile> {
     if (a.info.year > b.info.year) return -1
     if (a.info.year < b.info.year) return 1
     return 0
+  }
+
+  //--------------------------------------
+  //  showRawText
+  //--------------------------------------
+  private _showRawText: boolean = false
+  get showRawText(): boolean { return this._showRawText }
+  set showRawText(value: boolean) {
+    if (this._showRawText !== value) {
+      this._showRawText = value
+      this.mutated()
+    }
   }
 
   //--------------------------------------

@@ -85,7 +85,7 @@ class MDGrammar {
       return '<a href="' + url + '">' + (descr || url) + '</a>'
     }]
 
-    this.globalRule.childrenInlineRules = [code, strong, bold, em, imgAndLegend, img, link, italic]
+    this.globalRule.childrenInlineRules = [code, imgAndLegend, img, link, strong, bold, em, italic]
 
     // 
     // LINE GRAMMAR RULES
@@ -105,17 +105,17 @@ class MDGrammar {
 
     const quote = new MDLineGrammarRule()
     quote.matcher = [/^> (.*)$/, '<blockquote><p>$1</p></blockquote>']
-    quote.childrenInlineRules = [code, strong, bold, em, imgAndLegend, img, link, italic]
+    quote.childrenInlineRules = this.globalRule.childrenInlineRules
     quote.preProccessing = defLinePreproccessing
 
     const alignRight = new MDLineGrammarRule()
-    alignRight.matcher = [/^==> (.*)$/, '<div class="md-right">$1</div>']
-    alignRight.childrenInlineRules = [code, strong, bold, em, imgAndLegend, img, link, italic]
+    alignRight.matcher = [/^==> (.*)$/, '<p class="md-right">$1</p>']
+    alignRight.childrenInlineRules = this.globalRule.childrenInlineRules
     alignRight.preProccessing = defLinePreproccessing
 
     const alignCenter = new MDLineGrammarRule()
-    alignCenter.matcher = [/^=> (.*)$/, '<div class="md-center">$1</div>']
-    alignCenter.childrenInlineRules = [code, strong, bold, em, imgAndLegend, img, link, italic]
+    alignCenter.matcher = [/^=> (.*)$/, '<p class="md-center">$1</p>']
+    alignCenter.childrenInlineRules = this.globalRule.childrenInlineRules
     alignCenter.preProccessing = defLinePreproccessing
 
     const stars = new MDLineGrammarRule()
@@ -123,7 +123,7 @@ class MDGrammar {
 
     const p = new MDLineGrammarRule()
     p.matcher = [/^(.*)$/, '<p>$1</p>']
-    p.childrenInlineRules = [code, strong, bold, em, imgAndLegend, img, link, italic]
+    p.childrenInlineRules = this.globalRule.childrenInlineRules
     p.preProccessing = defLinePreproccessing
 
     const br = new MDLineGrammarRule()
@@ -131,12 +131,12 @@ class MDGrammar {
 
     const oli = new MDLineGrammarRule()
     oli.matcher = [/^\d+\. (.*)$/, '<li>$1</li>']
-    oli.childrenInlineRules = [code, strong, bold, em, imgAndLegend, img, link, italic]
+    oli.childrenInlineRules = this.globalRule.childrenInlineRules
     oli.preProccessing = defLinePreproccessing
 
     const uli = new MDLineGrammarRule()
     uli.matcher = [/^\+ (.*)$/, '<li>$1</li>']
-    uli.childrenInlineRules = [code, strong, bold, em, imgAndLegend, img, link, italic]
+    uli.childrenInlineRules = this.globalRule.childrenInlineRules
     uli.preProccessing = defLinePreproccessing
 
     this.globalRule.childrenLineRules = [header, bash, quote, alignCenter, alignRight, stars, br, p]
@@ -161,23 +161,33 @@ class MDGrammar {
     ol.startMatcher = [/^```ol *$/, '<ol>']
     ol.endMatcher = [/^``` *$/, '</ol>']
     ol.childrenLineRules = [oli, bash, br, p]
-    ol.childrenInlineRules = [code, strong, bold, em, imgAndLegend, img, link, italic]
+    ol.childrenInlineRules = this.globalRule.childrenInlineRules
     ol.childrenMultilineRules = [ol, ul]
 
     ul.startMatcher = [/^```ul *$/, '<ul>']
     ul.endMatcher = [/^``` *$/, '</ul>']
     ul.childrenLineRules = [uli, bash, br, p]
-    ul.childrenInlineRules = [code, strong, bold, em, imgAndLegend, img, link, italic]
+    ul.childrenInlineRules = this.globalRule.childrenInlineRules
     ul.childrenMultilineRules = [ol, ul]
+
+    const table = new MDMultilineGrammarRule()
+    table.startMatcher = [/^```tbl *$/, '<table>']
+    table.endMatcher = [/^``` *$/, '</table>']
+    const tableRow = new MDLineGrammarRule()
+    tableRow.matcher = [/^(.*)$/, (line: string) => {
+      return '<tr>' + line.split(/,(?! )/).map(v => '<td>' + v + '</td>').join('') + '</tr>'
+    }]
+    tableRow.childrenInlineRules = this.globalRule.childrenInlineRules
+    table.childrenLineRules = [tableRow]
 
     const div = new MDMultilineGrammarRule()
     div.startMatcher = [/^```([a-zA-Z]+) */, '<div class="$1"><div>']
     div.endMatcher = [/^``` *$/, '</div></div>']
-    div.childrenInlineRules = [code, strong, bold, em, imgAndLegend, img, link, italic]
+    div.childrenInlineRules = this.globalRule.childrenInlineRules
     div.childrenLineRules = [quote, alignCenter, alignRight, br, p]
     div.childrenMultilineRules = [div]
 
-    this.globalRule.childrenMultilineRules = [mc, ol, ul, div]
+    this.globalRule.childrenMultilineRules = [mc, ol, ul, table, div]
 
     console.log('this.globalRule.=', this.globalRule)
   }
@@ -208,15 +218,6 @@ class MDParser {
   run(text: string): string {
     const ctx = new MDParserContext(text)
     return this.parseMultiline(ctx, this.globalRule)
-  }
-
-  private parseLine(text: string, inlineRules: MDInlineGrammarRule[]): string {
-    let res = text
-    for (let i = 0; i < inlineRules.length; i++) {
-      const r = inlineRules[i]
-      res = res.replace(r.matcher[0], r.matcher[1])
-    }
-    return res
   }
 
   private parseMultiline(ctx: MDParserContext, rule: MDMultilineGrammarRule | GlobalGrammarRule): string {
@@ -262,11 +263,20 @@ class MDParser {
 
       if (exactlyMatched) continue
 
-      console.warn('Line not handled by any rule, line: <', row, '>', 'parent rule:', rule)
+      console.warn('Line is not handled by any rule, line: <', row, '>', 'parent rule:', rule)
       res += this.parseLine(row, rule.childrenInlineRules)
     }
 
     if (rule.postProccessing) res = rule.postProccessing(res)
+    return res
+  }
+
+  private parseLine(text: string, inlineRules: MDInlineGrammarRule[]): string {
+    let res = text
+    for (let i = 0; i < inlineRules.length; i++) {
+      const r = inlineRules[i]
+      res = res.replace(r.matcher[0], r.matcher[1])
+    }
     return res
   }
 }
@@ -275,7 +285,7 @@ const mdGrammar = new MDGrammar()
 export const md = (text: string, apiUrl?: string) => {
   const parser = new MDParser(mdGrammar)
   let res = parser.run(text)
-  // allow images relative path
+  // allow images to have a relative path
   if (apiUrl)
     res = res.replace(/src="((?!https?:)[^"]+)"/gm, 'src="' + apiUrl + '$1"')
   return res

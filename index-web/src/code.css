@@ -2,8 +2,7 @@ pre.code-dark,
 pre.code-night,
 pre.code-light {
     line-height: 1.7;
-    padding: 20px;
-    border-radius: 10px;
+    padding: 16px;
     margin: 0;
     font-family: var(--font-family-mono);
     font-size: 1.2rem;
@@ -46,6 +45,8 @@ code.md-night span {
 /******************************/
 pre.code-light {
     background-color: #f9f8f7;
+    border: 1px solid #eae9e8;
+
 }
 
 code.md-light {
@@ -93,6 +94,7 @@ code.md-light span.dec {
 pre.code-dark {
     background-color: #25272b;
 }
+
 code.md-dark {
     color: #c0c8cf;
 }
@@ -132,7 +134,7 @@ code.md-dark span.dec {
 /*--------- NIGHT -----------*/
 /******************************/
 pre.code-night {
-    background-color: #161616;
+    background-color: #151718;
 }
 
 code.md-night {
@@ -140,7 +142,7 @@ code.md-night {
 }
 
 code.md-night span.num {
-    color: #c1746d;
+    color: #cd7a72;
 }
 
 code.md-night span.str {

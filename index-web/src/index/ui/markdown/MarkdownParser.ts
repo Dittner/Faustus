@@ -1,18 +1,25 @@
 import { theme } from "../../../global/ThemeManager"
-import { CodeHighlighter } from "./CodeHighlighter"
+import { BashCodeHighlighter } from "../highlight/BashHighlighter"
+import { UniversalCodeHighlighter } from "../highlight/UniversalCodeHighlighter"
 
-export const codeHighlighter = new CodeHighlighter()
-const highlight = (code: string): string => {
-  let tokenRoot = codeHighlighter.tokenize(code, true)
-  return codeHighlighter.htmlize(tokenRoot)
-}
+export const universalCodeHighlighter = new UniversalCodeHighlighter()
+export const bashCodeHighlighter = new BashCodeHighlighter()
 
 const highlightMultilineCode = (code: string): string => {
-  return '<pre class="code-' + theme().id + '"><code class="md-' + theme().id + '">' + highlight(code) + '</code></pre>'
+  const tokenRoot = universalCodeHighlighter.tokenize(code)
+  const res = universalCodeHighlighter.htmlize(tokenRoot)
+  return '<pre class="code-' + theme().id + '"><code class="md-' + theme().id + '">' + res + '</code></pre>'
+}
+
+const highlightBashCode = (code: string): string => {
+  const tokenRoot = bashCodeHighlighter.tokenize(code)
+  const res = bashCodeHighlighter.htmlize(tokenRoot)
+  return '<pre class="code-' + theme().id + '"><code class="md-' + theme().id + '">' + res + '</code></pre>'
 }
 
 class MDInlineGrammarRule {
   matcher: [RegExp, any] = [new RegExp(''), '']
+  childrenInlineRules: MDInlineGrammarRule[] = []
 }
 
 class MDLineGrammarRule {
@@ -67,15 +74,13 @@ class MDGrammar {
 
     const em = new MDInlineGrammarRule()
     em.matcher = [/`([^`]+)`/g, '<em>$1</em>']
+    em.childrenInlineRules = [strong, bold, italic]
 
     const code = new MDInlineGrammarRule()
-    //to prevent formating underscores by bold, italic
-    code.matcher = [/``([^`]+)``/g, (line: string, s: string) => {
-      return '<code>' + s.replaceAll('_', '&#x5f;') + '</code>'
-    }]
+    code.matcher = [/``([^`]+)``/g, '<code>$1</code>']
 
-    const imgAndLegend = new MDInlineGrammarRule()
-    imgAndLegend.matcher = [/!\[([^\]]+)\]\(([^)]+)\)\(([^)]+)\)/gm, '<img alt="$1" src="$2"/><p class="md-legend">$3</p>']
+    const figure = new MDInlineGrammarRule()
+    figure.matcher = [/!\[([^\]]+)\]\(([^)]+)\)\(([^)]+)\)/gm, '<figure><img alt="$1" src="$2"/><figcaption>$3</figcaption></figure>']
 
     const img = new MDInlineGrammarRule()
     img.matcher = [/!\[([^\]]+)\]\(([^)]+)\)/gm, '<img alt="$1" src="$2"/>']
@@ -85,7 +90,7 @@ class MDGrammar {
       return '<a href="' + url + '">' + (descr || url) + '</a>'
     }]
 
-    this.globalRule.childrenInlineRules = [code, imgAndLegend, img, link, strong, bold, em, italic]
+    this.globalRule.childrenInlineRules = [code, figure, img, link, strong, bold, em, italic]
 
     // 
     // LINE GRAMMAR RULES
@@ -101,7 +106,7 @@ class MDGrammar {
 
     const bash = new MDLineGrammarRule()
     bash.matcher = [/^>>> /, '$ ']
-    bash.postProccessing = highlightMultilineCode
+    bash.postProccessing = highlightBashCode
 
     const quote = new MDLineGrammarRule()
     quote.matcher = [/^> (.*)$/, '<blockquote><p>$1</p></blockquote>']
@@ -109,12 +114,12 @@ class MDGrammar {
     quote.preProccessing = defLinePreproccessing
 
     const alignRight = new MDLineGrammarRule()
-    alignRight.matcher = [/^==> (.*)$/, '<p class="md-right">$1</p>']
+    alignRight.matcher = [/^==> (.*)$/, '<div class="md-right">$1</div>']
     alignRight.childrenInlineRules = this.globalRule.childrenInlineRules
     alignRight.preProccessing = defLinePreproccessing
 
     const alignCenter = new MDLineGrammarRule()
-    alignCenter.matcher = [/^=> (.*)$/, '<p class="md-center">$1</p>']
+    alignCenter.matcher = [/^=> (.*)$/, '<div class="md-center">$1</div>']
     alignCenter.childrenInlineRules = this.globalRule.childrenInlineRules
     alignCenter.preProccessing = defLinePreproccessing
 
@@ -178,6 +183,7 @@ class MDGrammar {
       return '<tr>' + line.split(/,(?! )/).map(v => '<td>' + v + '</td>').join('') + '</tr>'
     }]
     tableRow.childrenInlineRules = this.globalRule.childrenInlineRules
+    tableRow.preProccessing = defLinePreproccessing
     table.childrenLineRules = [tableRow]
 
     const div = new MDMultilineGrammarRule()
@@ -271,13 +277,61 @@ class MDParser {
     return res
   }
 
+  // private parseLineOld(text: string, inlineRules: MDInlineGrammarRule[]): string {
+  //   let res = text
+  //   for (let i = 0; i < inlineRules.length; i++) {
+  //     const r = inlineRules[i]
+  //     res = res.replace(r.matcher[0], r.matcher[1])
+  //   }
+  //   return res
+  // }
+
   private parseLine(text: string, inlineRules: MDInlineGrammarRule[]): string {
-    let res = text
-    for (let i = 0; i < inlineRules.length; i++) {
-      const r = inlineRules[i]
-      res = res.replace(r.matcher[0], r.matcher[1])
+    if (!text || inlineRules.length === 0) return text
+    if (inlineRules.length === 1) {
+      return text.replace(inlineRules[0].matcher[0], inlineRules[0].matcher[1])
     }
-    return res
+
+    const buffer: string[] = []
+    let rules = [...inlineRules]
+    let value = text
+
+    while (value) {
+      const candidateRules = []
+      let matchedRule: MDInlineGrammarRule | undefined
+      let matchedRuleMinSearchIndex = value.length
+      for (let i = 0; i < rules.length; i++) {
+        const r = rules[i]
+        const si = value.search(r.matcher[0])
+        if (si !== -1) {
+          candidateRules.push(r)
+          if (si < matchedRuleMinSearchIndex) {
+            matchedRuleMinSearchIndex = si
+            matchedRule = r
+          }
+        }
+      }
+
+      if (!matchedRule) {
+        buffer.push(value)
+        break
+      }
+
+      buffer.push(value.substring(0, matchedRuleMinSearchIndex))
+      value = value.substring(matchedRuleMinSearchIndex)
+
+      let replacingSubstring = value.match(matchedRule.matcher[0])?.[0] ?? ''
+      value = value.substring(replacingSubstring.length)
+
+      replacingSubstring = replacingSubstring.replace(matchedRule.matcher[0], matchedRule.matcher[1])
+      if (matchedRule.childrenInlineRules.length > 0)
+        replacingSubstring = this.parseLine(replacingSubstring, matchedRule.childrenInlineRules)
+
+      buffer.push(replacingSubstring)
+      rules = candidateRules
+    }
+
+    return buffer.join('')
   }
 }
 

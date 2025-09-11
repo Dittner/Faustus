@@ -1,6 +1,6 @@
 import { RXObservableValue } from "flinker"
-import { MaterialIcon } from "../../../global/MaterialIcon"
 import { btn, ButtonProps, span, TextProps } from "flinker-dom"
+import { MaterialIcon } from "../../../global/MaterialIcon"
 import { theme } from "../../../global/ThemeManager"
 import { FontFamily } from "./Font"
 
@@ -86,7 +86,7 @@ export const RedBtn = () => {
   return IconBtn()
     .react(s => {
       s.fontFamily = FontFamily.APP
-      s.fontSize = '0.9rem'
+      s.fontSize = '0.8rem'
       s.paddingBottom = '1px'
       s.paddingHorizontal = '5px'
       s.minHeight = '25px'

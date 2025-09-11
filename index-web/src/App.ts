@@ -1,12 +1,12 @@
+import { AnyUIComponent, div, h1, hstack, observer, p } from "flinker-dom"
+import { DemoView } from "./demo/ui/Demo"
 import { LayoutLayer } from "./global/Application"
 import { GlobalContext } from "./global/GlobalContext"
 import { MaterialIcon } from "./global/MaterialIcon"
 import { theme, themeManager } from "./global/ThemeManager"
 import { IconBtn } from "./index/ui/controls/Button"
 import { FontFamily } from "./index/ui/controls/Font"
-import { DemoView } from "./demo/ui/Demo"
 import { IndexView } from "./index/ui/IndexView"
-import { AnyUIComponent, div, h1, hstack, observer, p } from "flinker-dom"
 
 export const globalContext = GlobalContext.init()
 
@@ -77,6 +77,7 @@ const ErrorMsgView = () => {
 
             p()
               .react(s => {
+                s.fontSize = '0.8rem'
                 s.fontFamily = FontFamily.MONO
                 s.width = '100%'
                 s.textAlign = 'center'

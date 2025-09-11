@@ -1,13 +1,12 @@
+import { btn, hstack, link, spacer, span } from "flinker-dom"
 import { globalContext } from "../../App"
 import { MaterialIcon } from "../../global/MaterialIcon"
 import { theme, themeManager } from "../../global/ThemeManager"
-import { btn, hstack, link, spacer, span } from "flinker-dom"
 import { TextFile } from "../domain/IndexModel"
 import { IndexContext } from "../IndexContext"
 import { IconBtn, RedBtn } from "./controls/Button"
 
 export function NavBar() {
-  console.log('new NavBar')
   const ctx = IndexContext.self
 
   return hstack()
@@ -65,6 +64,7 @@ export function NavBar() {
           s.cornerRadius = '4px'
           s.width = '150px'
           s.height = '35px'
+          s.fontSize = '0.8rem'
         })
         .whenHovered(s => {
           s.bgColor = theme().red
@@ -85,7 +85,7 @@ export function NavBar() {
         .react(s => {
           s.icon = theme().isLight ? MaterialIcon.light_mode : MaterialIcon.brightness_1
           s.textColor = theme().id === 'night' ? theme().white : theme().red
-          s.iconSize = theme().isLight ? '1.2rem' : '0.8rem'
+          s.iconSize = theme().isLight ? '20px' : '14px'
         })
         .onClick(() => {
           if (theme().id === 'light') themeManager.setDarkTheme()
@@ -131,6 +131,7 @@ const NavLink = () => {
       s.textColor = theme().menuItem
       s.fontWeight = theme().defFontWeight
       s.lineHeight = '1.1'
+      s.fontSize = theme().defMenuFontSize
       s.textDecoration = 'none'
     })
     .whenHovered(s => {

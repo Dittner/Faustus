@@ -1,0 +1,38 @@
+services:
+  index-api:
+    container_name: index-api
+    build:
+      context: ./index-api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - UVICORN_RELOAD=true
+    volumes:
+      - ./index-api:/app
+    ports:
+      - 3001:80
+    tty: true
+    networks:
+      - network
+
+  index-web-client:
+    container_name: index-web-client
+    build:
+      context: ./index-web
+      dockerfile: Dockerfile
+      target: dev
+    restart: unless-stopped
+    environment:
+      - VITE_INDEX_API_URL=http://localhost:3001/api/index
+    depends_on:
+      - index-api
+    volumes:
+      - ./index-web/src:/app/src
+    ports:
+      - 3000:3000
+    networks:
+      - network
+
+networks:
+  network:
+    driver: bridge

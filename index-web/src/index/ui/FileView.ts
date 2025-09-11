@@ -6,7 +6,7 @@ import { InfoPage, Page, TextFile } from "../domain/IndexModel"
 import { IndexContext } from "../IndexContext"
 import { RedBtn } from "./controls/Button"
 import { FontFamily } from "./controls/Font"
-import { Markdown } from "./controls/Markdown"
+import { Markdown } from "./markdown/Markdown"
 
 export const FileView = () => {
   console.log('new FileView')
@@ -161,7 +161,7 @@ const AuthorFileInfo = (info: InfoPage) => {
               s.textColor = theme().h1
               s.fontWeight = 'bold'
               s.letterSpacing = '2px'
-              s.fontSize = '2.5rem'
+              s.fontSize = '2.0rem'
               s.text = info.author?.surname
             })
 
@@ -174,7 +174,7 @@ const AuthorFileInfo = (info: InfoPage) => {
               s.textColor = theme().h1
               s.fontWeight = '100'
               s.letterSpacing = '2px'
-              s.fontSize = '2.5rem'
+              s.fontSize = '2.0rem'
               s.text = info.author?.firstname
             })
         })
@@ -189,7 +189,7 @@ const AuthorFileInfo = (info: InfoPage) => {
           s.textColor = theme().text
           s.fontWeight = '100'
           s.letterSpacing = '2px'
-          s.fontSize = '1.1rem'
+          s.fontSize = '0.9rem'
           s.text = info.author?.years
         })
 
@@ -213,7 +213,7 @@ const AuthorFileInfo = (info: InfoPage) => {
           s.textAlign = 'left'
           s.textColor = theme().h1 + 'aa'
           s.paddingVertical = '20px'
-          s.fontSize = '1.3rem'
+          s.fontSize = '0.9rem'
           s.text = info.about
         })
     })
@@ -244,7 +244,7 @@ const ArticleFileInfo = (info: InfoPage) => {
           s.fontWeight = 'bold'
           s.textTransform = 'uppercase'
           s.letterSpacing = '2px'
-          s.fontSize = '2.5rem'
+          s.fontSize = '2.0rem'
           s.text = info.name
         })
 
@@ -255,7 +255,7 @@ const ArticleFileInfo = (info: InfoPage) => {
           .react(s => {
             s.className = 'article'
             s.textColor = theme().h1 + '50'
-            s.fontSize = '1.2rem'
+            s.fontSize = theme().defFontSize
             s.whiteSpace = 'nowrap'
             s.paddingBottom = '10px'
             if (info.textAuthor) s.text = info.textAuthor
@@ -271,7 +271,7 @@ const ArticleFileInfo = (info: InfoPage) => {
           s.width = '100%'
           s.textColor = theme().h1 + 'aa'
           s.paddingVertical = '20px'
-          s.fontSize = '1.3rem'
+          s.fontSize = '0.9rem'
           s.text = info.about
         })
     })

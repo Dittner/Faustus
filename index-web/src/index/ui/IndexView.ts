@@ -1,7 +1,7 @@
+import { div, observer, p, vstack } from "flinker-dom"
 import { globalContext } from "../../App"
 import { LayoutLayer } from "../../global/Application"
 import { theme } from "../../global/ThemeManager"
-import { div, observer, p, vstack } from "flinker-dom"
 import { IndexContext } from "../IndexContext"
 import { EditorView } from "./editor/EditorView"
 import { FileTreeView } from "./FileTreeView"
@@ -125,7 +125,7 @@ const ServerNotAvailableView = () => {
           p().react(s => {
             s.text = 'Server is not available!!!'
             s.textColor = theme().h1
-            s.fontSize = '12px'
+            s.fontSize = '0.8rem'
           })
         })
     })

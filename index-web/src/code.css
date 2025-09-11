@@ -1,11 +1,11 @@
 pre.code-dark,
 pre.code-night,
 pre.code-light {
-    line-height: 1.7;
+    line-height: 1.6;
     padding: 16px;
     margin: 0;
     font-family: var(--font-family-mono);
-    font-size: 1.2rem;
+    font-size: 0.9rem;
 }
 
 code.md-dark,
@@ -46,7 +46,6 @@ code.md-night span {
 pre.code-light {
     background-color: #f9f8f7;
     border: 1px solid #eae9e8;
-
 }
 
 code.md-light {
@@ -65,6 +64,7 @@ code.md-light span.op {
     color: #222222;
 }
 
+code.md-light span.bash,
 code.md-light span.fn {
     color: #016190;
 }
@@ -92,85 +92,84 @@ code.md-light span.dec {
 /*--------- DARK -----------*/
 /******************************/
 pre.code-dark {
-    background-color: #25272b;
+    background-color: #596d7d10;
 }
 
 code.md-dark {
-    color: #c0c8cf;
+    color: #aab9c9;
 }
 
 code.md-dark span.num {
-    color: #e2777a;
+    color: #cd7272;
 }
 
 code.md-dark span.str {
-    color: #86bebe;
-}
-
-code.md-dark span.fn,
-code.md-dark span.cl {
-    color: #6da3c9;
+    color: #6ba1a5;
 }
 
 code.md-dark span.op,
 code.md-dark span.kw {
-    color: #938eb7;
+    color: #7f7aab;
+}
+
+code.md-dark span.bash,
+code.md-dark span.fn,
+code.md-dark span.cl {
+    color: #5fa2cd;
 }
 
 code.md-dark span.tag,
 code.md-dark span.kt {
-    color: #c394c7;
+    color: #aa83a1;
 }
 
 code.md-dark span.cmt {
-    color: #717783;
+    color: #525769;
 }
 
 code.md-dark span.dec {
-    color: #a8ad89;
+    color: #9fa48f;
 }
 
 /******************************/
 /*--------- NIGHT -----------*/
 /******************************/
 pre.code-night {
-    background-color: #151718;
+    background-color: #5c95bd15;
 }
 
 code.md-night {
-    color: #b1b7c3;
+    color: #aab9c9;
 }
 
 code.md-night span.num {
-    color: #cd7a72;
+    color: #cd7272;
 }
 
 code.md-night span.str {
-    color: #81b4b4;
+    color: #6ba1a5;
 }
 
-code.md-night span.op {
+code.md-night span.op,
+code.md-night span.kw {
     color: #7f7aab;
 }
 
+code.md-night span.bash,
 code.md-night span.fn,
 code.md-night span.cl {
-    color: #6991b9;
-}
-
-code.md-night span.kw {
-    color: #8683a9;
+    color: #5fa2cd;
 }
 
 code.md-night span.tag,
 code.md-night span.kt {
-    color: #b48fc1;
+    color: #aa83a1;
 }
 
 code.md-night span.cmt {
-    color: #717783;
+    color: #525769;
 }
 
 code.md-night span.dec {
-    color: #9ca48f;
+    color: #9fa48f;
 }

@@ -4,6 +4,7 @@ import { buildRule, FontWeight, UIComponentProps } from 'flinker-dom'
 export interface GlobalTheme {
   id: string
   isLight: boolean
+  defMenuFontSize: string
   defFontSize: string
   defFontWeight: FontWeight
   appBg: string
@@ -24,6 +25,8 @@ export interface GlobalTheme {
   pink: string
   purple: string
   violet: string
+  warn: string
+  info: string
   comment: string
   selectedBlockBg: string
   hoveredBlockBg: string
@@ -116,7 +119,8 @@ export class ThemeManager {
     return {
       id: 'light',
       isLight: true,
-      defFontSize: '1.4rem',
+      defMenuFontSize: '0.8rem',
+      defFontSize: '1rem',
       defFontWeight: '400',
       appBg: white,
       white,
@@ -133,15 +137,17 @@ export class ThemeManager {
       h3: header,
       h4: header,
       h5: header,
-      h6: black + '88',
+      h6: header,
       code: black,
       codeBg: '#f4f3f2',
       em: black,
       blue: '#0a4277',
-      link: '#b16441ff',
+      link: '#b16441',
       pink: '#c7accc',
       purple: '#d5caf2',
       violet: '#43257c',
+      warn: '#a58a31',
+      info: '#3a84b8',
       comment: '#0b6039',
       selectedBlockBg: red + '15',
       hoveredBlockBg: black + '15',
@@ -165,10 +171,10 @@ export class ThemeManager {
   * */
 
   createDarkTheme(t: GlobalTheme): GlobalTheme {
-    const text = '#888a8f' //aab6c2
-    const white = '#d0d8df'
+    const text = '#7d828e' //aab6c2
+    const white = '#ced6dc'
     const red = '#df5f83'
-    const header = '#bbbbbb'//aaaaaa
+    const header = '#bcc3c9'//aaaaaa
     return Object.assign({}, t, {
       id: 'dark',
       isLight: false,
@@ -185,7 +191,7 @@ export class ThemeManager {
       h3: header,
       h4: header,
       h5: header,
-      h6: text + '88',
+      h6: header,
       em: '#aaaaaa',
       code: '#c0c8cf',
       codeBg: header + '08',
@@ -193,6 +199,8 @@ export class ThemeManager {
       blue: '#75bbe7',
       link: '#bd9054',
       violet: '#aeadde',
+      warn: '#a58a31',
+      info: '#3a84b8',
       purple: '#b2aee5',
       comment: '#7ea3a5',
       pink: '#c293cc',
@@ -235,13 +243,15 @@ export class ThemeManager {
       h3: header,
       h4: header,
       h5: header,
-      h6: text + '88',
+      h6: header,
       em: '#8b8e97ff',
       code: '#b1b7c3',
       codeBg: '#18191c',
       border: '#ffFFff10',
       blue: '#5fa2cd',
       violet: '#aeadde',
+      warn: '#b89f3a',
+      info: '#5fa2cd',
       purple: '#b2aee5',
       comment: '#7ea3a5',
       link: '#bd9054',
@@ -254,7 +264,7 @@ export class ThemeManager {
       menuHoveredItem: header,
       menuSelectedItem: header,
       menuHeader: '#5fa2cd',
-      menuHoveredHeader: '#86d0ff',
+      menuHoveredHeader: '#b1e1ffff',
     })
   }
 
@@ -273,7 +283,7 @@ export class ThemeManager {
 
     const h1Props: UIComponentProps = {
       textTransform: 'uppercase',
-      fontSize: '2.5rem',
+      fontSize: '1.5rem',
       fontWeight: 'bold',
       textColor: t.h1,
       paddingTop: headerPadingTop
@@ -281,7 +291,7 @@ export class ThemeManager {
     buildRule(h1Props, parentSelector, 'h1')
 
     const h2Props: UIComponentProps = {
-      fontSize: '2.5rem',
+      fontSize: '1.5rem',
       fontWeight: 'bold',
       textColor: t.h2,
       paddingTop: headerPadingTop
@@ -289,7 +299,7 @@ export class ThemeManager {
     buildRule(h2Props, parentSelector, 'h2')
 
     const h3Props: UIComponentProps = {
-      fontSize: '2.0rem',
+      fontSize: '1.2rem',
       fontWeight: 'bold',
       textAlign: 'left',
       textColor: t.h3,
@@ -298,7 +308,7 @@ export class ThemeManager {
     buildRule(h3Props, parentSelector, 'h3')
 
     const h4Props: UIComponentProps = {
-      fontSize: t.defFontSize,
+      fontSize: '1rem',
       fontWeight: 'bold',
       textAlign: 'left',
       textColor: t.h4,
@@ -307,14 +317,13 @@ export class ThemeManager {
 
     const h5Props: UIComponentProps = {
       fontSize: t.defFontSize,
-      fontStyle: 'italic',
-      fontWeight: 'normal',
+      fontWeight: 'bold',
       textColor: t.h5
     }
     buildRule(h5Props, parentSelector, 'h5')
 
     const h6Props: UIComponentProps = {
-      fontSize: '1.2rem',
+      fontSize: t.defFontSize,
       fontWeight: t.defFontWeight,
       textColor: t.h6
     }
@@ -328,7 +337,7 @@ export class ThemeManager {
       fontFamily: articleFont,
       fontSize: 'inherit',
       fontWeight: t.defFontWeight,
-      textColor
+      textColor: 'inherit'
     }
     buildRule(globalProps, parentSelector, 'div')
     buildRule(globalProps, parentSelector, 'p')
@@ -341,6 +350,7 @@ export class ThemeManager {
     const strongProps: UIComponentProps = {
       //fontFamily: '--font-family-article-bi',
       fontSize: 'inherit',
+      textColor: 'inherit',
       fontWeight: 'bold',
       fontStyle: 'italic'
     }
@@ -348,12 +358,14 @@ export class ThemeManager {
 
     const boldProps: UIComponentProps = {
       fontSize: 'inherit',
+      textColor: 'inherit',
       fontWeight: 'bold'
     }
     buildRule(boldProps, parentSelector, 'b')
 
     const italicProps: UIComponentProps = {
       fontSize: 'inherit',
+      textColor: 'inherit',
       fontWeight: t.defFontWeight,
       fontStyle: 'italic'
     }
@@ -365,7 +377,8 @@ export class ThemeManager {
 
     const listItemProps: UIComponentProps = {
       fontSize: 'inherit',
-      fontWeight: t.defFontWeight
+      fontWeight: t.defFontWeight,
+      margin: '0px'
     }
     buildRule(listItemProps, parentSelector, 'li')
 
@@ -382,33 +395,37 @@ export class ThemeManager {
     /******************************/
 
     const tableProps: UIComponentProps = {
-      fontSize: 'inherit',
+      width: '100%',
+      fontSize: '0.9rem',
+      textColor: 'inherit',
       fontWeight: t.defFontWeight,
-    }
-    buildRule(tableProps, parentSelector, 'th')
-
-    const tableCellProps: UIComponentProps = {
-      fontSize: 'inherit',
-      fontWeight: 'inherit',
       border: '1px solid ' + t.text50,
-      padding: '8px'
     }
-    buildRule(tableCellProps, parentSelector, 'th')
-    buildRule(tableCellProps, parentSelector, 'td')
+    buildRule(tableProps, parentSelector, 'table')
 
-    const tableElementProps: UIComponentProps = {
+    const trProps: UIComponentProps = {
       fontSize: 'inherit',
+      textColor: 'inherit',
       fontWeight: 'inherit',
-      margin: '0px'
+      bgColor: t.text + '10'
     }
-    buildRule(tableElementProps, parentSelector, 'th')
-    buildRule(tableElementProps, parentSelector, 'tr')
+    buildRule(trProps, parentSelector, 'tr:nth-child(even)')
+
+    const tdProps: UIComponentProps = {
+      fontSize: 'inherit',
+      textColor: 'inherit',
+      fontWeight: 'inherit',
+      //border: '1px solid ' + t.text50,
+      padding: '5px'
+    }
+
+    buildRule(tdProps, parentSelector, 'th')
+    buildRule(tdProps, parentSelector, 'td')
 
     /******************************/
-    // em
+    // em `
     /******************************/
 
-    //highliting: ` 
     const emphasizeProps: UIComponentProps = {
       fontFamily: articleFont,
       bgColor: t.isLight ? '#edf4ee' : 'undefined',
@@ -424,7 +441,7 @@ export class ThemeManager {
 
     //one line code: ```
     const monoFontProps: UIComponentProps = {
-      fontSize: 'inherit',
+      fontSize: '0.9rem',
       fontFamily: monoFont,
       display: 'inline',
       bgColor: t.codeBg,
@@ -445,13 +462,8 @@ export class ThemeManager {
     }, parentSelector, 'mark')
 
     /******************************/
-    // math
+    // link
     /******************************/
-
-    buildRule({
-      fontSize: '1.5rem',
-      textColor: t.h1
-    }, parentSelector, 'mjx-math')
 
     const linkProps: UIComponentProps = {
       fontSize: 'inherit',
@@ -459,16 +471,12 @@ export class ThemeManager {
       textColor: t.link
     }
 
-    /******************************/
-    // link
-    /******************************/
-
     buildRule(linkProps, parentSelector, 'a')
     buildRule(linkProps, parentSelector, 'a:link')
     buildRule(linkProps, parentSelector, 'a:visited')
     buildRule(linkProps, parentSelector, 'a:active')
     linkProps.textDecoration = 'underline'
-    buildRule(linkProps, parentSelector, 'a:hover')
+    buildRule(linkProps, parentSelector, 'a', 'hover')
 
     /******************************/
     // quote
@@ -479,17 +487,12 @@ export class ThemeManager {
       //paddingVertical: '10px',
       paddingHorizontal: '20px',
       //bgColor: '#e5f0df',
+      margin: '0px',
+      fontSize: '0.9rem',
+      textColor: t.comment,
       borderLeft: '1px solid ' + t.comment + '88'
     }
     buildRule(blockquoteContentProps, parentSelector, 'blockquote')
-
-    const blockquoteTextProps: UIComponentProps = {
-      fontSize: '1.3rem',
-      textColor: t.comment
-    }
-    buildRule(blockquoteTextProps, parentSelector, 'blockquote p')
-    buildRule(blockquoteTextProps, parentSelector, 'blockquote i')
-    buildRule(blockquoteTextProps, parentSelector, 'blockquote strong')
 
     /******************************/
     // image
@@ -500,13 +503,14 @@ export class ThemeManager {
       //paddingTop: '50px'
     }
     buildRule(imgProps, parentSelector, 'img')
+    buildRule(imgProps, parentSelector, 'figure')
 
-    const imgWithLegendProps: UIComponentProps = {
+    const imgCaptionProps: UIComponentProps = {
       fontWeight: 'inherit',
-      fontSize: '1.2rem',
+      fontSize: '0.9rem',
       textColor: t.text50,
     }
-    buildRule(imgWithLegendProps, parentSelector, '.md-legend')
+    buildRule(imgCaptionProps, parentSelector, 'figcaption')
 
     /******************************/
     // stars delim
@@ -583,7 +587,7 @@ export class ThemeManager {
       flexDirection: 'row',
       justifyContent: 'center',
       paddingHorizontal: '50px',
-      fontSize: '1.3rem'
+      fontSize: '0.9rem'
     }
     buildRule(poemProps, parentSelector, 'div.poem')
     buildRule({ fontSize: 'inherit', textColor: 'inherit' }, parentSelector, 'div.poem div')
@@ -594,7 +598,7 @@ export class ThemeManager {
 
     const noteProps: UIComponentProps = {
       width: '100%',
-      fontSize: '1.3rem',
+      fontSize: '0.9rem',
       fontWeight: t.defFontWeight,
       textColor: t.text,
       paddingHorizontal: '20px',
@@ -608,9 +612,9 @@ export class ThemeManager {
     // epigraph
     /******************************/
 
-    const epigraphProps: any = {
+    const epigraphProps: UIComponentProps = {
       width: '100%',
-      fontSize: '1.3rem',
+      fontSize: '0.9rem',
       paddingLeft: '50%',
       flexDirection: 'row',
       justifyContent: 'right',
@@ -620,6 +624,40 @@ export class ThemeManager {
     }
     buildRule(epigraphProps, parentSelector, 'div.epi')
     buildRule({ fontSize: 'inherit', textColor: 'inherit' }, parentSelector, 'div.epi div')
+
+    /******************************/
+    // warning
+    /******************************/
+
+    const warnProps: UIComponentProps = {
+      width: '100%',
+      fontSize: '0.9rem',
+      textColor: t.warn,
+      bgColor: t.warn + '10',
+      padding: '16px',
+      border: '1px solid ' + t.warn,
+      borderLeft: '5px solid ' + t.warn,
+      fontWeight: 'inherit'
+    }
+    buildRule(warnProps, parentSelector, 'div.warn')
+    buildRule({ fontSize: 'inherit', textColor: 'inherit' }, parentSelector, 'div.warn div')
+
+    /******************************/
+    // info
+    /******************************/
+
+    const infoProps: UIComponentProps = {
+      width: '100%',
+      fontSize: '0.9rem',
+      textColor: t.info,
+      bgColor: t.info + '10',
+      padding: '16px',
+      border: '1px solid ' + t.info,
+      borderLeft: '5px solid ' + t.info,
+      fontWeight: 'inherit'
+    }
+    buildRule(infoProps, parentSelector, 'div.info')
+    buildRule({ fontSize: 'inherit', textColor: 'inherit' }, parentSelector, 'div.info div')
   }
 }
 

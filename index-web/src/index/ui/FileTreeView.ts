@@ -27,7 +27,6 @@ export const FileTreeView = () => {
     .react(s => {
       s.width = '100%'
       s.gap = '8px'
-      s.fontSize = '1rem'
       s.paddingLeft = '20px'
       s.paddingRight = '20px'
       s.paddingBottom = '20px'
@@ -47,7 +46,6 @@ export const FileTreeView = () => {
         .react(s => {
           s.width = '100%'
           s.gap = '0'
-          s.fontSize = '1rem'
         })
 
       spacer()
@@ -100,7 +98,7 @@ const FileLink = (n: Node) => {
       n.type === 'dir' && Icon()
         .react(s => {
           s.textColor = 'inherit'
-          s.fontSize = '1.1rem'
+          s.fontSize = theme().defMenuFontSize
           s.value = MaterialIcon.folder
         })
 
@@ -109,7 +107,7 @@ const FileLink = (n: Node) => {
         .react(s => {
           s.text = n.title
           s.textColor = 'inherit'
-          s.fontSize = 'inherit'
+          s.fontSize = theme().defMenuFontSize
           s.fontFamily = 'inherit'
         })
     })

@@ -1,5 +1,5 @@
-import { theme } from "../../../global/ThemeManager"
 import { div, observer, textarea } from "flinker-dom"
+import { theme } from "../../../global/ThemeManager"
 import { IndexContext } from "../../IndexContext"
 import { FontFamily } from "../controls/Font"
 import { FileTextReplacer } from "./FileTextReplacer"
@@ -136,7 +136,7 @@ const TextArea = () => {
       s.textAlign = 'left'
       s.autoCorrect = 'off'
       s.spellCheck = false
-      s.paddingHorizontal = '40px'
+      s.paddingHorizontal = '20px'
       s.disableHorizontalScroll = true
     })
     .onKeyDown(keyDownFn)

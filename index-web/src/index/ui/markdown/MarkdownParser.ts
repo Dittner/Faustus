@@ -53,9 +53,9 @@ class MDGrammar {
       let res = v
       res = res.replace(/</g, '&lt;')
       //character escaping
-      res = res.replace(/\/`/gm, '&#x60;')
-      res = res.replace(/\/#/gm, '&#x23;')
-      res = res.replace(/\/_/g, '&#x5f;')
+      res = res.replace(/\\`/gm, '&#x60;')
+      res = res.replace(/\\#/gm, '&#x23;')
+      res = res.replace(/\\_/g, '&#x5f;')
       return res
     }
 
@@ -105,7 +105,7 @@ class MDGrammar {
     header.preProccessing = defLinePreproccessing
 
     const bash = new MDLineGrammarRule()
-    bash.matcher = [/^>>> /, '$ ']
+    bash.matcher = [/^>>> /, '> ']
     bash.postProccessing = highlightBashCode
 
     const quote = new MDLineGrammarRule()
@@ -155,7 +155,6 @@ class MDGrammar {
     mc.endMatcher = [/^``` *$/, '']
     const mcLinebreak = new MDLineGrammarRule()
     mcLinebreak.matcher = [/^(.*)$/, '$1\n']
-    mc.endMatcher = [/^``` *$/, '']
     const mcBr = new MDLineGrammarRule()
     mcBr.matcher = [/^\n$/, '\n']
     mc.childrenLineRules = [mcBr, mcLinebreak]

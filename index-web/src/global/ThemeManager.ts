@@ -138,15 +138,15 @@ export class ThemeManager {
       h4: header,
       h5: header,
       h6: header,
-      code: black,
-      codeBg: '#f4f3f2',
+      code: red,
+      codeBg: red + 10,
       em: black,
       blue: '#0a4277',
       link: '#b16441',
       pink: '#c7accc',
       purple: '#d5caf2',
       violet: '#43257c',
-      warn: '#a58a31',
+      warn: '#9a3f2b',
       info: '#3a84b8',
       comment: '#0b6039',
       selectedBlockBg: red + '15',
@@ -174,6 +174,7 @@ export class ThemeManager {
     const text = '#7d828e' //aab6c2
     const white = '#ced6dc'
     const red = '#df5f83'
+    const blue = '#75bbe7'
     const header = '#bcc3c9'//aaaaaa
     return Object.assign({}, t, {
       id: 'dark',
@@ -192,15 +193,15 @@ export class ThemeManager {
       h4: header,
       h5: header,
       h6: header,
-      em: '#aaaaaa',
-      code: '#c0c8cf',
+      em: '#989ba2ff',
+      code: header,
       codeBg: header + '08',
       border: '#ffFFff10',
-      blue: '#75bbe7',
+      blue,
       link: '#bd9054',
       violet: '#aeadde',
-      warn: '#a58a31',
-      info: '#3a84b8',
+      warn: '#ba4f37',
+      info: blue,
       purple: '#b2aee5',
       comment: '#7ea3a5',
       pink: '#c293cc',
@@ -208,10 +209,10 @@ export class ThemeManager {
       selectedBlockBg: text + '07',
       hoveredBlockBg: text + '10',
       modalViewBg: '#43354b',
-      menuItem: white + '88',
+      menuItem: text,
       menuHoveredItem: white,
       menuSelectedItem: white,
-      menuHeader: '#75bbe7',
+      menuHeader: blue,
       menuHoveredHeader: white,
     })
   }
@@ -226,7 +227,8 @@ export class ThemeManager {
     const text = '#707682' //aab6c2
     const white = '#c6d4e3'
     const red = '#df5f83'
-    const header = '#9ca0aeff'
+    const blue = '#6194c1'
+    const header = '#9ca0ae'
     return Object.assign({}, t, {
       id: 'night',
       isLight: false,
@@ -244,17 +246,17 @@ export class ThemeManager {
       h4: header,
       h5: header,
       h6: header,
-      em: '#8b8e97ff',
-      code: '#b1b7c3',
-      codeBg: '#18191c',
+      em: '#8b8e97',
+      code: '#adb4c1',
+      codeBg:  t.transparent,
       border: '#ffFFff10',
-      blue: '#5fa2cd',
+      blue,
       violet: '#aeadde',
-      warn: '#b89f3a',
-      info: '#5fa2cd',
+      warn: '#ba4f37',
+      info: blue,
       purple: '#b2aee5',
       comment: '#7ea3a5',
-      link: '#bd9054',
+      link: '#aa8657',
       pink: '#c293cc',
       orange: '#463d16',
       selectedBlockBg: text + '07',
@@ -263,8 +265,8 @@ export class ThemeManager {
       menuItem: text,
       menuHoveredItem: header,
       menuSelectedItem: header,
-      menuHeader: '#5fa2cd',
-      menuHoveredHeader: '#b1e1ffff',
+      menuHeader: blue,
+      menuHoveredHeader: '#7cbcf4ff',
     })
   }
 
@@ -391,7 +393,7 @@ export class ThemeManager {
     buildRule(listProps, parentSelector, 'ol')
 
     /******************************/
-    // Table
+    // table
     /******************************/
 
     const tableProps: UIComponentProps = {
@@ -403,20 +405,20 @@ export class ThemeManager {
     }
     buildRule(tableProps, parentSelector, 'table')
 
-    const trProps: UIComponentProps = {
-      fontSize: 'inherit',
-      textColor: 'inherit',
-      fontWeight: 'inherit',
-      bgColor: t.text + '10'
-    }
-    buildRule(trProps, parentSelector, 'tr:nth-child(even)')
+    // const trProps: UIComponentProps = {
+    //   fontSize: 'inherit',
+    //   textColor: 'inherit',
+    //   fontWeight: 'inherit',
+    //   bgColor: t.green + '10'
+    // }
+    // buildRule(trProps, parentSelector, 'tr:nth-child(even)')
 
     const tdProps: UIComponentProps = {
       fontSize: 'inherit',
       textColor: 'inherit',
       fontWeight: 'inherit',
-      //border: '1px solid ' + t.text50,
-      padding: '5px'
+      border: '1px solid ' + t.text50,
+      padding: '10px'
     }
 
     buildRule(tdProps, parentSelector, 'th')
@@ -446,6 +448,8 @@ export class ThemeManager {
       display: 'inline',
       bgColor: t.codeBg,
       textColor: t.code,
+      padding: '2px',
+      whiteSpace: 'nowrap'
       //padding: '5px'
     }
     buildRule(monoFontProps, parentSelector, 'code')
@@ -574,7 +578,6 @@ export class ThemeManager {
       fontSize: 'inherit',
     }
     buildRule(bashCodeProps, parentSelector, '.md-bash-code')
-
 
     /******************************/
     // poem

@@ -15,7 +15,7 @@ export enum Lexema {
   Keyword = 'KW',
   Keytype = 'KT',
   Decorator = 'D',
-  LineBreak = 'BR',
+  LineBreak = 'BR'
 }
 
 export class MDToken {

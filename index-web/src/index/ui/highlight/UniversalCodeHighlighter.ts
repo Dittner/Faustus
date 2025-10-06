@@ -6,6 +6,7 @@ const multilineGrammar = [
   'CMT(/*)(*/)',
   'CMT(#)(\n)',
   'CMT(//)(\n)',
+  'CMT(-- )(\n)',
   'STR(")(")',
   "STR(')(')",
   'STR(`)(`)'
@@ -15,14 +16,14 @@ const grammar = [
   //Replace IDs token with Decorators(D)
   'O(^@$:D) ID(:D)',
   'D(:) O(^[.]$:) ID(:D)',
-  //Replace IDs token with Keywords
-  'ID(^(extends|default|implements|catch|switch|static|override|internal|void|null|protected|abstract|export|public|readonly|private|var|const|let|final|throws|throw|new|instanceof|and|as|assert|case|match|async|await|break|interface|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|get|set|pass|raise|return|try|while|with|yield)$:KW)',
-  //Replace IDs token with Standad types(K) 
-  'ID(^(object|void|null|undefined|self|this|dict|string|list|double|False|false|None|bool|int|str|enum|number|float|never|True|true)$:KT)',
-  //Supports numbers with undescores
-  'ID(^[_0-9]+$:N)',
+  //Big numbers can have underscores
+  'N(:) ID(^_$:N) N(:)',
   //Identifiers can have numbers(N)
   'ID(:) N(:ID)',
+  //Replace IDs token with Keywords
+  'ID(^(extends|default|implements|catch|switch|static|override|internal|void|null|protected|abstract|export|public|readonly|private|var|const|let|final|local|throws|throw|new|instanceof|and|as|assert|case|match|async|await|break|interface|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|get|set|pass|raise|return|try|while|with|yield)$:KW)',
+  //Replace IDs token with Standad types(K) 
+  'ID(^(object|void|null|undefined|self|this|dict|string|list|double|False|false|None|bool|int|str|enum|number|float|never|True|true)$:KT)',
   //Replace IDs token separated with Spaces with Class
   'KW(^(class|interface|new)$:) SPA(:) ID(:CLS)',
   //Replace IDs or Keytypes or Keywords tokens with Functions

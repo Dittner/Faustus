@@ -104,7 +104,7 @@ code.md-dark span.num {
 }
 
 code.md-dark span.str {
-    color: #6ba1a5;
+    color: #7cb9bd;
 }
 
 code.md-dark span.op,
@@ -115,7 +115,7 @@ code.md-dark span.kw {
 code.md-dark span.bash,
 code.md-dark span.fn,
 code.md-dark span.cl {
-    color: #5fa2cd;
+    color: #71a6c7;
 }
 
 code.md-dark span.tag,
@@ -135,11 +135,11 @@ code.md-dark span.dec {
 /*--------- NIGHT -----------*/
 /******************************/
 pre.code-night {
-    background-color: #5c95bd15;
+    background-color: #5c95bd12;
 }
 
 code.md-night {
-    color: #aab9c9;
+    color: #adb4c1;
 }
 
 code.md-night span.num {
@@ -147,7 +147,7 @@ code.md-night span.num {
 }
 
 code.md-night span.str {
-    color: #6ba1a5;
+    color: #7faba8;
 }
 
 code.md-night span.op,
@@ -158,12 +158,12 @@ code.md-night span.kw {
 code.md-night span.bash,
 code.md-night span.fn,
 code.md-night span.cl {
-    color: #5fa2cd;
+    color: #6194c1;
 }
 
 code.md-night span.tag,
 code.md-night span.kt {
-    color: #aa83a1;
+    color: #bb93b7;
 }
 
 code.md-night span.cmt {
@@ -171,5 +171,5 @@ code.md-night span.cmt {
 }
 
 code.md-night span.dec {
-    color: #9fa48f;
+    color: #9fa786;
 }

@@ -1,10 +1,10 @@
 import { btn, hstack, link, spacer, span } from "flinker-dom"
-import { globalContext } from "../../App"
-import { MaterialIcon } from "../../global/MaterialIcon"
-import { theme, themeManager } from "../../global/ThemeManager"
-import { TextFile } from "../domain/IndexModel"
-import { IndexContext } from "../IndexContext"
+import { globalContext } from "../App"
+import { IndexContext } from "../app/IndexContext"
+import { theme, themeManager } from "../app/ThemeManager"
+import { TextFile } from "../domain/DomainModel"
 import { IconBtn, RedBtn } from "./controls/Button"
+import { MaterialIcon } from "./MaterialIcon"
 
 export function NavBar() {
   const ctx = IndexContext.self

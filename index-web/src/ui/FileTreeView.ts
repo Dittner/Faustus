@@ -1,11 +1,11 @@
 import { link, spacer, span, vlist, vstack } from "flinker-dom"
-import { globalContext } from "../../App"
-import { LayoutLayer } from "../../global/Application"
-import { MaterialIcon } from "../../global/MaterialIcon"
-import { theme } from "../../global/ThemeManager"
-import { TextFile } from "../domain/IndexModel"
-import { IndexContext } from "../IndexContext"
+import { globalContext } from "../App"
+import { LayoutLayer } from "../app/Application"
+import { IndexContext } from "../app/IndexContext"
+import { theme } from "../app/ThemeManager"
+import { TextFile } from "../domain/DomainModel"
 import { Icon, RedBtn } from "./controls/Button"
+import { MaterialIcon } from "./MaterialIcon"
 
 export const FileTreeView = () => {
   const ctx = IndexContext.self

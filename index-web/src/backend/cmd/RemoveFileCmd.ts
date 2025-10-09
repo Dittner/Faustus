@@ -1,8 +1,8 @@
 import { type RXObservable, RXOperation } from 'flinker'
-import { TextFile } from '../../../domain/IndexModel'
+import { TextFile } from '../../domain/DomainModel'
 import { type RestApi, type RestApiError, type Runnable } from '../RestApi'
 
-export class StoreFileCmd implements Runnable {
+export class RemoveFileCmd implements Runnable {
   private readonly api: RestApi
   private readonly file: TextFile
 
@@ -19,10 +19,8 @@ export class StoreFileCmd implements Runnable {
 
   private async store(op: RXOperation<any, RestApiError>) {
     const file = this.file
-    const path = file.isDirectory ? '/file' + file.link + '/info.txt' : '/file' + file.link + '.txt'
-    const body = JSON.stringify(file.serialize())
-
-    const [response, _] = await this.api.sendRequest('POST', path, body)
+    const path = file.isDirectory ? '/file' + file.link : '/file' + file.link + '.txt'
+    const [response, _] = await this.api.sendRequest('DELETE', path)
     if (response?.ok) {
       op.success('ok')
     } else {

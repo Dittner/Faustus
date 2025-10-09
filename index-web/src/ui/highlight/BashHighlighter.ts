@@ -17,7 +17,6 @@ const grammar = [
   'N(^0$:) ID(^x:N)',
 ]
 
-
 export class BashCodeHighlighter {
   private readonly highlighter: CodeHighlighter
   constructor() {

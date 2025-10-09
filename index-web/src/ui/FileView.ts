@@ -1,12 +1,13 @@
 import { div, hstack, image, observer, p, spacer, vlist, vstack } from "flinker-dom"
-import { globalContext } from "../../App"
-import { MaterialIcon } from "../../global/MaterialIcon"
-import { theme } from "../../global/ThemeManager"
-import { InfoPage, Page, TextFile } from "../domain/IndexModel"
-import { IndexContext } from "../IndexContext"
+
+import { globalContext } from "../App"
+import { IndexContext } from "../app/IndexContext"
+import { theme } from "../app/ThemeManager"
+import { InfoPage, Page, TextFile } from "../domain/DomainModel"
 import { RedBtn } from "./controls/Button"
 import { FontFamily } from "./controls/Font"
 import { Markdown } from "./markdown/Markdown"
+import { MaterialIcon } from "./MaterialIcon"
 
 export const FileView = () => {
   console.log('new FileView')

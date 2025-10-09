@@ -1,10 +1,10 @@
 import { RXObservable, RXObservableEntity } from 'flinker'
-import { globalContext } from '../../App'
-import { GlobalContext } from '../../global/GlobalContext'
-import { generateUID, sortByKeys } from '../../global/Utils'
 import RootInfo from '../../resources/RootInfo.txt?raw'
-import { IndexContext } from '../IndexContext'
-import { RestApiError } from '../infrastructure/backend/RestApi'
+import { globalContext } from '../App'
+import { GlobalContext } from '../app/GlobalContext'
+import { IndexContext } from '../app/IndexContext'
+import { generateUID, sortByKeys } from '../app/Utils'
+import { RestApiError } from '../backend/RestApi'
 
 interface Serializable {
   serialize: () => string

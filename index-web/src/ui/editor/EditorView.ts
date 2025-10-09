@@ -1,6 +1,6 @@
 import { div, observer, textarea } from "flinker-dom"
-import { theme } from "../../../global/ThemeManager"
-import { IndexContext } from "../../IndexContext"
+import { IndexContext } from "../../app/IndexContext"
+import { theme } from "../../app/ThemeManager"
 import { FontFamily } from "../controls/Font"
 import { FileTextReplacer } from "./FileTextReplacer"
 

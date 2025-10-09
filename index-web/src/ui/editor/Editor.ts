@@ -1,7 +1,6 @@
-
 import { RXObservableValue } from 'flinker';
-import { IndexContext } from '../../IndexContext';
-import { Page } from '../../domain/IndexModel';
+import { IndexContext } from '../../app/IndexContext';
+import { Page } from '../../domain/DomainModel';
 
 export interface NumberProtocol {
   value: number

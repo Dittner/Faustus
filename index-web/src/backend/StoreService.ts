@@ -1,8 +1,8 @@
-import {type RestApi} from './backend/RestApi'
-import {RXObservableEntity} from 'flinker'
-import {GlobalContext} from '../../global/GlobalContext'
-import { generateUID, UID } from '../../global/Utils'
-import { TextFile } from '../domain/IndexModel'
+import { RXObservableEntity } from 'flinker'
+import { GlobalContext } from '../app/GlobalContext'
+import { generateUID, UID } from '../app/Utils'
+import { TextFile } from '../domain/DomainModel'
+import { type RestApi } from './RestApi'
 
 export class StoreService extends RXObservableEntity<StoreService> {
   readonly uid = generateUID()

@@ -1,9 +1,9 @@
-import { StoreService } from './infrastructure/StoreService'
-import { GlobalContext } from '../global/GlobalContext'
 import { RXObservableValue } from 'flinker'
-import { RootTextFile, TextFile } from './domain/IndexModel'
-import { Editor } from './ui/editor/Editor'
 import { globalContext } from '../App'
+import { StoreService } from '../backend/StoreService'
+import { RootTextFile, TextFile } from '../domain/DomainModel'
+import { Editor } from '../ui/editor/Editor'
+import { GlobalContext } from './GlobalContext'
 
 export class IndexContext {
   readonly $selectedFile: RXObservableValue<TextFile>

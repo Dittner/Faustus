@@ -1,9 +1,9 @@
 import { RXObservableValue } from "flinker"
 import { div, input, p, spacer, StackProps, vstack } from "flinker-dom"
-import { FontFamily } from "../controls/Font"
-import { IndexContext } from "../../IndexContext"
+import { IndexContext } from "../../app/IndexContext"
+import { theme } from "../../app/ThemeManager"
 import { RedBtn } from "../controls/Button"
-import { theme } from "../../../global/ThemeManager"
+import { FontFamily } from "../controls/Font"
 
 export const FileTextReplacer = () => {
   const editor = IndexContext.self.editor

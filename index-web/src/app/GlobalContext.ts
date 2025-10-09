@@ -1,4 +1,4 @@
-import { RestApi } from "../index/infrastructure/backend/RestApi"
+import { RestApi } from "../backend/RestApi"
 import { Application } from "./Application"
 import { generateUID } from "./Utils"
 

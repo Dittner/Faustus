@@ -1,4 +1,4 @@
-import { theme } from "../../../global/ThemeManager"
+import { theme } from "../../app/ThemeManager"
 import { BashCodeHighlighter } from "../highlight/BashHighlighter"
 import { UniversalCodeHighlighter } from "../highlight/UniversalCodeHighlighter"
 

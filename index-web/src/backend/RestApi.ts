@@ -1,10 +1,11 @@
-import {PingCmd} from './cmd/PingCmd'
-import {StoreFileCmd} from './cmd/StoreFileCmd'
-import {LoadChildrenFilesCmd} from './cmd/LoadChildrenFilesCmd'
-import {type AnyRXObservable, type RXObservable, RXObservableEntity, RXObservableValue} from 'flinker'
-import {RemoveFileCmd} from './cmd/RemoveFileCmd'
-import { GlobalContext } from '../../../global/GlobalContext'
-import { TextFile } from '../../domain/IndexModel'
+import { type AnyRXObservable, type RXObservable, RXObservableEntity, RXObservableValue } from 'flinker'
+
+import { GlobalContext } from '../app/GlobalContext'
+import { TextFile } from '../domain/DomainModel'
+import { LoadChildrenFilesCmd } from './cmd/LoadChildrenFilesCmd'
+import { PingCmd } from './cmd/PingCmd'
+import { RemoveFileCmd } from './cmd/RemoveFileCmd'
+import { StoreFileCmd } from './cmd/StoreFileCmd'
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 type RestApiErrorCategory = 'noConnection' | 'notAuthorized' | 'serverError' | 'clientError' | 'unknownError' | 'aborted'

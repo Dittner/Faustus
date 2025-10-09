@@ -1,12 +1,12 @@
 import { AnyUIComponent, div, h1, hstack, observer, p } from "flinker-dom"
-import { DemoView } from "./demo/ui/Demo"
-import { LayoutLayer } from "./global/Application"
-import { GlobalContext } from "./global/GlobalContext"
-import { MaterialIcon } from "./global/MaterialIcon"
-import { theme, themeManager } from "./global/ThemeManager"
-import { IconBtn } from "./index/ui/controls/Button"
-import { FontFamily } from "./index/ui/controls/Font"
-import { IndexView } from "./index/ui/IndexView"
+import { LayoutLayer } from "./app/Application"
+import { GlobalContext } from "./app/GlobalContext"
+import { theme, themeManager } from "./app/ThemeManager"
+import { IconBtn } from "./ui/controls/Button"
+import { FontFamily } from "./ui/controls/Font"
+import { DemoView } from "./ui/Demo"
+import { IndexView } from "./ui/IndexView"
+import { MaterialIcon } from "./ui/MaterialIcon"
 
 export const globalContext = GlobalContext.init()
 

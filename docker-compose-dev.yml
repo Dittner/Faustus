@@ -79,7 +79,7 @@ services:
       target: dev
     restart: unless-stopped
     environment:
-      - VITE_INDEX_API_URL=http://localhost:3001/api/index
+      - VITE_INDEX_API_URL=http://localhost:3001/api/
     depends_on:
       - index-api
     volumes:

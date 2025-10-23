@@ -31,3 +31,41 @@ export const sortByKeys = (keys: string[], ascendingMask: boolean[] = []) => {
     return 0
   }
 }
+
+export const indexOfFirstVisibleElement = (coll: HTMLElement[], scrollY: number, parentHeight: number): number => {
+  let res = -1
+  // at the end of the parent – we need to select the last element
+  if (scrollY + window.innerHeight >= parentHeight) {
+    for (let i = coll.length - 1; i >= 0; i--) {
+      const elTop = coll[i].getBoundingClientRect().top
+      if (elTop >= 0 && elTop < window.innerHeight) {
+        return i
+      }
+    }
+  } else {
+    for (let i = 0; i < coll.length; i++) {
+      const rect = coll[i].getBoundingClientRect()
+      if (rect.top >= -50 && rect.top < window.innerHeight / 2) {
+        return i
+      } else if(res === -1 && rect.bottom > 0) {
+        res = i
+      }
+    }
+  }
+  return res
+}
+
+
+export class Path {
+  static parentPathOf(p: string) {
+    const res = p.endsWith('/') ? p.slice(0, -1) : p
+    const lastSlashIndex = res.lastIndexOf('/')
+    return lastSlashIndex === -1 ? '' : res.slice(0, lastSlashIndex + 1)
+  }
+
+  static readonly stemReg = /([^/]+)\/*$/
+  static stem(p: string) {
+    const res = p.match(Path.stemReg)
+    return res && res.length > 1 ? res[1] : p
+  }
+}

@@ -1,38 +1,29 @@
-import { div, observer, textarea } from "flinker-dom"
-import { IndexContext } from "../../app/IndexContext"
-import { theme } from "../../app/ThemeManager"
-import { FontFamily } from "../controls/Font"
-import { FileTextReplacer } from "./FileTextReplacer"
+import { textarea } from "flinker-dom"
+import { IndexContext } from "../../IndexContext"
+import { theme } from "../../theme/ThemeManager"
+import { FontFamily } from "../../controls/Font"
+import { Page } from "../../../domain/DomainModel"
 
 export const EditorView = () => {
   console.log('new EditorView')
-  const ctx = IndexContext.self
+  const reader = IndexContext.self.reader
+  let pageInFocus: Page | undefined = undefined
+  const formatter = new TextFormatter()
 
-  return div().children(() => {
-    TextArea()
-      .bind(ctx.editor.$inputBuffer)
-      .observe(ctx.editor.$isTextReplacing)
-      .observe(ctx.editor.$selectedPage)
-      .react(s => {
-        console.log('EditorView.TextArea: propsDidUpdate, props:', s)
-        s.visible = !ctx.editor.$isTextReplacing.value
-        s.mouseEnabled = ctx.editor.selectedPage !== undefined
-        s.height = window.innerHeight - 40 + 'px'
-        s.top = '40px'
-        s.position = 'relative'
-      })
+  const onFocus = (e: FocusEvent) => {
+    if (pageInFocus !== reader.$selectedPage.value) {
+      pageInFocus = reader.$selectedPage.value
+      const ta = e.currentTarget as HTMLTextAreaElement
+      //scroll to first line
+      ta.setSelectionRange(0, 0)
+      ta.blur()
+      ta.focus()
+    }
+  }
 
-    observer(ctx.editor.$isTextReplacing)
-      .onReceive(isTextReplacing => {
-        return isTextReplacing && FileTextReplacer()
-          .react(s => {
-            s.height = window.innerHeight - 40 + 'px'
-            s.top = '40px'
-            s.position = 'relative'
-            s.bgColor = theme().appBg
-          })
-      })
-  })
+  return TextEditor(formatter)
+    .bind(reader.$inputBuffer)
+    .onFocus(onFocus)
 }
 
 /*
@@ -41,7 +32,7 @@ export const EditorView = () => {
 *
 * */
 
-const TextArea = () => {
+const TextEditor = (formatter:TextFormatter) => {
   console.log('new EditorView.TextArea')
 
   const keyDownFn = (e: KeyboardEvent) => {
@@ -83,12 +74,18 @@ const TextArea = () => {
       e.preventDefault()
       e.stopPropagation()
       TextEditorController.duplicateLine(ta)
-    } // Tab
+    } //Ctrl + Shift + F
+    else if (e.ctrlKey && e.shiftKey && e.keyCode === 70) {
+      e.preventDefault()
+      e.stopPropagation()
+      formatter.format(ta)
+    }     
+    // Tab
     else if (e.keyCode === 9) {
       e.preventDefault()
       e.stopPropagation()
       TextEditorController.tabulate(ta)
-    }
+    } // Enter
     else if (e.keyCode === 13) {
       e.stopPropagation()
       e.preventDefault()
@@ -135,8 +132,9 @@ const TextArea = () => {
       s.textColor = theme().editorText
       s.textAlign = 'left'
       s.autoCorrect = 'off'
+      s.autoFocus = true
       s.spellCheck = false
-      s.paddingHorizontal = '20px'
+      s.paddingHorizontal = '2px'
       s.disableHorizontalScroll = true
     })
     .onKeyDown(keyDownFn)
@@ -288,4 +286,140 @@ class TextEditorController {
       console.log('TextEditorController:wrapAsMultilineCode: ', e)
     }
   }
+}
+
+class TextFormatter {
+  constructor() {}
+
+  //--------------------------------------
+  //  maxEmptyLines
+  //--------------------------------------
+  readonly MAX_EMPTY_LINES = 2
+
+  format(ta: HTMLTextAreaElement) {
+    try {
+      const cursorPos = ta.selectionStart
+      let startAt = ta.selectionStart
+      let stopAt = ta.selectionEnd
+      if (ta.selectionStart === ta.selectionEnd) {
+        startAt = 0
+        stopAt = ta.value.length
+      }
+      ta.selectionStart = startAt
+      ta.selectionEnd = stopAt
+      let text = ta.value.slice(startAt, stopAt)
+      document.execCommand('insertText', false, this.startFormating(text))
+      ta.setSelectionRange(cursorPos, cursorPos)
+    } catch (e) {
+      console.log('TextFormatter:format: ', e)
+    }
+  }
+
+  startFormating(value: string): string {
+    let text = this.removeExtraSpacesAtTheBeginning(value)
+    text = this.removeExtraSpacesAtTheEnd(text)
+    text = this.reduceEmptyLines(text)
+
+    const res: string[] = []
+    const textBuffer: string[] = []
+    const codeBuffer: string[] = []
+    let codeCounter = 0
+
+    const realizeBuffers = () => {
+      if (textBuffer.length > 0) {
+        let blockText = textBuffer.join('\n')
+        blockText = this.removeExtraSpacesInTheMiddle(blockText)
+        blockText = this.replaceHyphenWithDash(blockText)
+        blockText = this.removeHyphenAndSpace(blockText)
+        blockText = this.replaceQuotes(blockText)
+        res.push(blockText)
+        textBuffer.length = 0
+      }
+      if (codeBuffer.length > 0) {
+        let code = codeBuffer.join('\n')
+        code = this.replaceQuotes(code)
+        res.push(code)
+        codeBuffer.length = 0
+      }
+    }
+
+    const rows = text.split('\n')
+    rows.forEach(r => {
+      if (r.match(/^```code *$/)) {
+        codeCounter++
+        codeBuffer.push(r)
+        if (codeCounter === 1) realizeBuffers()
+      }
+      else if (r.match(/^``` *$/) && codeCounter > 0) {
+        codeCounter--
+        codeBuffer.push(r)
+        if (codeCounter === 0) realizeBuffers()
+      } else if (r.match(/^>>> */) && codeCounter === 0) {
+        realizeBuffers()
+        codeBuffer.push(r)
+        realizeBuffers()
+      } else if (codeCounter > 0) {
+        codeBuffer.push(r)
+      } else {
+        textBuffer.push(r)
+      }
+    })
+
+    realizeBuffers()
+    return res.join('\n')
+  }
+
+  removeExtraSpacesAtTheBeginning(s: string): string {
+    return s.replace(/^[\n ]+/, '')
+  }
+
+  removeExtraSpacesAtTheEnd(s: string): string {
+    return s.replace(/[\n ]+$/, '')
+  }
+
+  removeExtraSpacesInTheMiddle(s: string): string {
+    return s
+      .replace(/\n +/g, '\n')
+      .replace(/ +/g, ' ')
+      .replace(/ +,/g, ',')
+  }
+
+  replaceHyphenWithDash(s: string): string {
+    return s
+      .replace(/ -- /g, ' — ')
+      .replace(/\n-- /g, '\n— ')
+      .replace(/([,.])- /g, '$1 — ')
+      .replace(/ [-–] /g, ' — ')
+  }
+
+  removeHyphenAndSpace(s: string): string {
+    return s
+      .replace(/^[-–] /gm, '— ')
+      .replace(/[-–]$/gm, '—')
+      .replaceAll('\n- ', '\n— ')
+      .replace(/([А-я])- \n/g, '$1')
+  }
+
+  replaceQuotes(s: string): string {
+    return s
+      .replace(/[”„“]/g, '"')
+      .replace(/…/g, '...')
+  }
+
+  reduceEmptyLines(s: string): string {
+    return s
+      .replace(/\n\s+\n/g, '\n\n')
+      .replace(new RegExp(`\n{${this.MAX_EMPTY_LINES},}`, 'g'), '\n'.repeat(this.MAX_EMPTY_LINES))
+  }
+
+  // replaceWith() {
+  //   const substr = this.$replaceSubstring.value
+  //   const replaceValue = this.$replaceWith.value
+
+  //   const f = this.ctx.$selectedFile.value
+  //   if (f?.isEditing && substr) {
+  //     f.replaceWith(substr, replaceValue)
+  //     this.$inputBuffer.value = this.selectedPage?.text ?? ''
+  //   }
+  // }
 }

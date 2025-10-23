@@ -1,7 +1,7 @@
-import { type RestApi, type RestApiError, type Runnable } from '../RestApi'
 import { type RXObservable, RXOperation } from 'flinker'
+import { type RestApi, type RestApiError, type Runnable } from '../RestApi'
 
-export class LoadChildrenFilesCmd implements Runnable {
+export class LoadFileCmd implements Runnable {
   private readonly api: RestApi
   private readonly path: string
 
@@ -18,9 +18,9 @@ export class LoadChildrenFilesCmd implements Runnable {
     return op.asObservable
   }
 
-  private async startLoading(op: RXOperation<File[], RestApiError>) {
-    console.log('LoadChildrenFilesCmd:startLoading, dir link:', this.path)
-    const path = this.path ? '/dir' + this.path : '/dir'
+  private async startLoading(op: RXOperation<any, RestApiError>) {
+    console.log('LoadFileCmd:startLoading, path:', this.path)
+    const path = 'file/' + this.path
     const [response, body] = await this.api.sendRequest('GET', path)
     if (response?.ok) {
       //setTimeout(() => op.success(body), 100)

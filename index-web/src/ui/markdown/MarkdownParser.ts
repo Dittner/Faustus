@@ -1,6 +1,6 @@
-import { theme } from "../../app/ThemeManager"
 import { BashCodeHighlighter } from "../highlight/BashHighlighter"
 import { UniversalCodeHighlighter } from "../highlight/UniversalCodeHighlighter"
+import { theme } from "../theme/ThemeManager"
 
 export const universalCodeHighlighter = new UniversalCodeHighlighter()
 export const bashCodeHighlighter = new BashCodeHighlighter()
@@ -275,15 +275,6 @@ class MDParser {
     if (rule.postProccessing) res = rule.postProccessing(res)
     return res
   }
-
-  // private parseLineOld(text: string, inlineRules: MDInlineGrammarRule[]): string {
-  //   let res = text
-  //   for (let i = 0; i < inlineRules.length; i++) {
-  //     const r = inlineRules[i]
-  //     res = res.replace(r.matcher[0], r.matcher[1])
-  //   }
-  //   return res
-  // }
 
   private parseLine(text: string, inlineRules: MDInlineGrammarRule[]): string {
     if (!text || inlineRules.length === 0) return text

@@ -1,4 +1,4 @@
-import {RXObservableValue} from 'flinker'
+import { RXObservableValue } from 'flinker'
 
 export enum LayoutLayer {
   MINUS = '-1',
@@ -20,8 +20,8 @@ export enum AppSize {
 
 export class Application {
   readonly $size = new RXObservableValue<AppSize>(AppSize.L)
-  readonly $errorMsg = new RXObservableValue('')
   readonly $location = new RXObservableValue('')
+  readonly $scrollY = new RXObservableValue(0)
 
   readonly isMobileDevice: boolean
 
@@ -31,6 +31,7 @@ export class Application {
     console.log('isMobileDevice: ' + this.isMobileDevice)
     console.log('localStorage, theme: ' + window.localStorage.getItem('theme'))
     window.addEventListener('resize', this.updateSize.bind(this))
+    window.addEventListener('scroll', () => this.$scrollY.value = window.scrollY, false);
     this.watchHistoryEvents()
     this.updateLocation()
   }

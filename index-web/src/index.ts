@@ -1,8 +1,8 @@
-import './index.css'
+//import css at first!!!!
 import './code.css'
+import './index.css'
+import './jet_brains_mono.css'
 import { App } from './App'
-
-console.log('env:', import.meta.env);
 
 const app = App()
 document.getElementById('root')!.appendChild(app.dom)

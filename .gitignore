@@ -8,6 +8,7 @@
 __pycache__
 
 index-api/data
+index-api/index
 
 index-web/dist
 index-web/node_modules

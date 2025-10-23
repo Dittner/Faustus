@@ -1,11 +1,14 @@
 import { type AnyRXObservable, type RXObservable, RXObservableEntity, RXObservableValue } from 'flinker'
 
-import { GlobalContext } from '../app/GlobalContext'
 import { TextFile } from '../domain/DomainModel'
-import { LoadChildrenFilesCmd } from './cmd/LoadChildrenFilesCmd'
+import { LoadFileCmd } from './cmd/LoadFileCmd'
 import { PingCmd } from './cmd/PingCmd'
 import { RemoveFileCmd } from './cmd/RemoveFileCmd'
-import { StoreFileCmd } from './cmd/StoreFileCmd'
+import { RewriteFileCmd } from './cmd/RewriteFileCmd'
+import { LoadFilesAliasCmd } from './cmd/LoadFilesAliasCmd'
+import { LoadFilesTreeCmd } from './cmd/LoadFilesTreeCmd'
+import { CreateFileCmd } from './cmd/CreateFileCmd'
+import { RenameFileCmd } from './cmd/RenameFileCmd'
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 type RestApiErrorCategory = 'noConnection' | 'notAuthorized' | 'serverError' | 'clientError' | 'unknownError' | 'aborted'
@@ -34,13 +37,13 @@ export class RestApi extends RXObservableEntity<RestApi> {
   readonly baseUrl: string
   readonly assetsUrl: string
   readonly $isServerAvailable = new RXObservableValue(false)
-  headers: any = {'Content-Type': 'application/json'}
+  headers: any = { 'Content-Type': 'application/json' }
 
   constructor() {
     super()
     //env is defined in dockerfile
-    this.baseUrl = import.meta.env.VITE_INDEX_API_URL ?? 'http://localhost:3456/api/index'
-    this.assetsUrl = this.baseUrl + '/asset'
+    this.baseUrl = import.meta.env.VITE_INDEX_API_URL ?? 'http://localhost:3456/api/'
+    this.assetsUrl = this.baseUrl + 'asset/'
     console.log('RestApi, baseUrl: ', this.baseUrl)
     this.ping()
   }
@@ -51,23 +54,48 @@ export class RestApi extends RXObservableEntity<RestApi> {
   }
 
   //--------------------------------------
-  //  dir
+  //  file
   //--------------------------------------
 
-  loadChildrenFiles(path: string): RXObservable<any, RestApiError> {
-    const cmd = new LoadChildrenFilesCmd(this, path)
+  loadFilesTree(): RXObservable<any, RestApiError> {
+    const cmd = new LoadFilesTreeCmd(this)
     return cmd.run()
   }
 
-  storeFile(f: TextFile): RXObservable<any, RestApiError> {
-    const cmd = new StoreFileCmd(this, f)
+  loadFile(path: string): RXObservable<any, RestApiError> {
+    const cmd = new LoadFileCmd(this, path)
     return cmd.run()
   }
 
-  removeFile(f: TextFile): RXObservable<any, RestApiError> {
-    const cmd = new RemoveFileCmd(this, f)
+  rewriteFile(f: TextFile): RXObservable<any, RestApiError> {
+    const cmd = new RewriteFileCmd(this, f)
     return cmd.run()
   }
+
+  createFile(f: TextFile): RXObservable<any, RestApiError> {
+    const cmd = new CreateFileCmd(this, f)
+    return cmd.run()
+  }
+
+  removeFile(path: string): RXObservable<any, RestApiError> {
+    const cmd = new RemoveFileCmd(this, path)
+    return cmd.run()
+  }
+
+  renameFile(fromPath: string, toPath:string): RXObservable<any, RestApiError> {
+    const cmd = new RenameFileCmd(this, fromPath, toPath)
+    return cmd.run()
+  }
+
+  //--------------------------------------
+  //  voc
+  //--------------------------------------
+
+  loadAliasVoc(): RXObservable<any, RestApiError> {
+    const cmd = new LoadFilesAliasCmd(this)
+    return cmd.run()
+  }
+
 
   //--------------------------------------
   //  sendRequest
@@ -98,8 +126,7 @@ export class RestApi extends RXObservableEntity<RestApi> {
       }
       return [response, null]
     } catch (e: any) {
-      const msg = 'Unable to ' + method + ' resource: ' + this.baseUrl + path
-      GlobalContext.self.app.$errorMsg.value = msg
+      const msg = 'Failed to ' + method + ' resource: ' + this.baseUrl + path
       console.log(msg, '. Details:', e)
       return [null, null]
     }
@@ -131,7 +158,7 @@ export class RestApi extends RXObservableEntity<RestApi> {
       const details = await response.text()
       console.log('Details:', details)
       return details
-    } catch (_) {}
+    } catch (_) { }
     return null
   }
 }

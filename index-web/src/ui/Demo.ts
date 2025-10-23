@@ -1,11 +1,11 @@
 import { RXObservableValue, RXSubject } from "flinker"
 import { btn, div, h1, image, input, link, p, spacer, switcher, textarea, vlist, vstack } from "flinker-dom"
 import { globalContext } from "../App"
-import { theme } from "../app/ThemeManager"
 import { MaterialIcon } from "./MaterialIcon"
 import { Icon, IconBtn } from "./controls/Button"
 import { FontFamily } from "./controls/Font"
-import { TextInput } from "./editor/FileTextReplacer"
+import { theme } from "./theme/ThemeManager"
+import { TextInput } from "./controls/Input"
 
 export function DemoView() {
   return vstack()
@@ -222,9 +222,9 @@ const TodoList = () => {
         .react(s => s.text = 'TodoList (' + model.$tasks.value.length + ')')
 
       vlist<Task>()
-        .observe(model.$tasks)
+        .observe(model.$tasks, 'recreateChildren')
         .items(() => model.$tasks.value)
-        .equals((a, b) => a.id === b.id)
+        .itemHash(t => t.id)
         .itemRenderer(TaskView)
 
       btn()

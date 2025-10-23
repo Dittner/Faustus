@@ -14,6 +14,7 @@ export interface GlobalTheme {
   text50: string
   editorText: string
   orange: string
+  yellow: string
   red: string
   gray: string
   green: string
@@ -27,18 +28,15 @@ export interface GlobalTheme {
   violet: string
   warn: string
   info: string
+  statusFg: string
+  statusBg: string
   comment: string
   selectedBlockBg: string
   hoveredBlockBg: string
   modalViewBg: string
   transparent: string
   menuItem: string
-  h1: string
-  h2: string
-  h3: string
-  h4: string
-  h5: string
-  h6: string
+  header: string
   menuHoveredItem: string
   menuSelectedItem: string
   menuHeader: string
@@ -119,12 +117,13 @@ export class ThemeManager {
     return {
       id: 'light',
       isLight: true,
-      defMenuFontSize: '0.8rem',
+      defMenuFontSize: '0.85rem',
       defFontSize: '1rem',
       defFontWeight: '400',
       appBg: white,
       white,
       orange: '#a56a26',
+      yellow: '#a56a26',
       black,
       text: black,
       text50: black + '88',
@@ -132,12 +131,7 @@ export class ThemeManager {
       red,
       gray: '#8a9fb6',
       green: '#7198a9',
-      h1: black,
-      h2: header,
-      h3: header,
-      h4: header,
-      h5: header,
-      h6: header,
+      header,
       code: red,
       codeBg: red + 10,
       em: black,
@@ -148,6 +142,8 @@ export class ThemeManager {
       violet: '#43257c',
       warn: '#9a3f2b',
       info: '#3a84b8',
+      statusFg: '#376a83',
+      statusBg: '#152832',
       comment: '#0b6039',
       selectedBlockBg: red + '15',
       hoveredBlockBg: black + '15',
@@ -160,7 +156,7 @@ export class ThemeManager {
       menuHoveredHeader: red,
       maxBlogTextWidth: '950px',
       maxBlogTextWidthPx: 950,
-      menuWidthPx: 500
+      menuWidthPx: 550
     }
   }
 
@@ -187,12 +183,7 @@ export class ThemeManager {
       red,
       gray: '#79848d',
       green: '#6c8f9f',
-      h1: white,
       h2: header,
-      h3: header,
-      h4: header,
-      h5: header,
-      h6: header,
       em: '#989ba2ff',
       code: header,
       codeBg: header + '08',
@@ -202,6 +193,8 @@ export class ThemeManager {
       violet: '#aeadde',
       warn: '#ba4f37',
       info: blue,
+      statusFg: '#376a83',
+      statusBg: '#152832',
       purple: '#b2aee5',
       comment: '#7ea3a5',
       pink: '#c293cc',
@@ -239,21 +232,19 @@ export class ThemeManager {
       editorText: text,
       red,
       gray: '#79848d',
-      green: '#6c8f9f',
-      h1: white,
-      h2: header,
-      h3: header,
-      h4: header,
-      h5: header,
-      h6: header,
+      green: '#546f7cff',
+      header,
       em: '#8b8e97',
       code: '#adb4c1',
       codeBg:  t.transparent,
       border: '#ffFFff10',
       blue,
       violet: '#aeadde',
-      warn: '#ba4f37',
+      warn: '#9fa786',
+      yellow: '#9fa786',
       info: blue,
+      statusFg: '#376a83',
+      statusBg: '#181f23',
       purple: '#b2aee5',
       comment: '#7ea3a5',
       link: '#aa8657',
@@ -266,7 +257,7 @@ export class ThemeManager {
       menuHoveredItem: header,
       menuSelectedItem: header,
       menuHeader: blue,
-      menuHoveredHeader: '#7cbcf4ff',
+      menuHoveredHeader: '#7cbcf4',
     })
   }
 
@@ -275,7 +266,7 @@ export class ThemeManager {
     const monoFont = 'var(--font-family-mono)'
     const articleFont = 'var(--font-family-article)'
     const textColor = t.text
-    const headerPadingTop = '20px'
+    const headerPadingTop = '0px'
     // const textProps: StylableComponentProps = { textColor: '#86b3c7' }
     // buildRule(textProps, theme.id, '*')
 
@@ -285,9 +276,9 @@ export class ThemeManager {
 
     const h1Props: UIComponentProps = {
       textTransform: 'uppercase',
-      fontSize: '1.5rem',
+      fontSize: '2.0rem',
       fontWeight: 'bold',
-      textColor: t.h1,
+      textColor: t.header,
       paddingTop: headerPadingTop
     }
     buildRule(h1Props, parentSelector, 'h1')
@@ -295,7 +286,7 @@ export class ThemeManager {
     const h2Props: UIComponentProps = {
       fontSize: '1.5rem',
       fontWeight: 'bold',
-      textColor: t.h2,
+      textColor: t.header,
       paddingTop: headerPadingTop
     }
     buildRule(h2Props, parentSelector, 'h2')
@@ -304,7 +295,7 @@ export class ThemeManager {
       fontSize: '1.2rem',
       fontWeight: 'bold',
       textAlign: 'left',
-      textColor: t.h3,
+      textColor: t.header,
       paddingTop: headerPadingTop
     }
     buildRule(h3Props, parentSelector, 'h3')
@@ -313,21 +304,21 @@ export class ThemeManager {
       fontSize: '1rem',
       fontWeight: 'bold',
       textAlign: 'left',
-      textColor: t.h4,
+      textColor: t.header,
     }
     buildRule(h4Props, parentSelector, 'h4')
 
     const h5Props: UIComponentProps = {
       fontSize: t.defFontSize,
       fontWeight: 'bold',
-      textColor: t.h5
+      textColor: t.header
     }
     buildRule(h5Props, parentSelector, 'h5')
 
     const h6Props: UIComponentProps = {
       fontSize: t.defFontSize,
       fontWeight: t.defFontWeight,
-      textColor: t.h6
+      textColor: t.header
     }
     buildRule(h6Props, parentSelector, 'h6')
 
@@ -458,12 +449,14 @@ export class ThemeManager {
     // mark
     /******************************/
 
-    buildRule({
-      fontSize: t.defFontSize,
-      fontWeight: t.defFontWeight,
-      bgColor: '#ffFF00',
-      textColor
-    }, parentSelector, 'mark')
+    const markProps: UIComponentProps = {
+      fontSize: 'inherit',
+      fontWeight: 'inherit',
+      textColor: t.yellow,
+      bgColor: t.appBg
+    }
+
+    buildRule(markProps, parentSelector, 'mark')
 
     /******************************/
     // link
@@ -623,7 +616,7 @@ export class ThemeManager {
       justifyContent: 'right',
       textAlign: 'left',
       fontWeight: 'inherit',
-      textColor: t.h2
+      textColor: t.header
     }
     buildRule(epigraphProps, parentSelector, 'div.epi')
     buildRule({ fontSize: 'inherit', textColor: 'inherit' }, parentSelector, 'div.epi div')

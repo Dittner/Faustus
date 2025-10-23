@@ -1,25 +1,26 @@
 import { type RXObservable, RXOperation } from 'flinker'
 import { type RestApi, type RestApiError, type Runnable } from '../RestApi'
 
-export class RemoveFileCmd implements Runnable {
+export class LoadFilesAliasCmd implements Runnable {
   private readonly api: RestApi
-  private readonly path: string
 
-  constructor(api: RestApi, path: string) {
+  constructor(api: RestApi) {
     this.api = api
-    this.path = path
   }
 
   run(): RXObservable<any, RestApiError> {
     const op = new RXOperation<any, RestApiError>()
-    this.remove(op).catch((e: RestApiError) => { op.fail(e) })
+    this.startLoading(op).catch((e: RestApiError) => {
+      op.fail(e)
+    })
     return op.asObservable
   }
 
-  private async remove(op: RXOperation<any, RestApiError>) {
-    const path = 'file/rm/' + this.path
-    const [response, body] = await this.api.sendRequest('POST', path)
+  private async startLoading(op: RXOperation<any, RestApiError>) {
+    console.log('LoadFilesAliasCmd:startLoading')
+    const [response, body] = await this.api.sendRequest('GET', 'voc/alias')
     if (response?.ok) {
+      //setTimeout(() => op.success(body), 100)
       op.success(body)
     } else {
       await this.api.handlerError(response)

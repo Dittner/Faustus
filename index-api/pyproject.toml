@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.115.14",
+    "isort>=7.0.0",
     "path>=17.1.1",
     "uvicorn>=0.35.0",
 ]
@@ -18,5 +19,5 @@ dev = [
 
 # ignore annoying pylance warnings
 [tool.pyright]
-typeCheckingMode = "off"
-ignore = ["*"]
+#typeCheckingMode = "off"
+#ignore = ["*"]

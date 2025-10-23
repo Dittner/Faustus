@@ -12,6 +12,7 @@ lint.ignore = [
     "ANN202", # Missing return type annotation for private function
     "ANN204", # Missing return type annotation for special method
     "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
+    "BLE001", # except-Exception-as-e warning
     "COM812", # To avoid unexpected behavior
     "ERA001", # Found commented-out codeRuff
     "RET505", # superfluous-else-return
@@ -39,6 +40,7 @@ lint.ignore = [
     "TD002",
     "TD003",
     "FIX002", # too verbose descriptions of todos
+    "SIM108", # use if-else ternary operator
 ]
 
 exclude = [

@@ -2,7 +2,7 @@ import { RXObservableValue } from 'flinker'
 import { buildRule, FontWeight, UIComponentProps } from 'flinker-dom'
 
 export interface GlobalTheme {
-  id: string
+  id: 'dark' | 'light' | 'night'
   isLight: boolean
   defMenuFontSize: string
   defFontSize: string
@@ -14,7 +14,6 @@ export interface GlobalTheme {
   text50: string
   editorText: string
   orange: string
-  yellow: string
   red: string
   gray: string
   green: string
@@ -28,22 +27,18 @@ export interface GlobalTheme {
   violet: string
   warn: string
   info: string
+  mark: string
   statusFg: string
   statusBg: string
   comment: string
-  selectedBlockBg: string
-  hoveredBlockBg: string
-  modalViewBg: string
   transparent: string
-  menuItem: string
   header: string
-  menuHoveredItem: string
-  menuSelectedItem: string
-  menuHeader: string
-  menuHoveredHeader: string
-  maxBlogTextWidth: string
-  maxBlogTextWidthPx: number
-  menuWidthPx: number
+  menuDir: string
+  menuFile: string
+  menuPath: string
+  menuPage: string
+  maxBlogTextWidth: number
+  menuWidth: number
 }
 
 export class ThemeManager {
@@ -83,6 +78,15 @@ export class ThemeManager {
     window.localStorage.setItem('theme', 'night')
   }
 
+  switchTheme() {
+    if (this.$theme.value.id === 'light')
+      this.setDarkTheme()
+    else if (this.$theme.value.id === 'dark')
+      this.setNightTheme()
+    else if (this.$theme.value.id === 'night')
+      this.setLightTheme()
+  }
+
   constructor() {
     this._lightTheme = this.createLightTheme()
     this._darkTheme = this.createDarkTheme(this._lightTheme)
@@ -112,18 +116,18 @@ export class ThemeManager {
   createLightTheme(): GlobalTheme {
     const black = '#222222'
     const white = '#ffFFff'//efeee8
-    const red = '#93324f'
+    const red = '#bc4065'
     const header = '#755b54'
     return {
       id: 'light',
       isLight: true,
-      defMenuFontSize: '0.85rem',
+      defMenuFontSize: '0.8rem',
       defFontSize: '1rem',
       defFontWeight: '400',
       appBg: white,
       white,
       orange: '#a56a26',
-      yellow: '#a56a26',
+      mark: '#be4644',
       black,
       text: black,
       text50: black + '88',
@@ -142,21 +146,16 @@ export class ThemeManager {
       violet: '#43257c',
       warn: '#9a3f2b',
       info: '#3a84b8',
-      statusFg: '#376a83',
-      statusBg: '#152832',
       comment: '#0b6039',
-      selectedBlockBg: red + '15',
-      hoveredBlockBg: black + '15',
-      modalViewBg: '#e5d8f1',
       transparent: '#00000000',
-      menuItem: black + 'cc',
-      menuHoveredItem: red,
-      menuSelectedItem: black,
-      menuHeader: '#0a4277',
-      menuHoveredHeader: red,
-      maxBlogTextWidth: '950px',
-      maxBlogTextWidthPx: 950,
-      menuWidthPx: 550
+      statusFg: black,
+      statusBg: white,
+      menuDir: '#462962',
+      menuFile: '#0f5848',
+      menuPath: '#5c6c72',
+      menuPage: '#95302e',
+      maxBlogTextWidth: 950,
+      menuWidth: 550
     }
   }
 
@@ -168,14 +167,17 @@ export class ThemeManager {
 
   createDarkTheme(t: GlobalTheme): GlobalTheme {
     const text = '#7d828e' //aab6c2
-    const white = '#ced6dc'
-    const red = '#df5f83'
+    const white = '#b5bac8'
+    const red = '#cb6582'
     const blue = '#75bbe7'
-    const header = '#bcc3c9'//aaaaaa
+    const black = '#21232a'
+    const header = white//aaaaaa
     return Object.assign({}, t, {
       id: 'dark',
       isLight: false,
-      appBg: '#212224', //26272c 
+      appBg: black, //26272c 
+      black,
+      header,
       white,
       text,
       text50: text + 'aa',
@@ -184,29 +186,25 @@ export class ThemeManager {
       gray: '#79848d',
       green: '#6c8f9f',
       h2: header,
-      em: '#989ba2ff',
+      em: '#999eac',
       code: header,
       codeBg: header + '08',
-      border: '#ffFFff10',
       blue,
       link: '#bd9054',
       violet: '#aeadde',
-      warn: '#ba4f37',
+      warn: '#cb6582',
+      mark: '#cb6582',
       info: blue,
-      statusFg: '#376a83',
-      statusBg: '#152832',
+      statusFg: '#b2b79b',
+      statusBg: black,
       purple: '#b2aee5',
       comment: '#7ea3a5',
       pink: '#c293cc',
       orange: '#463d16',
-      selectedBlockBg: text + '07',
-      hoveredBlockBg: text + '10',
-      modalViewBg: '#43354b',
-      menuItem: text,
-      menuHoveredItem: white,
-      menuSelectedItem: white,
-      menuHeader: blue,
-      menuHoveredHeader: white,
+      menuDir: '#9b88ae',
+      menuFile: '#5bafbc',
+      menuPath: '#516e73',
+      menuPage: '#77a2ae',
     })
   }
 
@@ -217,15 +215,17 @@ export class ThemeManager {
 * */
 
   createNightTheme(t: GlobalTheme): GlobalTheme {
-    const text = '#707682' //aab6c2
-    const white = '#c6d4e3'
+    const text = '#707786' //aab6c2
+    const white = '#a2a9b8'
     const red = '#df5f83'
     const blue = '#6194c1'
-    const header = '#9ca0ae'
+    const header = white
+    const black = '#111111'
     return Object.assign({}, t, {
       id: 'night',
       isLight: false,
-      appBg: '#111111', //131417 262730
+      appBg: black,
+      black,
       white,
       text,
       text50: text + 'aa',
@@ -234,30 +234,25 @@ export class ThemeManager {
       gray: '#79848d',
       green: '#546f7cff',
       header,
-      em: '#8b8e97',
+      em: '#8e94a5',
       code: '#adb4c1',
-      codeBg:  t.transparent,
-      border: '#ffFFff10',
+      codeBg: t.transparent,
       blue,
       violet: '#aeadde',
       warn: '#9fa786',
-      yellow: '#9fa786',
+      mark: '#cb6582',
       info: blue,
-      statusFg: '#376a83',
-      statusBg: '#181f23',
       purple: '#b2aee5',
-      comment: '#7ea3a5',
+      comment: '#678591',
       link: '#aa8657',
       pink: '#c293cc',
       orange: '#463d16',
-      selectedBlockBg: text + '07',
-      hoveredBlockBg: text + '10',
-      modalViewBg: '#43354b',
-      menuItem: text,
-      menuHoveredItem: header,
-      menuSelectedItem: header,
-      menuHeader: blue,
-      menuHoveredHeader: '#7cbcf4',
+      statusFg: '#9fa786',
+      statusBg: '#181f23',
+      menuDir: '#8d74a6',
+      menuFile: '#4c9da3',
+      menuPath: '#4e6c70',
+      menuPage: '#4c9da3',
     })
   }
 
@@ -301,7 +296,7 @@ export class ThemeManager {
     buildRule(h3Props, parentSelector, 'h3')
 
     const h4Props: UIComponentProps = {
-      fontSize: '1rem',
+      fontSize: '1.2rem',
       fontWeight: 'bold',
       textAlign: 'left',
       textColor: t.header,
@@ -452,8 +447,8 @@ export class ThemeManager {
     const markProps: UIComponentProps = {
       fontSize: 'inherit',
       fontWeight: 'inherit',
-      textColor: t.yellow,
-      bgColor: t.appBg
+      textColor: t.mark,
+      bgColor: t.transparent
     }
 
     buildRule(markProps, parentSelector, 'mark')
@@ -496,7 +491,7 @@ export class ThemeManager {
     /******************************/
 
     const imgProps: UIComponentProps = {
-      maxWidth: (t.maxBlogTextWidthPx + 200) + 'px',
+      maxWidth: (t.maxBlogTextWidth + 200) + 'px',
       //paddingTop: '50px'
     }
     buildRule(imgProps, parentSelector, 'img')

@@ -142,7 +142,7 @@ export class FileExplorer extends OperatingModeClass {
       if (path) {
         globalContext.restApi.removeFile(path).pipe()
           .onReceive(data => {
-            this.ctx.$msg.value = { text: 'File "' + path + '", deleted', level: 'info' }
+            this.ctx.$msg.value = { text: path + ', deleted', level: 'info' }
 
             this.moveCursor(1)
             if (this.$selectedFilePath.value == path)
@@ -206,7 +206,7 @@ export class FileExplorer extends OperatingModeClass {
       const f = TextFile.createFile(path)
       globalContext.restApi.createFile(f).pipe()
         .onReceive(data => {
-          this.ctx.$msg.value = { text: 'File "' + f.path + '", written', level: 'info' }
+          this.ctx.$msg.value = { text: f.path + ', written', level: 'info' }
           this.addNewFiles(data)
           this.$mode.value = 'explore'
           this.refreshFileList()
@@ -236,7 +236,7 @@ export class FileExplorer extends OperatingModeClass {
             } else {
               this.loadFilesTree()
             }
-            this.ctx.$msg.value = { text: 'File "' + fromPath + '", renamed to "' + toPath + '"', level: 'info' }
+            this.ctx.$msg.value = { text: fromPath + ', renamed to ' + toPath, level: 'info' }
             this.$mode.value = 'explore'
           })
           .onError(e => {
@@ -339,13 +339,11 @@ export class FileExplorer extends OperatingModeClass {
         break
       }
 
-    if (!this.$selectedFilePath.value) {
-      if (isDir) {
-        if (this.$openedDirFiles.value.length > 0)
-          this.$selectedFilePath.value = this.$openedDirFiles.value[0].path
-      } else {
-        this.$selectedFilePath.value = path
-      }
+    if (isDir) {
+      if (this.$openedDirFiles.value.length > 0)
+        this.$selectedFilePath.value = this.$openedDirFiles.value[0].path
+    } else {
+      this.$selectedFilePath.value = path
     }
   }
 

@@ -1,6 +1,7 @@
 import { RXObservableValue } from "flinker"
 import { IndexContext } from "../IndexContext"
 import { Action, ActionsList } from "./Action"
+import { themeManager } from "../theme/ThemeManager"
 
 export type OperatingModeID = 'connect' | 'explore' | 'read' | 'search'
 export interface OperatingMode {
@@ -30,6 +31,7 @@ export class OperatingModeClass implements OperatingMode {
       this.$showActions.value = false
       this.ctx.$msg.value = undefined
     })
+    this.actionsList.add('T', 'Switch theme', () => themeManager.switchTheme())
     this.actionsList.add('.', 'Repeat last action', () => this.lastExecutedAction?.handler())
   }
 

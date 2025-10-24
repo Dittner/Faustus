@@ -15,6 +15,7 @@ interface Serializable {
 
 
 export const FILE_SECTION_ALIAS = '[ALIAS]'
+export const FILE_SECTION_AUTHOR = '[AUTHOR]'
 export const FILE_SECTION_PUBLISHED = '[PUBLISHED]'
 export const FILE_SECTION_BODY = '[BODY]'
 export const FILE_SECTION_BIRTH_YEAR = '[BIRTH_YEAR]'
@@ -29,6 +30,7 @@ export class TextFile extends RXObservableEntity<TextFile> {
   alias: string = ''
   birthYear: string = ''
   deathYear: string = ''
+  author: string = ''
   published: string = ''
   scrollPos = 0
   data: any = { text: '' }
@@ -93,6 +95,8 @@ export class TextFile extends RXObservableEntity<TextFile> {
 
       if (key === FILE_SECTION_ALIAS) {
         this.alias = value
+      } else if (key === FILE_SECTION_AUTHOR) {
+        this.author = value
       } else if (key === FILE_SECTION_PUBLISHED) {
         this.published = value
       } else if (key === FILE_SECTION_BIRTH_YEAR) {
@@ -120,6 +124,9 @@ export class TextFile extends RXObservableEntity<TextFile> {
     if (this.deathYear)
       text += FILE_SECTION_DEATH_YEAR + '\n' + this.deathYear + '\n\n'
 
+    if (this.author)
+      text += FILE_SECTION_AUTHOR + '\n' + this.author + '\n\n'
+
     if (this.published)
       text += FILE_SECTION_PUBLISHED + '\n' + this.published + '\n\n'
 
@@ -146,6 +153,7 @@ export class TextFile extends RXObservableEntity<TextFile> {
       let text = ''
       text += FILE_SECTION_BIRTH_YEAR + '\n1900' + '\n\n'
       text += FILE_SECTION_DEATH_YEAR + '\n1999' + '\n\n'
+      text += FILE_SECTION_AUTHOR + '\n' + 'Author A.' + '\n\n'
       text += FILE_SECTION_PUBLISHED + '\n' + (new Date()).getFullYear() + '\n\n'
       text += FILE_SECTION_BODY + '\n'
 

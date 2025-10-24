@@ -64,16 +64,12 @@ export const FileExplorerView = () => {
 
 const FileNodeRenderer = (n: FileNode) => {
   const ctx = IndexContext.self
-  const pathColor = '#4e6c70ff'
-  const textColor = n.isDir ? '#8d74a6' : '#21a98c'
-  const bgColor = theme().appBg
   const host = p()
   return host
     .react(s => {
       // updated when selected item has changed
       s.fontSize = theme().defMenuFontSize
       s.fontFamily = FontFamily.MONO
-      s.paddingLeft = '20px'
       s.wrap = false
     })
     .children(() => {
@@ -85,7 +81,12 @@ const FileNodeRenderer = (n: FileNode) => {
             block: 'center'
           })
         }
+
+
+        const textColor = n.isDir ? theme().menuDir : theme().menuFile
+        const bgColor = theme().appBg
         s.padding = '5px'
+        s.paddingLeft = '20px'
         s.textColor = underCurser ? bgColor : textColor
         s.bgColor = underCurser ? textColor : theme().transparent
         s.text = n.isDir ? n.id + '/' : ctx.explorer.filesAliasVoc[n.path] ?? n.id
@@ -93,8 +94,8 @@ const FileNodeRenderer = (n: FileNode) => {
 
       span().react(s => {
         s.padding = '5px'
-        s.textColor = pathColor
-        s.paddingLeft = '25px'
+        s.textColor = theme().menuPath
+        s.paddingLeft = '20px'
         s.text = '~/' + n.path
         s.fontStyle = 'italic'
       })

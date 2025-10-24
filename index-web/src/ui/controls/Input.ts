@@ -125,8 +125,8 @@ export const LineInput = ($buffer: RXObservableValue<string>, $cursorPos: RXObse
       s.margin = '0'
       s.wrap = false
       s.whiteSpace = 'nowrap'
-      s.textColor = theme().appBg
-      s.bgColor = theme().yellow
+      s.textColor = theme().black
+      s.bgColor = theme().mark
     })
     .propsDidChange(props => $sharedState.value = props)
     .children(() => {
@@ -157,8 +157,8 @@ export const LineInput = ($buffer: RXObservableValue<string>, $cursorPos: RXObse
           const t = $buffer.value
           const i = $cursorPos.value
           s.fontSize = 'inherit'
-          s.textColor = i === -1 ? theme().appBg : theme().yellow
-          s.bgColor = theme().appBg
+          s.textColor = i === -1 ? theme().black : theme().mark
+          s.bgColor = theme().black
           s.height = '100%'
           s.text = i === -1 ? '█' : t.at(i)
         })

@@ -10,8 +10,8 @@ import { ActionsHelpView, CMD_LINE_HEIGHT, MessangerView } from "../../IndexView
 import { EditorView } from "./TextEditor"
 import { StatusBar, StatusBarActionBuffer, StatusBarModeName } from "../../controls/StatusBar"
 import { FileReader } from "./FileReader"
-import { indexOfFirstVisibleElement } from "../../../app/Utils"
 import { PageHeaderListView } from "./PageHeaderListView"
+import { indexOfFirstVisibleElement } from "../../../app/Utils"
 
 export const FileView = () => {
   console.log('new FileView')
@@ -34,7 +34,7 @@ export const FileView = () => {
           .react(s => {
             s.visible = ctx.reader.$showPageHeaderList.value
             s.position = 'fixed'
-            s.width = theme().menuWidthPx + 'px'
+            s.width = theme().menuWidth + 'px'
             s.height = '100%'
             s.gap = '0'
             s.className = 'invisibleScrollbar'
@@ -58,8 +58,8 @@ export const FileView = () => {
             s.halign = 'left'
             s.top = '0'
             s.paddingBottom = CMD_LINE_HEIGHT + 'px'
-            s.left = (isEditing ? window.innerWidth / 2 - 20 : theme().menuWidthPx) + 'px'
-            s.width = (window.innerWidth - theme().menuWidthPx - 20) + 'px'
+            s.left = (isEditing ? window.innerWidth / 2 - 20 : theme().menuWidth) + 'px'
+            s.width = (window.innerWidth - theme().menuWidth - 20) + 'px'
             s.gap = '20px'
           })
 
@@ -85,15 +85,7 @@ export const FileView = () => {
           s.left = '0'
           s.gap = '0'
           s.width = '100%'
-          s.bgColor = theme().appBg
           s.layer = LayoutLayer.MODAL
-        })
-
-      span()
-        .observe(ctx.reader.$selectedFile)
-        .react(s => {
-          s.visible = false
-          ctx.reader.pageListDidRender()
         })
     })
 }
@@ -153,7 +145,7 @@ export const PageView = (page: Page, index: number) => {
           s.maxWidth = '10px'
           s.top = '0'
           s.bottom = '0'
-          s.borderColor = isEditing ? theme().red + '50' : isSelected ? theme().green : theme().transparent
+          s.borderColor = isEditing ? theme().red : isSelected ? theme().menuPage + '88' : theme().transparent
           s.borderRight = theme().red
         })
 
@@ -161,12 +153,11 @@ export const PageView = (page: Page, index: number) => {
         .observe(page)
         .react(s => {
           s.className = theme().id
-          s.maxWidth = theme().maxBlogTextWidthPx - 10 + 'px'
+          s.maxWidth = theme().maxBlogTextWidth - 10 + 'px'
           s.width = "100%"
           s.minHeight = "30px"
           s.text = page.text
           s.fontSize = theme().defFontSize
-
           s.apiUrl = globalContext.restApi.assetsUrl
           //s.showRawText = page.file.showRawText
           //s.fontFamily = isCode ? 'var(--font-family)' : 'var(--font-family-article)'
@@ -186,10 +177,12 @@ const Footer = (reader: FileReader) => {
 
         StatusBarModeName()
           .observe(reader.$editMode)
+          .observe(reader.$isFileChanged)
           .react(s => {
+            const isFileChanged = reader.$isFileChanged.value
             const isEditing = reader.$editMode.value !== 'none'
-            s.bgColor = isEditing ? theme().red : theme().statusFg
-            s.text = isEditing ? 'EDIT' : reader.id.toUpperCase()
+            s.bgColor = isEditing ? theme().red : isFileChanged ? theme().mark : theme().statusFg
+            s.text = isEditing ? 'EDIT' : isFileChanged ? 'MODIFIED' : reader.id.toUpperCase()
           })
 
         span()
@@ -197,27 +190,22 @@ const Footer = (reader: FileReader) => {
           .observe(reader.$isFileChanged)
           .react(s => {
             const f = reader.$selectedFile.value
-            s.text = f?.alias ?? f?.name ?? ''
+            s.fontFamily = FontFamily.ARTICLE
+            s.text = ''
+            if (f?.author) {
+              s.text += f.author
+              s.text += s.text.endsWith('.') ? ' ' : '. '
+            }
+
+            s.text += f?.alias ?? f?.name ?? ''
+
             if (f?.published)
-              s.text += ' (' + f.published + ')'
+              s.text += '. ' + f.published
             else if (f?.birthYear && f.deathYear)
-              s.text += ' (' + f.birthYear + '-' + f.deathYear + ')'
+              s.text += '. ' + f.birthYear + '-' + f.deathYear
             else if (f?.birthYear)
-              s.text += ' (' + f.birthYear + ')'
-            s.textColor = reader.$isFileChanged.value ? theme().yellow : theme().statusFg
-            s.fontWeight = 'bold'
-            s.whiteSpace = 'nowrap'
-          })
-
-        span()
-          .observe(reader.$selectedFile)
-          .observe(reader.$isFileChanged)
-          .react(s => {
-            const f = reader.$selectedFile.value
-            s.text = '~/' + f?.path
-            if (reader.$isFileChanged.value)
-              s.text += ' (CHANGED)'
-            s.textColor = reader.$isFileChanged.value ? theme().yellow : theme().statusFg
+              s.text += '. ' + f.birthYear
+            s.textColor = reader.$isFileChanged.value ? theme().mark : theme().statusFg
             s.whiteSpace = 'nowrap'
           })
 
@@ -230,7 +218,7 @@ const Footer = (reader: FileReader) => {
             s.visible = isEditing
             s.text = 'Press <ESC> to quit'
             s.whiteSpace = 'nowrap'
-            s.textColor = theme().statusFg
+            s.textColor = theme().red
           })
 
         StatusBarActionBuffer(reader)

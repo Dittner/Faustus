@@ -114,6 +114,7 @@ export class FileSearcher extends OperatingModeClass {
 
   override activate(): void {
     super.activate()
+    this.$buffer.value = ''
     this.loadAliasVoc()
   }
 

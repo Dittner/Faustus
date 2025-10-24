@@ -134,7 +134,7 @@ const TextEditor = (formatter:TextFormatter) => {
       s.autoCorrect = 'off'
       s.autoFocus = true
       s.spellCheck = false
-      s.paddingHorizontal = '2px'
+      s.paddingHorizontal = '5px'
       s.disableHorizontalScroll = true
     })
     .onKeyDown(keyDownFn)

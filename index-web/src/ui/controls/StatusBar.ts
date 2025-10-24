@@ -13,7 +13,8 @@ export const StatusBar = () => {
       s.width = '100%'
       s.height = CMD_LINE_HEIGHT + 'px'
       s.valign = 'center'
-      s.bgColor = theme().statusBg
+      s.bgColor = theme().statusBg + '88'
+      s.blur = '5px'
     })
 }
 
@@ -24,16 +25,16 @@ export const StatusBarModeName = () => {
       s.lineHeight = CMD_LINE_HEIGHT + 'px'
       s.height = CMD_LINE_HEIGHT + 'px'
       s.bgColor = theme().statusFg
-      s.textColor = theme().black
+      s.textColor = theme().statusBg
     })
 }
 
 export const StatusBarActionBuffer = (mode: OperatingModeClass) => {
-  const fg = theme().text
-  const bg = theme().appBg
   return span()
     .observe(mode.$cmdBuffer)
     .react(s => {
+      const fg = theme().id === 'light' ? theme().statusFg : theme().header
+      const bg = theme().id === 'light' ? theme().statusBg : theme().statusBg
       const isBufferEmpty = mode.$cmdBuffer.value.length > 0
       s.lineHeight = CMD_LINE_HEIGHT + 'px'
       s.height = CMD_LINE_HEIGHT + 'px'

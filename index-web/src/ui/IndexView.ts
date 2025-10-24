@@ -41,7 +41,8 @@ export const ActionsHelpView = (mode: OperatingMode) => {
       s.gap = '0'
       s.paddingVertical = '20px'
       s.borderColor = theme().statusFg
-      s.bgColor = theme().statusBg
+      s.bgColor = theme().statusBg + '88'
+      s.blur = '10px'
     }).children(() => {
       vlist<Action>()
         .items(() => col1)
@@ -102,8 +103,9 @@ export const MessangerView = () => {
       s.fontFamily = FontFamily.MONO
       s.fontSize = '18px'
       s.text = msg?.text ?? ''
-      s.width = '100%'
+      s.maxWidth = '100%'
       s.paddingHorizontal = '20px'
+      s.bgColor = theme().appBg
 
       if (msg?.level === 'error')
         s.textColor = theme().red

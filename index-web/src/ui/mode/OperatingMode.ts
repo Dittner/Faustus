@@ -6,7 +6,6 @@ import { themeManager } from "../theme/ThemeManager"
 export type OperatingModeID = 'connect' | 'explore' | 'read' | 'search'
 export interface OperatingMode {
   readonly id: OperatingModeID
-  readonly $cmdBuffer: RXObservableValue<string>
   readonly $showActions: RXObservableValue<boolean>
   readonly actionsList: ActionsList
   lastExecutedAction: Action | undefined
@@ -18,7 +17,6 @@ export interface OperatingMode {
 export class OperatingModeClass implements OperatingMode {
   readonly id: OperatingModeID
   readonly ctx: IndexContext
-  readonly $cmdBuffer = new RXObservableValue('')
   readonly $showActions = new RXObservableValue(false)
   readonly actionsList = new ActionsList()
   lastExecutedAction: Action | undefined = undefined
@@ -27,10 +25,7 @@ export class OperatingModeClass implements OperatingMode {
     this.id = id
     this.ctx = ctx
     this.actionsList.add(':?<CR>', 'Show list of actions', () => this.$showActions.value = true)
-    this.actionsList.add('<ESC>', 'Hide list of actions/any messages', () => {
-      this.$showActions.value = false
-      this.ctx.$msg.value = undefined
-    })
+    this.actionsList.add('<ESC>', 'Hide list of actions', () => this.$showActions.value = false)
     this.actionsList.add('T', 'Switch theme', () => themeManager.switchTheme())
     this.actionsList.add('.', 'Repeat last action', () => this.lastExecutedAction?.handler())
   }
@@ -46,27 +41,34 @@ export class OperatingModeClass implements OperatingMode {
 
   deactivate(): void {
     this.ctx.$msg.value = undefined
-    this.$cmdBuffer.value = ''
+    this.ctx.$msg.value = { text: '', level: 'info' }
     this.lastExecutedAction = undefined
   }
 
+  private cmdBuffer = ''
+  private defMsg:any = undefined
   onKeyDown(e: KeyboardEvent): void {
     if (!this.isActive || this.actionsList.actions.length === 0 || e.key === 'Shift') return
     console.log('key:', e.key, ', code:', e.code, ', keycode:', e.keyCode)
     const code = this.actionsList.parser.keyToCode(e)
 
-    this.$cmdBuffer.value += code
-    const a = this.actionsList.find(this.$cmdBuffer.value)
+    this.cmdBuffer += code
+
+    const a = this.actionsList.find(this.cmdBuffer)
     if (a) {
-      a.handler()
-      if (this.$cmdBuffer.value !== '.')
+      if (this.cmdBuffer !== '.')
         this.lastExecutedAction = a
-      this.$cmdBuffer.value = ''
+      this.cmdBuffer = ''
+      this.defMsg = { text: this.lastExecutedAction?.cmd ?? '', level: 'info' }
+      this.ctx.$msg.value = this.defMsg
+      a.handler()
       e.preventDefault()
-    } else if (!this.actionsList.some(this.$cmdBuffer.value)) {
-      this.$cmdBuffer.value = ''
+    } else if (this.actionsList.some(this.cmdBuffer)) {
+      e.preventDefault()
+      this.ctx.$msg.value = { text: this.cmdBuffer, level: 'info' }
     } else {
-      e.preventDefault()
+      this.cmdBuffer = ''
+      this.ctx.$msg.value = this.defMsg
     }
   }
 }

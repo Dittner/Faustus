@@ -9,8 +9,6 @@ import { FileExplorerView } from "./mode/explore/FileExplorerView"
 import { FileView } from "./mode/read/FileView"
 import { FileSeacthView } from "./mode/search/FileSearchView"
 
-export const CMD_LINE_HEIGHT = 30
-
 export function IndexView() {
   console.log('new IndexView')
   IndexContext.init()
@@ -103,15 +101,15 @@ export const MessangerView = () => {
       s.fontFamily = FontFamily.MONO
       s.fontSize = '18px'
       s.text = msg?.text ?? ''
-      s.maxWidth = '100%'
-      s.paddingHorizontal = '20px'
-      s.bgColor = theme().appBg
+      //s.bgColor = theme().appBg
+      s.paddingHorizontal = '2px'
+      s.whiteSpace = 'nowrap'
 
       if (msg?.level === 'error')
         s.textColor = theme().red
       else if (msg?.level === 'warning')
         s.textColor = theme().warn
       else
-        s.textColor = theme().header
+        s.textColor = theme().id === 'light' ? theme().black : theme().white
     })
 }

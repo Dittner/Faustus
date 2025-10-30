@@ -39,6 +39,7 @@ export interface GlobalTheme {
   menuPage: string
   maxBlogTextWidth: number
   menuWidth: number
+  statusBarHeight: number
 }
 
 export class ThemeManager {
@@ -116,18 +117,18 @@ export class ThemeManager {
   createLightTheme(): GlobalTheme {
     const black = '#222222'
     const white = '#ffFFff'//efeee8
-    const red = '#bc4065'
+    const red = '#ac2f2f'
     const header = '#755b54'
     return {
       id: 'light',
       isLight: true,
-      defMenuFontSize: '0.8rem',
+      defMenuFontSize: '0.75rem',
       defFontSize: '1rem',
       defFontWeight: '400',
       appBg: white,
       white,
       orange: '#a56a26',
-      mark: '#be4644',
+      mark: '#ac2f2f',
       black,
       text: black,
       text50: black + '88',
@@ -153,9 +154,10 @@ export class ThemeManager {
       menuDir: '#462962',
       menuFile: '#0f5848',
       menuPath: '#5c6c72',
-      menuPage: '#95302e',
+      menuPage: '#ac2f2f',
       maxBlogTextWidth: 950,
-      menuWidth: 550
+      menuWidth: 550,
+      statusBarHeight: 30,
     }
   }
 
@@ -170,7 +172,7 @@ export class ThemeManager {
     const white = '#b5bac8'
     const red = '#cb6582'
     const blue = '#75bbe7'
-    const black = '#21232a'
+    const black = '#212227' //212227
     const header = white//aaaaaa
     return Object.assign({}, t, {
       id: 'dark',
@@ -195,7 +197,7 @@ export class ThemeManager {
       warn: '#cb6582',
       mark: '#cb6582',
       info: blue,
-      statusFg: '#b2b79b',
+      statusFg: '#b0c8b3',
       statusBg: black,
       purple: '#b2aee5',
       comment: '#7ea3a5',
@@ -216,7 +218,7 @@ export class ThemeManager {
 
   createNightTheme(t: GlobalTheme): GlobalTheme {
     const text = '#707786' //aab6c2
-    const white = '#a2a9b8'
+    const white = '#969dad'
     const red = '#df5f83'
     const blue = '#6194c1'
     const header = white
@@ -228,7 +230,7 @@ export class ThemeManager {
       black,
       white,
       text,
-      text50: text + 'aa',
+      text50: text + 'bb',
       editorText: text,
       red,
       gray: '#79848d',
@@ -239,20 +241,20 @@ export class ThemeManager {
       codeBg: t.transparent,
       blue,
       violet: '#aeadde',
-      warn: '#9fa786',
+      warn: '#b0c8b3',
       mark: '#cb6582',
       info: blue,
       purple: '#b2aee5',
-      comment: '#678591',
+      comment: '#74a7aa',
       link: '#aa8657',
       pink: '#c293cc',
       orange: '#463d16',
-      statusFg: '#9fa786',
+      statusFg: '#b0c8b3',
       statusBg: '#181f23',
       menuDir: '#8d74a6',
-      menuFile: '#4c9da3',
+      menuFile: '#5ea0a5',
       menuPath: '#4e6c70',
-      menuPage: '#4c9da3',
+      menuPage: '#5ea0a5',
     })
   }
 
@@ -491,7 +493,7 @@ export class ThemeManager {
     /******************************/
 
     const imgProps: UIComponentProps = {
-      maxWidth: (t.maxBlogTextWidth + 200) + 'px',
+      maxWidth: window.innerWidth - 40 + 'px',
       //paddingTop: '50px'
     }
     buildRule(imgProps, parentSelector, 'img')

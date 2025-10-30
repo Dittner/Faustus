@@ -57,8 +57,10 @@ const PageHeaderRenderer = (page: Page) => {
 
       s.paddingRight = '5px'
       s.paddingLeft = page.headerLevel * 20 + 'px'
+      s.paddingVertical = '5px'
       s.wrap = false
       s.text = page.header
+      s.lineHeight = '1rem'
     })
     .whenHovered(s => {
       s.cursor = 'pointer'

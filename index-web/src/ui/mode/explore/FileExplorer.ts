@@ -230,6 +230,7 @@ export class FileExplorer extends OperatingModeClass {
                   f.path = toPath
                   f.id = Path.stem(toPath)
                   this.$selectedFilePath.value = toPath
+                  this.filesAliasVoc[toPath] = this.filesAliasVoc[fromPath]
                   break
                 }
               }

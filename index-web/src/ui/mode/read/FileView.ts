@@ -6,9 +6,9 @@ import { FontFamily } from "../../controls/Font"
 import { Markdown } from "../../markdown/Markdown"
 import { theme } from "../../theme/ThemeManager"
 import { LayoutLayer } from "../../../app/Application"
-import { ActionsHelpView, CMD_LINE_HEIGHT, MessangerView } from "../../IndexView"
+import { ActionsHelpView, MessangerView } from "../../IndexView"
 import { EditorView } from "./TextEditor"
-import { StatusBar, StatusBarActionBuffer, StatusBarModeName } from "../../controls/StatusBar"
+import { StatusBar, StatusBarModeName } from "../../controls/StatusBar"
 import { FileReader } from "./FileReader"
 import { PageHeaderListView } from "./PageHeaderListView"
 import { indexOfFirstVisibleElement } from "../../../app/Utils"
@@ -40,14 +40,15 @@ export const FileView = () => {
             s.className = 'invisibleScrollbar'
             s.enableOwnScroller = true
             s.paddingRight = '20px'
-            s.paddingBottom = CMD_LINE_HEIGHT + 'px'
+            s.paddingBottom = theme().statusBarHeight + 'px'
             s.layer = LayoutLayer.MODAL
           })
 
         PageList(file)
+          .observe(ctx.reader.$showPageHeaderList)
           .observe(ctx.reader.$editMode)
           .react(s => {
-
+            const showPageHeaderList = ctx.reader.$showPageHeaderList.value
             const isEditing = ctx.reader.$editMode.value !== 'none'
             s.position = 'absolute'
             s.layer = LayoutLayer.ZERO
@@ -57,10 +58,16 @@ export const FileView = () => {
             s.valign = 'top'
             s.halign = 'left'
             s.top = '0'
-            s.paddingBottom = CMD_LINE_HEIGHT + 'px'
-            s.left = (isEditing ? window.innerWidth / 2 - 20 : theme().menuWidth) + 'px'
+            s.paddingBottom = theme().statusBarHeight + 'px'
             s.width = (window.innerWidth - theme().menuWidth - 20) + 'px'
             s.gap = '20px'
+
+            if (isEditing)
+              s.left = window.innerWidth / 2 - 20 + 'px'
+            else if (showPageHeaderList)
+              s.left = theme().menuWidth + 'px'
+            else
+              s.left = '0px'
           })
 
         EditorView()
@@ -72,7 +79,7 @@ export const FileView = () => {
             s.top = '0'
             s.left = '0'
             s.width = window.innerWidth / 2 - 20 + 'px'
-            s.height = window.innerHeight - CMD_LINE_HEIGHT + 'px'
+            s.height = window.innerHeight - theme().statusBarHeight + 'px'
             s.borderRight = ['1px', 'solid', theme().text + '20']
             s.borderColor = theme().transparent
           })
@@ -171,7 +178,6 @@ const Footer = (reader: FileReader) => {
       s.gap = '0'
     })
     .children(() => {
-      MessangerView()
       ActionsHelpView(reader)
       StatusBar().children(() => {
 
@@ -182,7 +188,7 @@ const Footer = (reader: FileReader) => {
             const isFileChanged = reader.$isFileChanged.value
             const isEditing = reader.$editMode.value !== 'none'
             s.bgColor = isEditing ? theme().red : isFileChanged ? theme().mark : theme().statusFg
-            s.text = isEditing ? 'EDIT' : isFileChanged ? 'MODIFIED' : reader.id.toUpperCase()
+            s.text = isEditing ? 'EDIT (Press <ESC> to quit)' : isFileChanged ? 'MODIFIED' : reader.id.toUpperCase()
           })
 
         span()
@@ -211,21 +217,7 @@ const Footer = (reader: FileReader) => {
 
         spacer().react(s => s.width = '100%')
 
-        span()
-          .observe(reader.$editMode)
-          .react(s => {
-            const isEditing = reader.$editMode.value !== 'none'
-            s.visible = isEditing
-            s.text = 'Press <ESC> to quit'
-            s.whiteSpace = 'nowrap'
-            s.textColor = theme().red
-          })
-
-        StatusBarActionBuffer(reader)
-          .observe(reader.$cmdBuffer)
-          .react(s => {
-            s.text = reader.$cmdBuffer.value || (reader.lastExecutedAction?.cmd ?? '')
-          })
+        MessangerView()
       })
     })
 }

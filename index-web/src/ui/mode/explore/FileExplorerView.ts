@@ -4,8 +4,8 @@ import { FileExplorer } from "./FileExplorer"
 import { IndexContext } from "../../IndexContext"
 import { FontFamily } from "../../controls/Font"
 import { LayoutLayer } from "../../../app/Application"
-import { ActionsHelpView, CMD_LINE_HEIGHT, MessangerView } from "../../IndexView"
-import { StatusBar, StatusBarActionBuffer, StatusBarModeName } from "../../controls/StatusBar"
+import { ActionsHelpView, MessangerView } from "../../IndexView"
+import { StatusBar, StatusBarModeName } from "../../controls/StatusBar"
 import { LineInput } from "../../controls/Input"
 import { FileNode } from "../FileNode"
 
@@ -19,7 +19,7 @@ export const FileExplorerView = () => {
           s.position = 'fixed'
           s.width = '100%'
           s.height = '100vh'
-          s.paddingBottom = CMD_LINE_HEIGHT + 'px'
+          s.paddingBottom = theme().statusBarHeight + 'px'
           s.layer = LayoutLayer.MODAL
         }).children(() => {
 
@@ -54,7 +54,7 @@ export const FileExplorerView = () => {
               s.title = mode === 'create' ? 'New:' : mode === 'rename' ? 'Rename:' : 'Input:'
               s.position = 'fixed'
               s.width = '100%'
-              s.height = CMD_LINE_HEIGHT + 'px'
+              s.height = theme().statusBarHeight + 'px'
               s.bottom = '0'
               s.layer = LayoutLayer.MODAL
             })
@@ -111,7 +111,6 @@ const Footer = (explorer: FileExplorer) => {
     })
     .children(() => {
 
-      MessangerView()
       ActionsHelpView(explorer)
       StatusBar().children(() => {
 
@@ -128,11 +127,7 @@ const Footer = (explorer: FileExplorer) => {
             s.width = '100%'
           })
 
-        StatusBarActionBuffer(explorer)
-          .observe(explorer.$cmdBuffer)
-          .react(s => {
-            s.text = explorer.$cmdBuffer.value || (explorer.lastExecutedAction?.cmd ?? '')
-          })
+        MessangerView()
       })
     })
 }

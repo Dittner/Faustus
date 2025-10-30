@@ -38,8 +38,7 @@ export class FileReader extends OperatingModeClass {
         const f = this.$selectedFile.value
         if (f && p) {
           console.log('Selected page changed:', p)
-          window.localStorage.setItem('filePath', f.path)
-          window.localStorage.setItem('filePageIndex', f.pages.findIndex(item => item === p) + '')
+          window.localStorage.setItem('pageIndexOf:' + f.path, f.pages.findIndex(item => item === p) + '')
         }
       })
       .subscribe()
@@ -226,10 +225,7 @@ export class FileReader extends OperatingModeClass {
   override onKeyDown(e: KeyboardEvent): void {
     if (this.$editMode.value !== 'none') {
       if (e.key === 'Escape') {
-        if (this.$showActions.value || this.ctx.$msg.value)
-          super.onKeyDown(e)
-        else
-          this.finishEditing()
+        this.finishEditing()
       }
       //Ctrl + Shift + S
       else if (e.ctrlKey && e.shiftKey && e.keyCode === 83) {
@@ -386,8 +382,9 @@ export class FileReader extends OperatingModeClass {
           } else {
             this.$selectedFile.value = f
             this.cache[path] = f
-            if (window.localStorage.getItem('filePath') === path) {
-              const filePageIndex = parseInt(window.localStorage.getItem('filePageIndex') ?? '0')
+            const lastOpenedPageIndex = window.localStorage.getItem('pageIndexOf:' + path)
+            if (lastOpenedPageIndex) {
+              const filePageIndex = parseInt(lastOpenedPageIndex)
 
               RX.delayedComplete(10).pipe()
                 .onComplete(() => {

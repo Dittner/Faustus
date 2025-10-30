@@ -207,6 +207,8 @@ class MarkdownDB:
 
             new_files = self.mkdirs(tp.as_posix())
             fp.rename(tp)
+            if self.file_alias_voc[from_src]:
+                self.file_alias_voc[to_src] = self.file_alias_voc[from_src]
             return new_files
 
     def delete_file(self, src: str):

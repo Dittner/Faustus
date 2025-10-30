@@ -4,7 +4,6 @@ import { FileSearcher } from "./FileSearch"
 import { IndexContext } from "../../IndexContext"
 import { FontFamily } from "../../controls/Font"
 import { LayoutLayer } from "../../../app/Application"
-import { CMD_LINE_HEIGHT } from "../../IndexView"
 import { LineInput } from "../../controls/Input"
 import { FileNode } from "../FileNode"
 
@@ -18,7 +17,7 @@ export const FileSeacthView = () => {
           s.position = 'fixed'
           s.width = '100%'
           s.height = '100vh'
-          s.paddingBottom = CMD_LINE_HEIGHT + 'px'
+          s.paddingBottom = theme().statusBarHeight + 'px'
           s.layer = LayoutLayer.MODAL
         }).children(() => {
 
@@ -37,7 +36,7 @@ export const FileSeacthView = () => {
               s.title = '/'
               s.position = 'fixed'
               s.width = '100%'
-              s.height = CMD_LINE_HEIGHT + 'px'
+              s.height = theme().statusBarHeight + 'px'
               s.bottom = '0'
               s.layer = LayoutLayer.MODAL
             })
@@ -124,8 +123,8 @@ const FoundTotalBar = (searcher: FileSearcher) => {
     .observe(searcher.$allFiles)
     .react(s => {
       s.text = searcher.$availableFiles.value.length + '/' + searcher.$allFiles.value.length
-      s.lineHeight = CMD_LINE_HEIGHT + 'px'
-      s.height = CMD_LINE_HEIGHT + 'px'
+      s.lineHeight = theme().statusBarHeight + 'px'
+      s.height = theme().statusBarHeight + 'px'
       s.fontFamily = FontFamily.MONO
       s.fontSize = theme().defMenuFontSize
       s.textColor = theme().black

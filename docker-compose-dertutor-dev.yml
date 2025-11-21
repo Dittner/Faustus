@@ -1,0 +1,83 @@
+services:
+  dertutor-pg:
+    image: postgres
+    container_name: dertutor-pg
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGDATA: /var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    networks:
+      - network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.org
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin/
+    networks:
+      - network
+
+  dertutor-api:
+    container_name: dertutor-api
+    build:
+      context: ./dertutor-api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      dertutor-pg:
+        condition: service_healthy
+    links:
+      - dertutor-pg
+    environment:
+      - UVICORN_RELOAD=true
+      - DB_URL=postgresql+asyncpg://postgres:postgres@dertutor-pg:5432/postgres
+    volumes:
+      - ./dertutor-api:/app
+    ports:
+      - 3003:80
+    tty: true
+    networks:
+      - network
+
+
+  dertutor-web-client:
+    container_name: dertutor-web-client
+    build:
+      context: ./dertutor-web
+      dockerfile: Dockerfile
+      target: dev
+    restart: unless-stopped
+    environment:
+      - VITE_DERTUTOR_API_URL=http://localhost:3003/api
+    depends_on:
+      - dertutor-api
+    volumes:
+      - ./dertutor-web/src:/app/src
+    ports:
+      - 3004:3000
+    networks:
+      - network
+
+networks:
+  network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  pgadmin-data:

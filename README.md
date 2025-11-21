@@ -7,7 +7,36 @@ __Faustus__ – group of apps:
 ## License
 MIT
 
-## Build Docker Image
+## Run Index App
 ```cmd
-$ docker-compose -f docker-compose-dev.yml up --build
+>>> cd Projects/Faustus/index-api
+>>> uv run uvicorn "src.main:app" --host "127.0.0.1" --port "3456" --reload
+
+>>> cd Projects/Faustus/index-web
+>>> nm run dev
+```
+
+or using docker
+
+```cmd
+>>> docker-compose -f docker-compose-index-dev.yml up --build
+```
+
+## Run Dertutor App
+```cmd
+>>> docker-compose -f docker-compose-dertutor-dev.yml up --build
+```
+
+## Run pgadmin
+Enter database address: 'dertutor-pg' – container name, not localhost
+
+## Migrations
+Generate migration file:
+```cmd
+>>> uv run alembic revision --autogenerate -m 'migration name'
+```
+
+Apply migration
+```cmd
+>>> uv run alembic upgrade head
 ```

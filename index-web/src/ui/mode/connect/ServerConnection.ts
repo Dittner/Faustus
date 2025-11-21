@@ -12,10 +12,10 @@ export class ServerConnection extends OperatingModeClass {
   override activate(): void {
     super.activate()
     let logs = ''
-    logs += 'API_URL: ' + globalContext.restApi.baseUrl + '\n'
+    logs += 'API_URL: ' + globalContext.indexServer.baseUrl + '\n'
     logs += 'Connecting to the server...\n'
     this.$logs.value = logs
-    globalContext.restApi.ping().pipe()
+    globalContext.indexServer.ping().pipe()
       .onReceive(_ => {
         this.$logs.value += 'Success\n'
         const path = document.location.pathname.split('#')[0]

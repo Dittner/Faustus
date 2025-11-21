@@ -122,7 +122,7 @@ export class FileSearcher extends OperatingModeClass {
     if (!this.isActive) return
     console.log('FileSearcher:loadAliasVoc')
     this.ctx.$msg.value = { text: 'Loading...', level: 'info' }
-    globalContext.restApi.loadAliasVoc().pipe()
+    globalContext.indexServer.loadAliasVoc().pipe()
       .onReceive((data: any) => {
         this.ctx.$msg.value = undefined
         console.log('FileSearcher:loadAliasVoc, complete, data: ', data)
@@ -146,7 +146,7 @@ export class FileSearcher extends OperatingModeClass {
   private loadFilesTree() {
     if (!this.isActive) return
     console.log('FileExplorer:loadTree')
-    globalContext.restApi.loadFilesTree().pipe()
+    globalContext.indexServer.loadFilesTree().pipe()
       .onReceive((data: []) => {
         this.parseFilesTree(data)
       })

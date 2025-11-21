@@ -1,4 +1,4 @@
-services:
+services:      
   index-api:
     container_name: index-api
     build:
@@ -10,7 +10,7 @@ services:
     volumes:
       - ./index-api:/app
     ports:
-      - 3001:80
+      - 3000:80
     tty: true
     networks:
       - network
@@ -23,13 +23,13 @@ services:
       target: dev
     restart: unless-stopped
     environment:
-      - VITE_INDEX_API_URL=http://localhost:3001/api/
+      - VITE_INDEX_API_URL=http://localhost:3000/api
     depends_on:
       - index-api
     volumes:
       - ./index-web/src:/app/src
     ports:
-      - 3000:3000
+      - 3001:3000
     networks:
       - network
 

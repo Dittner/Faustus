@@ -7,7 +7,7 @@ import { LayoutLayer } from "../../../app/Application"
 import { LineInput } from "../../controls/Input"
 import { FileNode } from "../FileNode"
 
-export const FileSeacthView = () => {
+export const FileSearchView = () => {
   const ctx = IndexContext.self
 
   return observer(ctx.$mode)

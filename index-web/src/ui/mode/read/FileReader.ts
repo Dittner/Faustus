@@ -174,7 +174,7 @@ export class FileReader extends OperatingModeClass {
     }
 
     if (file.hasChanges) {
-      globalContext.restApi.rewriteFile(file).pipe()
+      globalContext.indexServer.rewriteFile(file).pipe()
         .onReceive((data: any) => {
           this.ctx.$msg.value = { text: file.path + ', written', level: 'info' }
           file.data = data
@@ -372,7 +372,7 @@ export class FileReader extends OperatingModeClass {
       console.log('FileViewMode:parseBrowserLocation, file got from cache, scrollPos:', this.$selectedFile.value.scrollPos)
     } else {
       this.ctx.$msg.value = { text: 'Loading...', level: 'info' }
-      globalContext.restApi.loadFile(path).pipe()
+      globalContext.indexServer.loadFile(path).pipe()
         .onReceive((data: any) => {
           this.ctx.$msg.value = undefined
           const f = new TextFile()

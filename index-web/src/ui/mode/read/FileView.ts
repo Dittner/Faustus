@@ -165,7 +165,7 @@ export const PageView = (page: Page, index: number) => {
           s.minHeight = "30px"
           s.text = page.text
           s.fontSize = theme().defFontSize
-          s.apiUrl = globalContext.restApi.assetsUrl
+          s.absolutePathPrefix = globalContext.indexServer.assetsUrl
           //s.showRawText = page.file.showRawText
           //s.fontFamily = isCode ? 'var(--font-family)' : 'var(--font-family-article)'
         })
@@ -179,45 +179,51 @@ const Footer = (reader: FileReader) => {
     })
     .children(() => {
       ActionsHelpView(reader)
-      StatusBar().children(() => {
+      StatusBar()
+        .observe(reader.$isFileChanged)
+        .react(s => {
+          const isFileChanged = reader.$isFileChanged.value
+          s.bgColor = isFileChanged ? theme().red + '20' : theme().statusBg + '88'
+        })
+        .children(() => {
 
-        StatusBarModeName()
-          .observe(reader.$editMode)
-          .observe(reader.$isFileChanged)
-          .react(s => {
-            const isFileChanged = reader.$isFileChanged.value
-            const isEditing = reader.$editMode.value !== 'none'
-            s.bgColor = isEditing ? theme().red : isFileChanged ? theme().mark : theme().statusFg
-            s.text = isEditing ? 'EDIT (Press <ESC> to quit)' : isFileChanged ? 'MODIFIED' : reader.id.toUpperCase()
-          })
+          StatusBarModeName()
+            .observe(reader.$editMode)
+            .observe(reader.$isFileChanged)
+            .react(s => {
+              const isFileChanged = reader.$isFileChanged.value
+              const isEditing = reader.$editMode.value !== 'none'
+              s.bgColor = isEditing ? theme().red : isFileChanged ? theme().mark : theme().statusFg
+              s.text = isEditing ? 'EDIT (Press <ESC> to quit)' : isFileChanged ? 'MODIFIED' : reader.id.toUpperCase()
+            })
 
-        span()
-          .observe(reader.$selectedFile)
-          .observe(reader.$isFileChanged)
-          .react(s => {
-            const f = reader.$selectedFile.value
-            s.fontFamily = FontFamily.ARTICLE
-            s.text = ''
-            if (f?.author) {
-              s.text += f.author
-              s.text += s.text.endsWith('.') ? ' ' : '. '
-            }
+          span()
+            .observe(reader.$selectedFile)
+            .observe(reader.$isFileChanged)
+            .react(s => {
+              const f = reader.$selectedFile.value
+              s.fontFamily = FontFamily.ARTICLE
+              s.text = ''
+              if (f?.author) {
+                s.text += f.author
+                s.text += s.text.endsWith('.') ? ' ' : '. '
+              }
 
-            s.text += f?.alias ?? f?.name ?? ''
+              s.text += f?.alias ?? f?.name ?? ''
 
-            if (f?.published)
-              s.text += '. ' + f.published
-            else if (f?.birthYear && f.deathYear)
-              s.text += '. ' + f.birthYear + '-' + f.deathYear
-            else if (f?.birthYear)
-              s.text += '. ' + f.birthYear
-            s.textColor = reader.$isFileChanged.value ? theme().mark : theme().statusFg
-            s.whiteSpace = 'nowrap'
-          })
+              if (f?.published)
+                s.text += '. ' + f.published
+              else if (f?.birthYear && f.deathYear)
+                s.text += '. ' + f.birthYear + '-' + f.deathYear
+              else if (f?.birthYear)
+                s.text += '. ' + f.birthYear
+              s.textColor = reader.$isFileChanged.value ? theme().mark : theme().statusFg
+              s.whiteSpace = 'nowrap'
+            })
 
-        spacer().react(s => s.width = '100%')
+          spacer().react(s => s.width = '100%')
 
-        MessangerView()
-      })
+          MessangerView()
+        })
     })
 }

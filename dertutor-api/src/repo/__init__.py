@@ -1,3 +1,4 @@
-__all__ = ('db_helper', 'Base', 'Lang', 'Vocabulary', 'Note' )
-from .database import db_helper
-from .model import Base, Lang, Vocabulary, Note
+__all__ = ('Resource', 'Base', 'InsertDefaultRowsService', 'Lang', 'Note', 'Vocabulary', 'repo')
+from .model import Base, Lang, Note, Vocabulary, Resource
+from .repo import repo
+from .service import InsertDefaultRowsService

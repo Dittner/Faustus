@@ -10,9 +10,11 @@ __pycache__
 index-api/data
 index-api/index
 
-index-web/dist
-index-web/node_modules
-index-web/package-lock.json
+pgdata
+
+*/dist
+*/node_modules
+*/package-lock.json
 
 
 

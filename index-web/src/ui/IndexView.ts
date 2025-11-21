@@ -7,7 +7,7 @@ import { theme } from "./theme/ThemeManager"
 import { Action } from "./mode/Action"
 import { FileExplorerView } from "./mode/explore/FileExplorerView"
 import { FileView } from "./mode/read/FileView"
-import { FileSeacthView } from "./mode/search/FileSearchView"
+import { FileSearchView } from "./mode/search/FileSearchView"
 
 export function IndexView() {
   console.log('new IndexView')
@@ -21,7 +21,7 @@ export function IndexView() {
       ServerConnectionView()
       FileExplorerView()
       FileView()
-      FileSeacthView()
+      FileSearchView()
     })
 }
 

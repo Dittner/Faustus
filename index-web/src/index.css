@@ -1,7 +1,7 @@
 :root {
     --LineHeight: 1.6;
     --font-family: -apple-system, 'system-ui', 'system-ui', sans-serif;
-    --font-family-mono: 'jetbrains', Menlo, source-code-pro, Monaco, 'Courier New', monospace;
+    --font-family-mono: Menlo, 'jetbrains', Menlo, source-code-pro, Monaco, 'Courier New', monospace;
     --font-family-article: 'verdana', -apple-system, 'system-ui', 'system-ui', sans-serif;
 }
 
@@ -58,7 +58,7 @@
 html {
     color-scheme: dark;
     scroll-behavior: auto;
-    font-size: 22px;
+    font-size: 21px;
     text-size-adjust: 100%;
     line-height: var(--LineHeight);
     justify-content: space-between;

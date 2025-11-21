@@ -11,6 +11,8 @@ lint.ignore = [
     "ANN202", # Missing return type annotation for private function
     "ANN204", # Missing return type annotation for special method
     "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
+    "ANN206", # Missing return type annotation for classmethod init
+    "A005",   # Module shadows a Python standard-library
     "COM812", # To avoid unexpected behavior
     "RET505", # superfluous-else-return
     "T201", # remove-print
@@ -42,6 +44,7 @@ lint.ignore = [
     "TRY003", # external messages in exceptions are too verbose
     "TD002",
     "TD003",
+    "TRY300", # Moving to else block
     
     "UP043", # Unnecessary default type argumentsRuff
     

@@ -140,7 +140,7 @@ export class FileExplorer extends OperatingModeClass {
     if (this.$mode.value === 'explore') {
       const path = this.$selectedFilePath.value
       if (path) {
-        globalContext.restApi.removeFile(path).pipe()
+        globalContext.indexServer.removeFile(path).pipe()
           .onReceive(data => {
             this.ctx.$msg.value = { text: path + ', deleted', level: 'info' }
 
@@ -204,7 +204,7 @@ export class FileExplorer extends OperatingModeClass {
     if (this.$mode.value === 'create') {
       const path = this.bufferController.$buffer.value
       const f = TextFile.createFile(path)
-      globalContext.restApi.createFile(f).pipe()
+      globalContext.indexServer.createFile(f).pipe()
         .onReceive(data => {
           this.ctx.$msg.value = { text: f.path + ', written', level: 'info' }
           this.addNewFiles(data)
@@ -221,7 +221,7 @@ export class FileExplorer extends OperatingModeClass {
       const fromPath = this.$selectedFilePath.value ?? ''
       const toPath = this.bufferController.$buffer.value
       if (fromPath && toPath && fromPath !== toPath) {
-        globalContext.restApi.renameFile(fromPath, toPath).pipe()
+        globalContext.indexServer.renameFile(fromPath, toPath).pipe()
           .onReceive(_ => {
             // when only file name is changed
             if (!fromPath.endsWith('/') && Path.parentPathOf(fromPath) === Path.parentPathOf(toPath)) {
@@ -291,7 +291,7 @@ export class FileExplorer extends OperatingModeClass {
     if (!this.isActive) return
     console.log('FileExplorer:loadAliasVoc')
     this.ctx.$msg.value = { text: 'Loading...', level: 'info' }
-    globalContext.restApi.loadAliasVoc().pipe()
+    globalContext.indexServer.loadAliasVoc().pipe()
       .onReceive((data: any) => {
         this.ctx.$msg.value = undefined
         console.log('FileExplorer:loadAliasVoc, complete, data: ', data)
@@ -310,7 +310,7 @@ export class FileExplorer extends OperatingModeClass {
     // document.location.pathname === directoryId/fileId#hash
     //const path = document.location.pathname.split('#')[0]
     //const selectedChapter = document.location.hash //#hash
-    globalContext.restApi.loadFilesTree().pipe()
+    globalContext.indexServer.loadFilesTree().pipe()
       .onReceive((data: []) => {
         this.$allFiles.value = []
         this.addNewFiles(data)

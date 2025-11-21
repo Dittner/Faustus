@@ -85,6 +85,12 @@ export class TextFile extends RXObservableEntity<TextFile> {
   private parseHeaders(text: string) {
     const keyValues = text.replace(/\n{3,}/g, '\n\n').split('\n\n')
 
+    this.alias = ''
+    this.author = ''
+    this.published = ''
+    this.birthYear = ''
+    this.deathYear = ''
+
     for (let i = 0; i < keyValues.length; i++) {
       const keyValue = keyValues[i]
       const sepIndex = keyValue.indexOf('\n')
@@ -164,7 +170,7 @@ export class TextFile extends RXObservableEntity<TextFile> {
   }
 
   createPage(atIndex: number = 0): Page {
-    const p = new Page(this, '$## New page')
+    const p = new Page(this, '## New page')
     if (atIndex === 0) {
       this.pages.unshift(p)
     } else if (atIndex >= this._pages.length) {

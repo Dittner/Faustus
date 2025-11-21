@@ -1,11 +1,13 @@
 pre.code-dark,
 pre.code-night,
 pre.code-light {
-    line-height: 1.5;
+    line-height: 1.6;
     padding: 15px;
     margin: 0;
     font-family: var(--font-family-mono);
     font-size: 0.9rem;
+    /* -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: antialiased !important; */
 }
 
 code.md-dark,
@@ -135,11 +137,11 @@ code.md-dark span.dec {
 /*--------- NIGHT -----------*/
 /******************************/
 pre.code-night {
-    background-color: #161b1c;
+    background-color: #161b1c88;
 }
 
 code.md-night {
-    color: #81b8c2;
+    color: #8abac2;
 }
 
 code.md-night span.num {
@@ -147,7 +149,7 @@ code.md-night span.num {
 }
 
 code.md-night span.str {
-    color: #56b08f;
+    color: #64ab91;
 }
 
 code.md-night span.op {

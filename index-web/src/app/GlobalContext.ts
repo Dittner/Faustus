@@ -1,11 +1,11 @@
-import { RestApi } from "../backend/RestApi"
+import { IndexServer } from "../backend/IndexServer"
 import { Application } from "./Application"
 import { generateUID } from "./Utils"
 
 export class GlobalContext {
   readonly uid = generateUID()
   readonly app: Application
-  readonly restApi:RestApi
+  readonly indexServer: IndexServer
 
   static self: GlobalContext
 
@@ -18,6 +18,6 @@ export class GlobalContext {
 
   private constructor() {
     this.app = new Application()
-    this.restApi = new RestApi()
+    this.indexServer = new IndexServer()
   }
 }

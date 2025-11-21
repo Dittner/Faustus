@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import (
 from src.config import settings
 
 
-class DatabaseHelper:
+class Repo:
     def __init__(
         self,
         url: str,
@@ -33,14 +33,15 @@ class DatabaseHelper:
 
     async def dispose(self) -> None:
         await self.engine.dispose()
-        log.info('Database engine disposed')
+        print('Database engine disposed')
 
-    async def session_getter(self):
-        async with self.session_factory() as session:
-            yield session
+    def make_session(self):
+        return self.session_factory()
+        # async with self.session_factory() as session:
+        #     yield session
 
 
-db_helper = DatabaseHelper(
+repo = Repo(
     url=str(settings.db.url),
     echo=settings.db.echo,
     echo_pool=settings.db.echo_pool,

@@ -1,21 +1,101 @@
-import { p } from "flinker-dom"
+import { div, hstack, observer, p, span, vlist } from "flinker-dom"
 import { GlobalContext } from "./app/GlobalContext"
 import { DertutorContext } from "./ui/DertutorContext"
-import { MainView } from "./ui/MainView"
+import { Action } from "./ui/actions/Action"
 import { FontFamily } from "./ui/controls/Font"
 import { theme, themeManager } from "./ui/theme/ThemeManager"
+import { IViewModel } from "./ui/view/ViewModel"
+import { ServerConnectionView } from "./ui/view/connect/ServerConnctionView"
+import { LangListView } from "./ui/view/lang/LangListView"
+import { NoteListView } from "./ui/view/note/NoteListView"
+import { VocListView } from "./ui/view/vocs/VocListView"
 
 export const globalContext = GlobalContext.init()
 
 export function App() {
   console.log('new App')
-  DertutorContext.init()
+  const ctx = DertutorContext.init()
 
-  return MainView()
+  return div()
     .observe(themeManager.$theme, 'affectsProps', 'affectsChildrenProps')
     .react(s => {
       s.width = '100%'
-      s.minHeight = '100vh'
+    })
+    .children(() => {
+      observer(ctx.$activeVM)
+        .onReceive(vm => {
+          if (vm === ctx.connectionVM) return ServerConnectionView()
+          else if (vm === ctx.langListVM) return LangListView()
+          else if (vm === ctx.vocListVM) return VocListView()
+          else if (vm === ctx.noteListVM) return NoteListView()
+          else return undefined
+        })
+    })
+}
+
+export const ActionsHelpView = (vm: IViewModel) => {
+  const total = vm.actionsList.actions.length
+  const col1 = vm.actionsList.actions.slice(0, Math.ceil(total / 2))
+  const col2 = vm.actionsList.actions.slice(Math.ceil(total / 2))
+  return hstack()
+    .observe(vm.$showActions)
+    .react(s => {
+      s.visible = vm.$showActions.value
+      s.fontFamily = FontFamily.MONO
+      s.fontSize = '18px'
+      s.width = '100%'
+      s.gap = '0'
+      s.paddingVertical = '20px'
+      s.borderColor = theme().statusFg
+      s.bgColor = theme().statusBg + '88'
+      s.blur = '10px'
+    }).children(() => {
+      vlist<Action>()
+        .items(() => col1)
+        .itemHash(a => a.cmd)
+        .itemRenderer(ActionInfoView)
+        .react(s => {
+          s.width = '50%'
+          s.gap = '0'
+        })
+
+      vlist<Action>()
+        .items(() => col2)
+        .itemHash(a => a.cmd)
+        .itemRenderer(ActionInfoView)
+        .react(s => {
+          s.width = '50%'
+          s.gap = '0'
+        })
+    })
+}
+
+const ActionInfoView = (a: Action) => {
+  return p()
+    .react(s => {
+      s.width = '100%'
+      s.fontSize = '18px'
+    }).children(() => {
+      span().react(s => {
+        s.display = 'inline-block'
+        s.text = a.cmd
+        s.textColor = theme().red
+        s.paddingHorizontal = '20px'
+        s.paddingVertical = '5px'
+        s.width = '100px'
+        s.whiteSpace = 'nowrap'
+        s.textAlign = 'right'
+      })
+
+      span()
+        .react(s => {
+          s.text = a.desc
+          s.textColor = theme().statusFg
+          s.width = '100%'
+          //s.whiteSpace = 'pre'
+          s.paddingHorizontal = '20px'
+          s.paddingVertical = '5px'
+        })
     })
 }
 

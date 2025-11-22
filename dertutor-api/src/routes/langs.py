@@ -1,10 +1,9 @@
 import logging
 
 from fastapi import APIRouter, Response, status
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import DBAPIError
-
 from src.repo import repo
 from src.repo.model import Lang
 

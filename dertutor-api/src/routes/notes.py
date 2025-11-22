@@ -4,9 +4,8 @@ from fastapi import APIRouter, Response, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import DBAPIError
-
 from src.repo import repo
-from src.repo.model import Note, Vocabulary
+from src.repo.model import Note, NoteLevel, Vocabulary
 
 router = APIRouter(prefix='', tags=['Notes'])
 log = logging.getLogger(__name__)
@@ -15,18 +14,16 @@ log = logging.getLogger(__name__)
 class NoteCreate(BaseModel):
     title: str
     text: str
-    vocabulary_id: int
-    vocabulary_group: str
-    audio_id: int | None
+    level: NoteLevel | None
+    audio_url: str
 
 
 class NoteRead(BaseModel):
     id: int
     title: str
     text: str
-    vocabulary_id: int
-    vocabulary_group: str
-    audio_id: int | None
+    level: NoteLevel | None
+    audio_url: str
 
 
 class NoteDelete(BaseModel):
@@ -45,7 +42,7 @@ async def get_notes(voc_id: int):
 async def create_note(n: NoteCreate, voc_id: int):
     async with repo.make_session() as session:
         try:
-            res = Note(**n.model_dump(), vocabulary_id = voc_id)
+            res = Note(**n.model_dump(), vocabulary_id=voc_id)
             session.add(res)
             await session.commit()
             return res
@@ -59,7 +56,7 @@ async def create_note(n: NoteCreate, voc_id: int):
 async def delete_note(n: NoteDelete):
     async with repo.make_session() as session:
         try:
-            query = select(Vocabulary).where(Note.id == n.id)
+            query = select(Note).where(Note.id == n.id)
             res = await session.execute(query)
             item = res.scalars().first()
             if item:
@@ -67,7 +64,7 @@ async def delete_note(n: NoteDelete):
                 await session.commit()
                 return Response(content='deleted', status_code=status.HTTP_200_OK)
             else:
-                return Response(content='Vocabulary not found', status_code=status.HTTP_400_BAD_REQUEST)
+                return Response(content='Note not found', status_code=status.HTTP_400_BAD_REQUEST)
         except DBAPIError as e:
             await session.rollback()  # Rollback the session to clear the failed transaction
             log.warning(f'DBAPIError: {e}')

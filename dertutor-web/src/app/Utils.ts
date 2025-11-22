@@ -76,14 +76,23 @@ export class Path {
     const values = path.split('/')
     return {
       langCode: values.length > 0 ? values[0] : '',
-      vocName: values.length > 1 ? values[1] : '',
+      vocCode: values.length > 1 ? values[1] : '',
       noteId: values.length > 2 ? Number(values[2]) : -1
     }
+  }
+
+  static format(p: string): string {
+    return p.toLowerCase()
+      .replaceAll('ö', 'oe')
+      .replaceAll('ä', 'ae')
+      .replaceAll('ü', 'ue')
+      .replaceAll(' ', '_')
+      .split('').filter(c => (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c === '_').join('')
   }
 }
 
 interface AdressBarKeys {
   langCode: string
-  vocName: string
+  vocCode: string
   noteId: number
 }

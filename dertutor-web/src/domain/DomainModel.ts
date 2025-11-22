@@ -1,6 +1,6 @@
 import { AnyRXObservable, RXObservableEntity } from 'flinker'
-import { generateUID } from '../app/Utils'
 import { globalContext } from '../App'
+import { generateUID, Path } from '../app/Utils'
 
 /*
 *
@@ -15,6 +15,7 @@ export class Lang extends RXObservableEntity<Lang> {
   isDamaged = false
   id = -1
   code: string = ''
+  name: string = ''
   vocabularies: Array<Vocabulary> = []
   vocabulariesLoaded = false
   data: any = {}
@@ -28,7 +29,7 @@ export class Lang extends RXObservableEntity<Lang> {
     }
   }
 
-  get path() { return this.code }
+  get path() { return '/' + this.code }
 
   constructor() {
     super()
@@ -39,13 +40,14 @@ export class Lang extends RXObservableEntity<Lang> {
       this.data = data
       console.log('Lang: ' + data?.id + ', code:', data.code)
 
-      if (data === undefined || data.id == undefined || data.code == undefined) {
+      if (data === undefined || data.id == undefined || data.code == undefined || data.name === undefined) {
         console.log('Lang:deserialize, Lang is damaged, data:', data)
         this.isDamaged = true
       }
       else {
         this.id = data.id
         this.code = data.code
+        this.name = data.name
         this.isDamaged = false
       }
     } catch (e: any) {
@@ -132,6 +134,7 @@ export class Vocabulary extends RXObservableEntity<Vocabulary> {
   isDamaged = false
   id = -1
   name = ''
+  code = ''
   lang: Lang
   notes: Array<Note> = []
   notesLoaded = false
@@ -146,7 +149,7 @@ export class Vocabulary extends RXObservableEntity<Vocabulary> {
     }
   }
 
-  get path() { return this.lang.path + '/' + this.name }
+  get path() { return this.lang.path + '/' + this.code }
 
   constructor(lang: Lang) {
     super()
@@ -165,6 +168,7 @@ export class Vocabulary extends RXObservableEntity<Vocabulary> {
       else {
         this.id = data.id
         this.name = data.name
+        this.code = Path.format(data.name)
         this.isDamaged = false
       }
     } catch (e: any) {
@@ -182,7 +186,7 @@ export class Vocabulary extends RXObservableEntity<Vocabulary> {
     const op = globalContext.server.loadNotes(this.id)
     op.pipe()
       .onReceive((data: any[]) => {
-        console.log('Lang:loadVocabularies, complete, data: ', data)
+        console.log('Lang:loadNotes, complete, data: ', data)
         this.notes = data.map(d => {
           const n = new Note(this)
           n.deserialize(d)
@@ -203,13 +207,9 @@ export class Vocabulary extends RXObservableEntity<Vocabulary> {
   //--------------------------------------
   //  vocabularies
   //--------------------------------------
-  createNote(value1: string, value2: string, value3: string, examples: string, options: any): Note {
+  createNote(title: string): Note {
     const res = new Note(this)
-    res.value1 = value1
-    res.value2 = value2
-    res.value3 = value3
-    res.examples = examples
-    res.options = options
+    res.title = title
     return res
   }
 
@@ -246,15 +246,14 @@ export class Vocabulary extends RXObservableEntity<Vocabulary> {
 *
 * */
 
+export const noteLevels = ['a1', 'a2', 'b1', 'b2', 'c1', 'c2']
 export class Note {
   isDamaged = false
   id = -1
-  value1 = ''
-  value2 = ''
-  value3 = ''
-  examples = ''
-  options: any = {}
-  audioId = -1
+  title = ''
+  text = ''
+  level = ''
+  audioUrl = ''
   vocabulary: Vocabulary
 
   data: any = {}
@@ -269,20 +268,18 @@ export class Note {
   deserialize(data: any) {
     try {
       this.data = data
-      console.log('Note: ' + data?.id + ', value1:', data.value1)
+      console.log('Note: ' + data?.id + ', value1:', data.title)
 
-      if (data === undefined || data.id == undefined || data.vocabulary_id == undefined || data.value1 == undefined || data.value2 == undefined || data.value3 == undefined) {
+      if (data === undefined || data.id == undefined || data.title == undefined || data.text == undefined) {
         console.log('Note:deserialize, Note is damaged, data:', data)
         this.isDamaged = true
       }
       else {
         this.id = data.id
-        this.value1 = data.value1
-        this.value2 = data.value2
-        this.value3 = data.value3
-        this.examples = data.examples ?? ''
-        this.options = data.options ?? {}
-        this.audioId = data.audioId ?? -1
+        this.title = data.title
+        this.text = data.text
+        this.level = (data.level === undefined || data.level > 6) ? '' : noteLevels[data.level]
+        this.audioUrl = data.audioUrl ?? ''
         this.isDamaged = false
       }
     } catch (e: any) {

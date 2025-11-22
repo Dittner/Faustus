@@ -2,7 +2,7 @@ import { RXObservableValue } from 'flinker'
 import { buildRule, FontWeight, UIComponentProps } from 'flinker-dom'
 
 export interface GlobalTheme {
-  id: 'dark' | 'light' | 'night'
+  id: 'dark' | 'light'
   isLight: boolean
   defMenuFontSize: string
   defFontSize: string
@@ -38,7 +38,7 @@ export interface GlobalTheme {
   menuNormal: string
   menuDe: string
   menuEn: string
-  maxBlogTextWidth: number
+  maxNoteViewWidth: number
   menuWidth: number
   statusBarHeight: number
 }
@@ -140,7 +140,7 @@ export class ThemeManager {
       menuNormal: '#5c6c72',
       menuDe: '#b16441',
       menuEn: '#ac2f2f',
-      maxBlogTextWidth: 950,
+      maxNoteViewWidth: 950,
       menuWidth: 550,
       statusBarHeight: 30,
     }
@@ -161,7 +161,7 @@ export class ThemeManager {
     const header = white
     const black = '#111111'
     return Object.assign({}, t, {
-      id: 'night',
+      id: 'dark',
       isLight: false,
       appBg: black,
       black,

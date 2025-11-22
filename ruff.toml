@@ -37,6 +37,7 @@ lint.ignore = [
     "INP001", # Add __init__.py
     "Q000", # Double quotes are preferred 
     "TRY003", # external messages in exceptions are too verbose
+    "TRY300", #Consider moving this statement to an `else` block
     "TD002",
     "TD003",
     "FIX002", # too verbose descriptions of todos

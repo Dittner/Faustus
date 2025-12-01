@@ -6,6 +6,7 @@ import { LangListVM } from './view/lang/LangListVM'
 import { NoteListVM } from './view/note/NoteListVM'
 import { IViewModel } from './view/ViewModel'
 import { VocListVM } from './view/vocs/VocListVM'
+import { EditorVM } from './view/editor/EditorVM'
 
 export interface Message {
   readonly level: 'warning' | 'error' | 'info'
@@ -18,6 +19,7 @@ export class DertutorContext {
   readonly langListVM: LangListVM
   readonly vocListVM: VocListVM
   readonly noteListVM: NoteListVM
+  readonly editorVM: EditorVM
 
   readonly $selectedLang = new RXObservableValue<Lang | undefined>(undefined)
   readonly $selectedVoc = new RXObservableValue<Vocabulary | undefined>(undefined)
@@ -39,6 +41,7 @@ export class DertutorContext {
     this.langListVM = new LangListVM(this)
     this.vocListVM = new VocListVM(this)
     this.noteListVM = new NoteListVM(this)
+    this.editorVM = new EditorVM(this)
 
     this.$activeVM = new RXObservableValue(this.connectionVM)
     this.connectionVM.activate()

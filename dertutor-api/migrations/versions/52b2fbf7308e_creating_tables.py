@@ -1,8 +1,8 @@
 """creating tables
 
-Revision ID: 511395e12410
+Revision ID: 52b2fbf7308e
 Revises:
-Create Date: 2025-11-21 19:33:06.545580
+Create Date: 2025-11-30 08:48:52.109154
 
 """
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = '511395e12410'
+revision: str = '52b2fbf7308e'
 down_revision: str | Sequence[str] | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -41,7 +41,7 @@ def upgrade() -> None:
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('title', sa.Text(), server_default='', nullable=False),
         sa.Column('text', sa.Text(), server_default='', nullable=False),
-        sa.Column('level', sa.Enum('a1', 'a2', 'b1', 'b2', 'c1', 'c2', name='notelevel'), nullable=True),
+        sa.Column('level', sa.Integer(), nullable=False),
         sa.Column('vocabulary_id', sa.Integer(), nullable=False),
         sa.Column('audio_url', sa.String(length=256), nullable=False),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_notes')),
@@ -51,10 +51,13 @@ def upgrade() -> None:
         'resources',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('name', sa.String(length=256), nullable=False),
-        sa.Column('data', sa.LargeBinary(), nullable=False),
+        sa.Column('url', sa.String(length=256), nullable=False),
         sa.Column('note_id', sa.Integer(), nullable=False),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_resources')),
+        sa.UniqueConstraint('note_id', 'id', name=op.f('uq_resources_note_id_id')),
+        sa.UniqueConstraint('url', name=op.f('uq_resources_url')),
     )
+    # ### end Alembic commands ###
 
 
 def downgrade() -> None:

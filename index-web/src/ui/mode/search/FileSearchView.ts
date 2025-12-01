@@ -105,7 +105,7 @@ const SearchResultItem = (f: FileNode, searchValue: string) => {
 
       span().react(s => {
         const underCurser = searcher.$selectedFilePath.value === f.path
-        const text = '~/' + f.path
+        const text = '~' + f.path
         s.fontFamily = 'inherit'
         s.paddingLeft = '25px'
         s.textColor = underCurser ? theme().white : theme().menuPath

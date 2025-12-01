@@ -20,8 +20,7 @@ export class LoadFileCmd implements Runnable {
 
   private async startLoading(op: RXOperation<any, RestApiError>) {
     console.log('LoadFileCmd:startLoading, path:', this.path)
-    const path = 'file/' + this.path
-    const [response, body] = await this.api.sendRequest('GET', path)
+    const [response, body] = await this.api.sendRequest('GET', '/file' + this.path)
     if (response?.ok) {
       //setTimeout(() => op.success(body), 100)
       op.success(body)

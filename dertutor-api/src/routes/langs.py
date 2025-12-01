@@ -4,7 +4,7 @@ from fastapi import APIRouter, Response, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import DBAPIError
-from src.repo import repo
+from src.context import dertutor_context
 from src.repo.model import Lang
 
 router = APIRouter(prefix='', tags=['Languages'])
@@ -28,7 +28,7 @@ class LangDelete(BaseModel):
 
 @router.get('/languages', response_model=list[LangRead])
 async def get_languages():
-    async with repo.make_session() as session:
+    async with dertutor_context.session_manager.make_session() as session:
         res = await session.execute(select(Lang))
         langs = res.scalars().all()
         print(langs)
@@ -37,7 +37,7 @@ async def get_languages():
 
 @router.post('/languages', response_model=LangRead)
 async def create_language(lang: LangCreate):
-    async with repo.make_session() as session:
+    async with dertutor_context.session_manager.make_session() as session:
         try:
             res = Lang(**lang.model_dump())
             session.add(res)
@@ -51,7 +51,7 @@ async def create_language(lang: LangCreate):
 
 @router.delete('/languages', response_model=LangRead | None)
 async def delete_language(lang: LangDelete):
-    async with repo.make_session() as session:
+    async with dertutor_context.session_manager.make_session() as session:
         try:
             query = select(Lang).where(Lang.id == lang.id)
             res = await session.execute(query)
@@ -61,11 +61,11 @@ async def delete_language(lang: LangDelete):
                 await session.commit()
                 return Response(content='deleted', status_code=status.HTTP_200_OK)
             else:
-                return Response(content='Language not found', status_code=status.HTTP_400_BAD_REQUEST)
+                return Response(content='Language not found', status_code=status.HTTP_404_NOT_FOUND)
         except DBAPIError as e:
             await session.rollback()  # Rollback the session to clear the failed transaction
             log.warning(f'DBAPIError: {e}')
-            return Response(content=str(e.orig), status_code=status.HTTP_400_BAD_REQUEST)
+            return Response(content=str(e.orig), status_code=status.HTTP_404_NOT_FOUND)
 
 
 # class UserSchema(BaseModel):

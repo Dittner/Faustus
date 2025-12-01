@@ -3,7 +3,7 @@ import { DertutorContext } from "../DertutorContext"
 import { Action, ActionsList } from "../actions/Action"
 import { themeManager } from "../theme/ThemeManager"
 
-export type ViewModelID = 'connection' | 'langs' | 'vocs' | 'notes'
+export type ViewModelID = 'connection' | 'langs' | 'vocs' | 'notes' | 'editor'
 export interface IViewModel {
   readonly id: ViewModelID
   readonly $showActions: RXObservableValue<boolean>
@@ -47,9 +47,9 @@ export class ViewModel implements IViewModel {
 
   private cmdBuffer = ''
   private defMsg: any = undefined
-  onKeyDown(e: KeyboardEvent): void {
+  async onKeyDown(e: KeyboardEvent): Promise<void> {
     if (!this.isActive || this.actionsList.actions.length === 0 || e.key === 'Shift') return
-    console.log('key:', e.key, ', code:', e.code, ', keycode:', e.keyCode)
+    //console.log('key:', e.key, ', code:', e.code, ', keycode:', e.keyCode)
     const code = this.actionsList.parser.keyToCode(e)
 
     this.cmdBuffer += code

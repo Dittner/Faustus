@@ -89,14 +89,14 @@ const FileNodeRenderer = (n: FileNode) => {
         s.paddingLeft = '20px'
         s.textColor = underCurser ? bgColor : textColor
         s.bgColor = underCurser ? textColor : theme().transparent
-        s.text = n.isDir ? n.id + '/' : ctx.explorer.filesAliasVoc[n.path] ?? n.id
+        s.text = n.isDir ? n.id + '/' : (ctx.explorer.filesAliasVoc[n.path] || n.id)
       })
 
       span().react(s => {
         s.padding = '5px'
         s.textColor = theme().menuPath
         s.paddingLeft = '20px'
-        s.text = '~/' + n.path
+        s.text = '~' + n.path
         s.fontStyle = 'italic'
       })
     })
@@ -122,7 +122,7 @@ const Footer = (explorer: FileExplorer) => {
         span()
           .observe(explorer.$openedDirPath)
           .react(s => {
-            s.text = '~/' + explorer.$openedDirPath.value
+            s.text = '~' + explorer.$openedDirPath.value
             s.textColor = theme().statusFg
             s.width = '100%'
           })

@@ -60,7 +60,7 @@ export class Path {
   static parentPathOf(p: string) {
     const res = p.endsWith('/') ? p.slice(0, -1) : p
     const lastSlashIndex = res.lastIndexOf('/')
-    return lastSlashIndex === -1 ? '' : res.slice(0, lastSlashIndex + 1)
+    return lastSlashIndex === -1 ? '/' : res.slice(0, lastSlashIndex + 1)
   }
 
   static readonly stemReg = /([^/]+)\/*$/

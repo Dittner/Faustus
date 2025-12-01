@@ -1,8 +1,8 @@
 """creating foreign_constraints
 
-Revision ID: c0b0fc3167db
-Revises: 511395e12410
-Create Date: 2025-11-21 19:33:58.388528
+Revision ID: 171363f50b8b
+Revises: 52b2fbf7308e
+Create Date: 2025-11-30 08:50:52.040031
 
 """
 
@@ -10,9 +10,8 @@ from collections.abc import Sequence
 
 from alembic import op
 
-# revision identifiers, used by Alembic.
-revision: str = 'c0b0fc3167db'
-down_revision: str | Sequence[str] | None = '511395e12410'
+revision: str = '171363f50b8b'
+down_revision: str | Sequence[str] | None = '52b2fbf7308e'
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

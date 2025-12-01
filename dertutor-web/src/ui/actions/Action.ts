@@ -38,6 +38,7 @@ export class KeyParser {
     this.map('Backspace', '<BS>')
     this.map('Delete', '<DEL>')
     this.map('Escape', '<ESC>')
+    this.map(' ', '<Space>')
     this.map('ArrowUp', '<Up>')
     this.map('ArrowDown', '<Down>')
     this.map('ArrowLeft', '<Left>')

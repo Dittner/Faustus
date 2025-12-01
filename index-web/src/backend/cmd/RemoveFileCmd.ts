@@ -17,8 +17,7 @@ export class RemoveFileCmd implements Runnable {
   }
 
   private async remove(op: RXOperation<any, RestApiError>) {
-    const path = 'file/rm/' + this.path
-    const [response, body] = await this.api.sendRequest('POST', path)
+    const [response, body] = await this.api.sendRequest('POST', '/file/rm' + this.path)
     if (response?.ok) {
       op.success(body)
     } else {

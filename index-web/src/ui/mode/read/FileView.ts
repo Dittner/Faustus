@@ -1,17 +1,17 @@
 import { div, hstack, p, spacer, span, vlist, vstack } from "flinker-dom"
 import { globalContext } from "../../../App"
+import { LayoutLayer } from "../../../app/Application"
+import { indexOfFirstVisibleElement } from "../../../app/Utils"
 import { Page, TextFile } from "../../../domain/DomainModel"
 import { IndexContext } from "../../IndexContext"
+import { ActionsHelpView, MessangerView } from "../../IndexView"
 import { FontFamily } from "../../controls/Font"
+import { StatusBar, StatusBarModeName } from "../../controls/StatusBar"
 import { Markdown } from "../../markdown/Markdown"
 import { theme } from "../../theme/ThemeManager"
-import { LayoutLayer } from "../../../app/Application"
-import { ActionsHelpView, MessangerView } from "../../IndexView"
-import { EditorView } from "./TextEditor"
-import { StatusBar, StatusBarModeName } from "../../controls/StatusBar"
 import { FileReader } from "./FileReader"
 import { PageHeaderListView } from "./PageHeaderListView"
-import { indexOfFirstVisibleElement } from "../../../app/Utils"
+import { EditorView } from "./TextEditor"
 
 export const FileView = () => {
   console.log('new FileView')
@@ -204,19 +204,23 @@ const Footer = (reader: FileReader) => {
               const f = reader.$selectedFile.value
               s.fontFamily = FontFamily.ARTICLE
               s.text = ''
-              if (f?.author) {
-                s.text += f.author
-                s.text += s.text.endsWith('.') ? ' ' : '. '
+
+              if (f) {
+                if (f.author) {
+                  s.text += f.author
+                  s.text += s.text.endsWith('.') ? ' ' : '. '
+                }
+
+                s.text += f.alias || f.name
+
+                if (f.published)
+                  s.text += '. ' + f.published
+                else if (f.birthYear && f.deathYear)
+                  s.text += '. ' + f.birthYear + '-' + f.deathYear
+                else if (f.birthYear)
+                  s.text += '. ' + f.birthYear
               }
 
-              s.text += f?.alias ?? f?.name ?? ''
-
-              if (f?.published)
-                s.text += '. ' + f.published
-              else if (f?.birthYear && f.deathYear)
-                s.text += '. ' + f.birthYear + '-' + f.deathYear
-              else if (f?.birthYear)
-                s.text += '. ' + f.birthYear
               s.textColor = reader.$isFileChanged.value ? theme().mark : theme().statusFg
               s.whiteSpace = 'nowrap'
             })

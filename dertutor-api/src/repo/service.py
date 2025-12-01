@@ -1,14 +1,14 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.repo import repo
+from src.context import dertutor_context
 from src.repo.model import Lang, Vocabulary
 
 
 class InsertDefaultRowsService:
     @classmethod
     async def run(cls):
-        async with repo.make_session() as session:
+        async with dertutor_context.session_manager.make_session() as session:
             res = await session.execute(select(Lang))
             if len(res.scalars().all()) == 0:
                 await cls.create_languages(session)
@@ -28,7 +28,7 @@ class InsertDefaultRowsService:
         res = await session.execute(q)
         lang = res.scalar_one_or_none()
         if lang:
-            session.add(Vocabulary(lang_id=lang.id, name='Wörterbuch'))
+            session.add(Vocabulary(lang_id=lang.id, name='Lexikon'))
 
     @classmethod
     async def create_en_vocabularies(cls, session: AsyncSession):
@@ -36,4 +36,4 @@ class InsertDefaultRowsService:
         res = await session.execute(q)
         lang = res.scalar_one_or_none()
         if lang:
-            session.add(Vocabulary(lang_id=lang.id, name='Dictionary'))
+            session.add(Vocabulary(lang_id=lang.id, name='Lexicon'))

@@ -213,6 +213,14 @@ export class Vocabulary extends RXObservableEntity<Vocabulary> {
     return res
   }
 
+  add(note: Note) {
+    if (!note.isDamaged) {
+      this.notes.push(note)
+      this.hasChanges = true
+      this.mutated()
+    }
+  }
+
   remove(note: Note): number {
     const ind = this.notes.findIndex(n => n.id === note.id)
     if (ind !== -1) {
@@ -246,13 +254,13 @@ export class Vocabulary extends RXObservableEntity<Vocabulary> {
 *
 * */
 
-export const noteLevels = ['a1', 'a2', 'b1', 'b2', 'c1', 'c2']
+export const noteLevels = ['', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 export class Note {
   isDamaged = false
   id = -1
   title = ''
   text = ''
-  level = ''
+  level = 0
   audioUrl = ''
   vocabulary: Vocabulary
 
@@ -260,6 +268,15 @@ export class Note {
 
 
   get path() { return this.vocabulary.path + '/' + this.id }
+  get levelStr() { return this.level < noteLevels.length ? noteLevels[this.level] : '' }
+
+  get hasChanges() {
+    if (this.data.text !== this.text) return true
+    if (this.data.title !== this.title) return true
+    if (this.data.audio_url !== this.audioUrl) return true
+    if (this.data.level !== this.level) return true
+    return false
+  }
 
   constructor(voc: Vocabulary) {
     this.vocabulary = voc
@@ -270,7 +287,7 @@ export class Note {
       this.data = data
       console.log('Note: ' + data?.id + ', value1:', data.title)
 
-      if (data === undefined || data.id == undefined || data.title == undefined || data.text == undefined) {
+      if (data === undefined || data.id === undefined || data.title === undefined || data.text === undefined || data.audio_url === undefined || data.level === undefined) {
         console.log('Note:deserialize, Note is damaged, data:', data)
         this.isDamaged = true
       }
@@ -278,14 +295,29 @@ export class Note {
         this.id = data.id
         this.title = data.title
         this.text = data.text
-        this.level = (data.level === undefined || data.level > 6) ? '' : noteLevels[data.level]
-        this.audioUrl = data.audioUrl ?? ''
+        this.level = data.level
+        this.audioUrl = data.audio_url
         this.isDamaged = false
       }
     } catch (e: any) {
       this.isDamaged = true
       console.log('Note:deserialize, err:', e.message, 'data:', data)
     }
+  }
+
+  serialize(): any {
+    return {
+      title: this.title,
+      text: this.text,
+      level: this.level,
+      vocabulary_id: this.vocabulary.id,
+      audio_url: this.audioUrl
+    }
+  }
+
+  play() {
+    if (this.audioUrl)
+      new Audio(globalContext.server.baseUrl + this.audioUrl).play()
   }
 }
 

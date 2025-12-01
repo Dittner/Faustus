@@ -20,7 +20,7 @@ export class CreateFileCmd implements Runnable {
   private async store(op: RXOperation<any, RestApiError>) {
     const file = this.file
     const data = JSON.stringify(file.serialize())
-    const [response, body] = await this.api.sendRequest('POST', 'file/mk/' + file.path, data)
+    const [response, body] = await this.api.sendRequest('POST', '/file/mk' + file.path, data)
     if (response?.ok) {
       op.success(body)
     } else {

@@ -58,7 +58,7 @@
 html {
     color-scheme: dark;
     scroll-behavior: auto;
-    font-size: 22px;
+    font-size: 20px;
     text-size-adjust: 100%;
     line-height: var(--LineHeight);
     justify-content: space-between;

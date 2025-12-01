@@ -77,20 +77,20 @@ export const IconBtn = () => {
 
 /*
 *
-* RedBtn
+* TextBtn
 *
 **/
 
-export const RedBtn = () => {
+export const TextBtn = () => {
   return IconBtn()
     .react(s => {
       s.fontFamily = FontFamily.APP
       s.fontSize = '0.8rem'
       s.paddingBottom = '1px'
-      s.paddingHorizontal = '5px'
+      s.paddingHorizontal = '0'
       s.minHeight = '25px'
       s.gap = '2px'
-      s.textColor = theme().red
+      s.textColor = theme().btn
       s.cornerRadius = '4px'
     })
     .whenHovered(s => {

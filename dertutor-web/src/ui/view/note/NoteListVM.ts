@@ -1,17 +1,16 @@
 import { RXObservableValue } from "flinker"
 
+import { globalContext } from "../../../App"
 import { Path } from "../../../app/Utils"
 import { Note, Vocabulary } from "../../../domain/DomainModel"
 import { InputBufferController } from "../../controls/Input"
 import { DertutorContext } from "../../DertutorContext"
 import { ViewModel } from "../ViewModel"
 
-const PATH_ALLOWED_SYMBOLS: Set<string> = new Set('_0123456789/abcdefghijklmnopqrstuvwxyz'.split(''))
-
 export class NoteListVM extends ViewModel {
   readonly $notes = new RXObservableValue<Array<Note>>([])
   readonly $mode = new RXObservableValue<'explore' | 'create' | 'rename'>('explore')
-  readonly bufferController = new InputBufferController(PATH_ALLOWED_SYMBOLS)
+  readonly bufferController = new InputBufferController()
 
   constructor(ctx: DertutorContext) {
     super('notes', ctx)
@@ -22,13 +21,14 @@ export class NoteListVM extends ViewModel {
     this.actionsList.add('g', 'Select first note', () => this.moveCursorToTheFirst())
     this.actionsList.add('G', 'Select last note', () => this.moveCursorToTheLast())
 
-    this.actionsList.add('j', 'Select next note', () => this.moveCursor(1))
-    this.actionsList.add('k', 'Select prev note', () => this.moveCursor(-1))
-
     this.actionsList.add('<Right>', 'Select next note', () => this.moveCursor(1))
     this.actionsList.add('<Left>', 'Select prev note', () => this.moveCursor(-1))
 
+    this.actionsList.add('n', 'New note (ADMIN)', () => this.newNote())
+    this.actionsList.add('<Space>', 'Play Audio', () => this.playAudio())
+
     this.actionsList.add('q', 'Quit', () => this.quit())
+    this.actionsList.add('e', 'Edit (ADMIN)', () => this.edit())
 
     //this.actionsList.add(':n<CR>', 'New file', () => this.newFile())
     //this.actionsList.add(':d<CR>', 'Delete file', () => this.deleteFile())
@@ -75,7 +75,27 @@ export class NoteListVM extends ViewModel {
     }
   }
 
-  onKeyDown(e: KeyboardEvent): void {
+  private edit() {
+    if (this.$mode.value === 'explore') {
+      this.ctx.editorVM.activate()
+    } else {
+      this.ctx.$msg.value = { level: 'error', text: 'Editor should be closed before starting editting another note' }
+    }
+  }
+
+  private newNote() {
+    if (this.$mode.value === 'explore') {
+      this.bufferController.$buffer.value = ''
+      this.bufferController.$title.value = 'New:'
+      this.$mode.value = 'create'
+    }
+  }
+
+  private playAudio() {
+    this.ctx.$selectedNote.value?.play()
+  }
+
+  override async onKeyDown(e: KeyboardEvent): Promise<void> {
     if (this.$mode.value === 'explore') {
       super.onKeyDown(e)
     } else {
@@ -83,10 +103,39 @@ export class NoteListVM extends ViewModel {
       if (code === '<ESC>') {
         this.$mode.value = 'explore'
       } else if (code === '<CR>') {
-        //this.applyInput()
+        this.applyInput()
+      } else if (code === '<C-v>') {
+        await this.bufferController.pasteFromKeyboard()
       } else {
         this.bufferController.onKeyDown(e)
       }
+    }
+  }
+
+  private applyInput() {
+    if (this.$mode.value === 'create') {
+      const parent = this.ctx.$selectedVoc.value
+      const title = this.bufferController.$buffer.value.trim()
+      if (parent && title) {
+        const n = parent.createNote(title)
+        globalContext.server.createNote(n).pipe()
+          .onReceive((data: any[]) => {
+            console.log('NoteListVM:applyInput, creating note, result: ', data)
+            n.deserialize(data)
+            if (n.isDamaged) {
+              this.ctx.$msg.value = { level: 'warning', text: 'Created note is demaged' }
+            } else {
+              parent.add(n)
+              this.$notes.value = this.ctx.$selectedVoc.value?.notes ? [...this.ctx.$selectedVoc.value.notes] : []
+              this.ctx.$selectedNote.value = n
+            }
+          })
+          .onError(e => {
+            this.ctx.$msg.value = { level: 'error', text: e.message }
+          })
+          .subscribe()
+      }
+      this.$mode.value = 'explore'
     }
   }
 

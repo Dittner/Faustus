@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Response, status
-
 from src.index.db import ClientError, MarkdownDB
 from src.index.schemas import TextFileRenameSchema, TextFileSchema
 
@@ -16,9 +15,11 @@ def index_root():
 def get_files_tree():
     return db.get_files_tree()
 
+
 # ---------------
 #     file
 # ---------------
+
 
 @router.get('/file/{src:path}')
 def read_file(src: str):
@@ -75,6 +76,7 @@ def delete_file(src: str):
 #     voc
 # ---------------
 
+
 @router.get('/voc/alias')
 def get_file_alias_voc():
     return db.file_alias_voc
@@ -83,6 +85,7 @@ def get_file_alias_voc():
 # ---------------
 #     ASSETS
 # ---------------
+
 
 @router.get('/asset/{src:path}')
 def get_image(src: str):

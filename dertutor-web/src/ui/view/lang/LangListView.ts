@@ -1,4 +1,4 @@
-import { div, p, span, vlist, vstack } from "flinker-dom"
+import { hstack, p, spacer, span, vlist, vstack } from "flinker-dom"
 import { ActionsHelpView, MessangerView } from "../../../App"
 import { LayoutLayer } from "../../../app/Application"
 import { Lang } from "../../../domain/DomainModel"
@@ -11,11 +11,34 @@ import { IViewModel } from "../ViewModel"
 export const LangListView = () => {
   const ctx = DertutorContext.self
   const vm = ctx.langListVM
-  return div()
+  return vstack()
     .react(s => {
       s.width = '100%'
+      s.height = '100vh'
+      s.halign = 'center'
+      s.valign = 'center'
       s.gap = '10px'
     }).children(() => {
+      hstack()
+        .react(s => {
+          s.position = 'fixed'
+          s.top = '0'
+          s.width = '100%'
+          s.paddingHorizontal = '20px'
+          s.halign = 'left'
+          s.valign = 'center'
+        })
+        .children(() => {
+          HelpAction('→', 'Next')
+          spacer()
+          HelpAction('←', 'Prev')
+          spacer()
+          HelpAction('<Enter>', 'Accept')
+          spacer()
+          HelpAction('T', 'Switch theme')
+          spacer()
+          HelpAction('?', 'Help')
+        })
 
       vlist<Lang>()
         .observe(vm.$allLangs, 'recreateChildren')
@@ -24,10 +47,8 @@ export const LangListView = () => {
         .itemRenderer(LangRenderer)
         .itemHash((item: Lang) => item.id + ':' + (item === ctx.$selectedLang.value))
         .react(s => {
-          s.className = 'listScrollbar'
-          s.enableOwnScroller = true
-          s.width = '200px'
-          s.height = '100vh'
+          s.width = '100%'
+          s.maxWidth = theme().menuWidth + 'px'
           s.paddingBottom = theme().statusBarHeight - 40 + 'px'
           s.gap = '0'
         })
@@ -49,20 +70,16 @@ const LangRenderer = (lang: Lang) => {
     .react(s => {
       const selected = ctx.$selectedLang.value === lang
 
-      let textColor = theme().menuNormal
-      if (lang.code === 'de')
-        textColor = theme().menuDe
-      else if (lang.code === 'en')
-        textColor = theme().menuEn
+      let textColor = theme().red
 
-      s.fontSize = theme().defMenuFontSize
-      s.fontFamily = FontFamily.MONO
+      s.fontSize = theme().defFontSize
+      s.fontFamily = FontFamily.APP
       s.wrap = false
       s.width = '100%'
-      s.padding = '5px'
       s.textColor = selected ? theme().appBg : textColor
       s.bgColor = selected ? textColor : theme().transparent
-      s.text = lang.code.toLocaleUpperCase()
+      s.text = lang.name
+      s.textAlign = 'center'
       s.textSelectable = false
     })
     .whenHovered(s => {
@@ -82,17 +99,38 @@ const Footer = (vm: IViewModel) => {
 
         StatusBarModeName()
           .react(s => {
-            s.text = vm.id.toUpperCase()
+            s.text = 'Select a language'
           })
 
-        span()
-          .react(s => {
-            s.text = ''
-            s.textColor = theme().statusFg
-            s.width = '100%'
-          })
+        spacer()
 
         MessangerView()
+      })
+    })
+}
+
+
+const HelpAction = (cmd: string, desc: string) => {
+  return p()
+    .react(s => {
+      s.fontSize = theme().defMenuFontSize
+      s.fontFamily = FontFamily.APP
+      s.paddingVertical = '5px'
+      s.whiteSpace = 'nowrap'
+    }).children(() => {
+      span()
+        .react(s => {
+          s.text = desc
+          s.textColor = theme().text
+          s.whiteSpace = 'nowrap'
+        })
+
+      span().react(s => {
+        s.display = 'inline-block'
+        s.text = cmd
+        s.textColor = theme().header
+        s.whiteSpace = 'nowrap'
+        s.paddingLeft = '5px'
       })
     })
 }

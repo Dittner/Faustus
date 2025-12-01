@@ -18,9 +18,6 @@ export class LangListVM extends ViewModel {
     this.actionsList.add('g', 'Select first langugage', () => this.moveCursorToTheFirst())
     this.actionsList.add('G', 'Select last langugage', () => this.moveCursorToTheLast())
 
-    this.actionsList.add('j', 'Select next langugage', () => this.moveCursor(1))
-    this.actionsList.add('k', 'Select prev langugage', () => this.moveCursor(-1))
-
     this.actionsList.add('<Right>', 'Select next langugage', () => this.moveCursor(1))
     this.actionsList.add('<Left>', 'Select prev langugage', () => this.moveCursor(-1))
 
@@ -73,12 +70,12 @@ export class LangListVM extends ViewModel {
   }
 
   private loadAllLangs() {
-    console.log('DertutorContext:loadAllLangs')
+    console.log('LangListVM:loadAllLangs')
     this.ctx.$msg.value = { text: 'Loading...', level: 'info' }
     globalContext.server.loadAllLangs().pipe()
       .onReceive((data: any[]) => {
         this.ctx.$msg.value = undefined
-        console.log('DertutorContext:loadAllLangs, complete, data: ', data)
+        console.log('LangListVM:loadAllLangs, complete, data: ', data)
         this.$allLangs.value = data.map(d => {
           const l = new Lang()
           l.deserialize(d)

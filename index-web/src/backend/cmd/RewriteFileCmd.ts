@@ -21,7 +21,7 @@ export class RewriteFileCmd implements Runnable {
     const file = this.file
     const data = file.serialize()
     console.log('RewriteFileCmd, data:', data)
-    const [response, _] = await this.api.sendRequest('POST', 'file/rw/' + file.path, JSON.stringify(data))
+    const [response, _] = await this.api.sendRequest('POST', '/file/rw' + file.path, JSON.stringify(data))
     if (response?.ok) {
       op.success(data)
     } else {

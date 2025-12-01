@@ -14,6 +14,7 @@ export interface GlobalTheme {
   text50: string
   editorText: string
   orange: string
+  yellow: string
   red: string
   gray: string
   green: string
@@ -28,6 +29,7 @@ export interface GlobalTheme {
   warn: string
   info: string
   mark: string
+  btn: string
   statusFg: string
   statusBg: string
   comment: string
@@ -106,13 +108,15 @@ export class ThemeManager {
     return {
       id: 'light',
       isLight: true,
-      defMenuFontSize: '0.75rem',
+      defMenuFontSize: '0.8rem',
       defFontSize: '1rem',
       defFontWeight: '400',
       appBg: white,
       white,
+      yellow: '#a56a26',
       orange: '#a56a26',
       mark: '#ac2f2f',
+      btn: '#ac2f2f',
       black,
       text: black,
       text50: black + '88',
@@ -140,8 +144,8 @@ export class ThemeManager {
       menuNormal: '#5c6c72',
       menuDe: '#b16441',
       menuEn: '#ac2f2f',
-      maxNoteViewWidth: 950,
-      menuWidth: 550,
+      maxNoteViewWidth: 900,
+      menuWidth: 400,
       statusBarHeight: 30,
     }
   }
@@ -156,7 +160,7 @@ export class ThemeManager {
   createDarkTheme(t: GlobalTheme): GlobalTheme {
     const text = '#707786' //aab6c2
     const white = '#969dad'
-    const red = '#df5f83'
+    const red = '#cb6565'
     const blue = '#6194c1'
     const header = white
     const black = '#111111'
@@ -179,13 +183,15 @@ export class ThemeManager {
       blue,
       violet: '#aeadde',
       warn: '#b0c8b3',
-      mark: '#cb6582',
+      mark: '#cb6565',
       info: blue,
       purple: '#b2aee5',
       comment: '#74a7aa',
       link: '#aa8657',
       pink: '#c293cc',
-      orange: '#463d16',
+      yellow: '#b0c8b3',
+      orange: '#c5975b',
+      btn: '#c5975b',
       statusFg: '#b0c8b3',
       statusBg: '#181f23',
       menuFocused: '#8d74a6',
@@ -211,7 +217,7 @@ export class ThemeManager {
 
     const h1Props: UIComponentProps = {
       textTransform: 'uppercase',
-      fontSize: '2.0rem',
+      fontSize: '1.5rem',
       fontWeight: 'bold',
       textColor: t.header,
       paddingTop: headerPadingTop
@@ -219,7 +225,7 @@ export class ThemeManager {
     buildRule(h1Props, parentSelector, 'h1')
 
     const h2Props: UIComponentProps = {
-      fontSize: '1.5rem',
+      fontSize: '1.25rem',
       fontWeight: 'bold',
       textColor: t.header,
       paddingTop: headerPadingTop
@@ -227,7 +233,7 @@ export class ThemeManager {
     buildRule(h2Props, parentSelector, 'h2')
 
     const h3Props: UIComponentProps = {
-      fontSize: '1.2rem',
+      fontSize: '1.1rem',
       fontWeight: 'bold',
       textAlign: 'left',
       textColor: t.header,
@@ -236,7 +242,7 @@ export class ThemeManager {
     buildRule(h3Props, parentSelector, 'h3')
 
     const h4Props: UIComponentProps = {
-      fontSize: '1.2rem',
+      fontSize: '1.1rem',
       fontWeight: 'bold',
       textAlign: 'left',
       textColor: t.header,

@@ -33,10 +33,16 @@ Enter database address: 'dertutor-pg' – container name, not localhost
 ## Migrations
 Generate migration file:
 ```cmd
->>> uv run alembic revision --autogenerate -m 'migration name'
+>>> uv run alembic revision --autogenerate -m 'creating tables'
+>>> uv run alembic revision --autogenerate -m 'creating foreign_constraints'
 ```
 
 Apply migration
 ```cmd
 >>> uv run alembic upgrade head
+```
+
+Roolback all migrations
+```cmd
+>>> uv run alembic downgrade base  
 ```

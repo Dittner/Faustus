@@ -1,7 +1,4 @@
-import enum
-
-from sqlalchemy import Enum as SQLEnum  # Alias to avoid conflict with Python's enum
-from sqlalchemy import ForeignKey, LargeBinary, MetaData, String, Text, UniqueConstraint
+from sqlalchemy import ForeignKey, Integer, LargeBinary, MetaData, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -38,21 +35,12 @@ class Vocabulary(Base):
     __table_args__ = (UniqueConstraint('lang_id', 'name'),)
 
 
-class NoteLevel(enum.Enum):
-    a1 = 0
-    a2 = 1
-    b1 = 2
-    b2 = 3
-    c1 = 4
-    c2 = 5
-
-
 class Note(Base):
     __tablename__ = 'notes'
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(Text, default='', server_default='')
     text: Mapped[str] = mapped_column(Text, default='', server_default='')
-    level: Mapped[NoteLevel] = mapped_column(SQLEnum(NoteLevel), nullable=True)
+    level: Mapped[int] = mapped_column(Integer)
     vocabulary_id: Mapped[int] = mapped_column(ForeignKey('vocabularies.id'))
     audio_url: Mapped[str] = mapped_column(String(256))
     resources: Mapped[list['Resource']] = relationship(cascade='all, delete')
@@ -63,5 +51,6 @@ class Resource(Base):
     __tablename__ = 'resources'
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(256))
-    data: Mapped[bytes] = mapped_column(LargeBinary)
+    url: Mapped[str] = mapped_column(String(256), unique=True)
     note_id: Mapped[int] = mapped_column(ForeignKey('notes.id'))
+    __table_args__ = (UniqueConstraint('note_id', 'id'),)

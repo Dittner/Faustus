@@ -2,7 +2,7 @@ import { type AnyRXObservable, type RXObservable, RXObservableValue } from 'flin
 
 import { PingCmd } from './cmd/PingCmd'
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
+export type HttpMethod = 'HEAD' | 'GET' | 'POST' | 'PUT' | 'DELETE'
 export type RestApiErrorCategory = 'noConnection' | 'notAuthorized' | 'serverError' | 'clientError' | 'unknownError' | 'aborted'
 export const NO_CONNECTION_STATUS = 0
 
@@ -48,11 +48,12 @@ export class RestApi {
 
   async sendRequest(method: HttpMethod, path: string, body: string | null = null): Promise<[Response | null, any | null]> {
     try {
-      console.log('===>', method + ':', path)
-      const response = await fetch(this.baseUrl + path, {
+      const url = path.indexOf('http') === 0 ? path : this.baseUrl + path
+      console.log('===>', method + ':', url)
+      const response = await fetch(url, {
         method,
         headers: this.headers,
-        credentials: 'same-origin',
+        //credentials: 'same-origin',
         body
       })
 
@@ -71,7 +72,8 @@ export class RestApi {
       }
       return [response, null]
     } catch (e: any) {
-      const msg = 'Failed to ' + method + ' resource: ' + this.baseUrl + path
+      const url = path.indexOf('http') === 0 ? path : this.baseUrl + path
+      const msg = 'Failed to ' + method + ' resource: ' + url
       console.log(msg, '. Details:', e)
       return [null, null]
     }
@@ -87,7 +89,7 @@ export class RestApi {
       } else if (response.status === 400) {
         throw new RestApiError('clientError', response.status, details)
       } else if (response.status === 404) {
-        throw new RestApiError('clientError', response.status, details)
+        throw new RestApiError('clientError', response.status, details || 'Not found')
       } else if (response.status >= 500) {
         throw new RestApiError('serverError', response.status, 'Server error: ' + details)
       } else {

@@ -12,8 +12,10 @@ lint.ignore = [
     "ANN202", # Missing return type annotation for private function
     "ANN204", # Missing return type annotation for special method
     "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
+    "ASYNC230", #Async functions should not open files with blocking methods like `open`
     "BLE001", # except-Exception-as-e warning
     "COM812", # To avoid unexpected behavior
+    "EM102", #Exception must not use an f-string literal, assign to variable first
     "ERA001", # Found commented-out codeRuff
     "RET505", # superfluous-else-return
     "T201", # remove-print
@@ -42,6 +44,7 @@ lint.ignore = [
     "TD003",
     "FIX002", # too verbose descriptions of todos
     "SIM108", # use if-else ternary operator
+    "F541", # f-string without any placeholdersRuff
 ]
 
 exclude = [

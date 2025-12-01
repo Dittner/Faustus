@@ -15,7 +15,7 @@ export class IndexServer extends RestApi {
   readonly assetsUrl: string
   constructor() {
     //env is defined in dockerfile
-    const baseUrl = import.meta.env.VITE_INDEX_API_URL ?? 'http://localhost:3456/api/'
+    const baseUrl = import.meta.env.VITE_INDEX_API_URL ?? 'http://localhost:3456/api'
     super(baseUrl)
     
     this.assetsUrl = this.baseUrl + 'asset/'

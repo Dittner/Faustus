@@ -10,7 +10,10 @@ __pycache__
 index-api/data
 index-api/index
 
-pgdata
+corpus-api/data
+corpus-api/resources
+
+data
 
 */dist
 */node_modules

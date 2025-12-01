@@ -1,11 +1,13 @@
 import { type RXObservable, RXOperation } from 'flinker'
 import { type RestApi, type RestApiError, type Runnable } from '../RestApi'
 
-export class LoadFilesTreeCmd implements Runnable {
+export class ValidateMp3LinkCmd implements Runnable {
   private readonly api: RestApi
+  private readonly link: string
 
-  constructor(api: RestApi) {
+  constructor(api: RestApi, link: string) {
     this.api = api
+    this.link = link
   }
 
   run(): RXObservable<any, RestApiError> {
@@ -17,10 +19,10 @@ export class LoadFilesTreeCmd implements Runnable {
   }
 
   private async startLoading(op: RXOperation<any, RestApiError>) {
-    console.log('LoadFilesTreeCmd:startLoading')
-    const [response, body] = await this.api.sendRequest('GET', '/file/tree')
+    console.log('ValidateMp3LinkCmd:startLoading')
+
+    const [response, body] = await this.api.sendRequest('HEAD', this.link)
     if (response?.ok) {
-      //setTimeout(() => op.success(body), 100)
       op.success(body)
     } else {
       await this.api.handlerError(response)

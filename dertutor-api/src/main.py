@@ -6,10 +6,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
-from src.repo import InsertDefaultRowsService, repo
+from src.repo import InsertDefaultRowsService
+from src.context import dertutor_context
 from src.routes.langs import router as langs_router
 from src.routes.vocabularies import router as vocabularies_router
 from src.routes.notes import router as notes_router
+from src.routes.resources import router as resource_router
+from src.routes.corpus import router as corpus_router
 
 print('Python ver:', sys.version)
 
@@ -27,20 +30,25 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     #     await conn.run_sync(Base.metadata.drop_all)
 
     await InsertDefaultRowsService.run()
+    dertutor_context.en_ru_db.connect()
+    dertutor_context.en_pron_db.connect()
+    dertutor_context.de_pron_db.connect()
 
     yield
     # shutdown
-    await repo.dispose()
+    await dertutor_context.close_all_connections()
 
 
 app = FastAPI(
-    # default_response_class=ORJSONResponse,
+    title='DERTUTOR API',
     lifespan=lifespan,
-    default_response_class=ORJSONResponse,
-)
+    default_response_class=ORJSONResponse)
+
 app.include_router(langs_router, prefix='/api')
 app.include_router(vocabularies_router, prefix='/api')
 app.include_router(notes_router, prefix='/api')
+app.include_router(resource_router, prefix='/api')
+app.include_router(corpus_router, prefix='/api')
 
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_methods=['*'], allow_headers=['*'])
 

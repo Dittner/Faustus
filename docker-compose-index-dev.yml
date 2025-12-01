@@ -9,6 +9,7 @@ services:
       - UVICORN_RELOAD=true
     volumes:
       - ./index-api:/app
+      - ./data/index/data:/app/data
     ports:
       - 3000:80
     tty: true

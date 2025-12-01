@@ -18,7 +18,7 @@ export class LoadFilesAliasCmd implements Runnable {
 
   private async startLoading(op: RXOperation<any, RestApiError>) {
     console.log('LoadFilesAliasCmd:startLoading')
-    const [response, body] = await this.api.sendRequest('GET', 'voc/alias')
+    const [response, body] = await this.api.sendRequest('GET', '/voc/alias')
     if (response?.ok) {
       //setTimeout(() => op.success(body), 100)
       op.success(body)

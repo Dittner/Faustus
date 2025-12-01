@@ -40,7 +40,7 @@ class MarkdownDB:
                 file = p / child.stem
                 alias = self.get_file_alias(child)
                 if alias:
-                    voc[file.relative_to(ROOT_DIR_PATH).as_posix()] = alias
+                    voc['/' + file.relative_to(ROOT_DIR_PATH).as_posix()] = alias
 
     def get_files_tree(self):
         res = []
@@ -57,7 +57,7 @@ class MarkdownDB:
 
                 mdf = MDFile()
                 mdf.id = child.name
-                mdf.path = child.relative_to(ROOT_DIR_PATH).as_posix() + '/'
+                mdf.path = '/' + child.relative_to(ROOT_DIR_PATH).as_posix() + '/'
                 mdf.is_dir = True
                 res.append(mdf)
                 self.list_dir(child, res)
@@ -65,7 +65,7 @@ class MarkdownDB:
             elif self.is_text_file_valid(child):
                 mdf = MDFile()
                 mdf.id = child.stem
-                mdf.path = (p / mdf.id).relative_to(ROOT_DIR_PATH).as_posix()
+                mdf.path = '/' + (p / mdf.id).relative_to(ROOT_DIR_PATH).as_posix()
                 mdf.is_dir = False
                 res.append(mdf)
 
@@ -104,7 +104,7 @@ class MarkdownDB:
                 Path.mkdir(p)
                 f = MDFile()
                 f.id = n
-                f.path = p.relative_to(ROOT_DIR_PATH).as_posix() + '/'
+                f.path = '/' + p.relative_to(ROOT_DIR_PATH).as_posix() + '/'
                 f.is_dir = True
                 res.append(f)
             ind += 1
@@ -114,7 +114,7 @@ class MarkdownDB:
         p = ROOT_DIR_PATH / (src + '.txt')
         if p.exists():
             with p.open() as f:
-                return {'is_dir': False, 'path': src, 'text': f.read()}
+                return {'is_dir': False, 'path': '/' + src, 'text': f.read()}
 
         raise FileNotFoundError
 
@@ -139,7 +139,7 @@ class MarkdownDB:
         print('Creating new file:', src)
         mdf = MDFile()
         mdf.id = p.stem
-        mdf.path = src
+        mdf.path = '/' + src
         mdf.is_dir = False
         new_files.append(mdf)
 
@@ -147,7 +147,7 @@ class MarkdownDB:
         f.write(text)
         f.close()
 
-        self.file_alias_voc[self.trim_suffix(p.relative_to(ROOT_DIR_PATH)).as_posix()] = alias
+        self.file_alias_voc['/' + self.trim_suffix(p.relative_to(ROOT_DIR_PATH)).as_posix()] = alias
         return new_files
 
     def rewrite_file(self, src: str, alias: str, text: str) -> list[MDFile]:
@@ -167,7 +167,7 @@ class MarkdownDB:
         f.write(text)
         f.close()
 
-        self.file_alias_voc[self.trim_suffix(p.relative_to(ROOT_DIR_PATH)).as_posix()] = alias
+        self.file_alias_voc['/' + self.trim_suffix(p.relative_to(ROOT_DIR_PATH)).as_posix()] = alias
         return []
 
     def trim_suffix(self, p: Path):
@@ -229,7 +229,7 @@ class MarkdownDB:
                 print('Deleting dir from trash')
                 shutil.rmtree(p.absolute().as_posix())
             elif new_path.exists():
-                raise FileAlreadyExistsError(new_path.relative_to(ROOT_DIR_PATH).as_posix())
+                raise FileAlreadyExistsError('/' + new_path.relative_to(ROOT_DIR_PATH).as_posix())
             elif new_path != p:
                 new_files = self.mkdirs(new_path.as_posix())
                 p.replace(new_path)
@@ -253,7 +253,7 @@ class MarkdownDB:
 
                 f = MDFile()
                 f.id = p.stem
-                f.path = self.trim_suffix(new_path.relative_to(ROOT_DIR_PATH)).as_posix()
+                f.path = '/' + self.trim_suffix(new_path.relative_to(ROOT_DIR_PATH)).as_posix()
                 f.is_dir = False
                 new_files.append(f)
 

@@ -1,4 +1,4 @@
-import { div, p, span, vlist, vstack } from "flinker-dom"
+import { p, span, vlist, vstack } from "flinker-dom"
 import { ActionsHelpView, MessangerView } from "../../../App"
 import { LayoutLayer } from "../../../app/Application"
 import { Vocabulary } from "../../../domain/DomainModel"
@@ -11,10 +11,14 @@ import { IViewModel } from "../ViewModel"
 export const VocListView = () => {
   const ctx = DertutorContext.self
   const vm = ctx.vocListVM
-  return div()
+  return vstack()
     .react(s => {
       s.width = '100%'
+      s.height = '100vh'
       s.gap = '10px'
+      s.width = '100%'
+      s.halign = 'center'
+      s.valign = 'center'
     }).children(() => {
 
       vlist<Vocabulary>()
@@ -26,8 +30,8 @@ export const VocListView = () => {
         .react(s => {
           s.className = 'listScrollbar'
           s.enableOwnScroller = true
-          s.width = '200px'
-          s.height = '100vh'
+          s.width = '100%'
+          s.maxWidth = theme().menuWidth + 'px'
           s.paddingBottom = theme().statusBarHeight - 40 + 'px'
           s.gap = '0'
         })
@@ -45,7 +49,7 @@ export const VocListView = () => {
 const VocRenderer = (voc: Vocabulary) => {
   const ctx = DertutorContext.self
   return p().react(s => {
-    const underCurser = ctx.$selectedVoc.value === voc
+    const selected = ctx.$selectedVoc.value === voc
     // if (underCurser) {
     //   host.dom.scrollIntoView({
     //     behavior: 'instant',
@@ -55,12 +59,13 @@ const VocRenderer = (voc: Vocabulary) => {
 
     const textColor = theme().menuFocused
     const bgColor = theme().appBg
-    s.fontSize = theme().defMenuFontSize
-    s.fontFamily = FontFamily.MONO
+    s.fontSize = theme().defFontSize
+    s.fontFamily = FontFamily.APP
     s.wrap = false
-    s.padding = '5px'
-    s.textColor = underCurser ? bgColor : textColor
-    s.bgColor = underCurser ? textColor : theme().transparent
+    s.width = '100%'
+    s.textColor = selected ? bgColor : textColor
+    s.textAlign = 'center'
+    s.bgColor = selected ? textColor : theme().transparent
     s.text = voc.name
   })
 }
@@ -77,7 +82,7 @@ const Footer = (vm: IViewModel) => {
 
         StatusBarModeName()
           .react(s => {
-            s.text = vm.id.toUpperCase()
+            s.text = 'Select a dictionary'
           })
 
         span()

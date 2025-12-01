@@ -6,12 +6,10 @@ import { InputBufferController } from "../../controls/Input"
 import { DertutorContext } from "../../DertutorContext"
 import { ViewModel } from "../ViewModel"
 
-const PATH_ALLOWED_SYMBOLS: Set<string> = new Set('_0123456789/abcdefghijklmnopqrstuvwxyz'.split(''))
-
 export class VocListVM extends ViewModel {
   readonly $vocs = new RXObservableValue<Array<Vocabulary>>([])
   readonly $mode = new RXObservableValue<'explore' | 'create' | 'rename'>('explore')
-  readonly bufferController = new InputBufferController(PATH_ALLOWED_SYMBOLS)
+  readonly bufferController = new InputBufferController()
 
   constructor(ctx: DertutorContext) {
     super('vocs', ctx)
@@ -21,9 +19,6 @@ export class VocListVM extends ViewModel {
   private addKeybindings() {
     this.actionsList.add('g', 'Select first dictionary', () => this.moveCursorToTheFirst())
     this.actionsList.add('G', 'Select last dictionary', () => this.moveCursorToTheLast())
-
-    this.actionsList.add('j', 'Select next dictionary', () => this.moveCursor(1))
-    this.actionsList.add('k', 'Select prev dictionary', () => this.moveCursor(-1))
 
     this.actionsList.add('<Right>', 'Select next dictionary', () => this.moveCursor(1))
     this.actionsList.add('<Left>', 'Select prev dictionary', () => this.moveCursor(-1))
@@ -73,7 +68,7 @@ export class VocListVM extends ViewModel {
     this.ctx.$selectedVoc.value = undefined
   }
 
-  onKeyDown(e: KeyboardEvent): void {
+  override async onKeyDown(e: KeyboardEvent): Promise<void> {
     if (this.$mode.value === 'explore') {
       super.onKeyDown(e)
     } else {

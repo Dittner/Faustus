@@ -9,6 +9,7 @@ import { ServerConnectionView } from "./ui/view/connect/ServerConnctionView"
 import { LangListView } from "./ui/view/lang/LangListView"
 import { NoteListView } from "./ui/view/note/NoteListView"
 import { VocListView } from "./ui/view/vocs/VocListView"
+import { EditorView } from "./ui/view/editor/EditorView"
 
 export const globalContext = GlobalContext.init()
 
@@ -28,8 +29,21 @@ export function App() {
           else if (vm === ctx.langListVM) return LangListView()
           else if (vm === ctx.vocListVM) return VocListView()
           else if (vm === ctx.noteListVM) return NoteListView()
+          else if (vm === ctx.editorVM) return EditorView()
           else return undefined
         })
+
+      // p()
+      //   .observe(ctx.$selectedLang)
+      //   .react(s => {
+      //     const code = ctx.$selectedLang.value?.code ?? ''
+      //     s.visible = ctx.$selectedLang.value !== undefined
+      //     s.position = 'fixed'
+      //     s.width = '100%'
+      //     s.height = '1px'
+      //     s.top = '0'
+      //     s.bgColor = code === 'de' ? theme().yellow : theme().red
+      //   })
     })
 }
 
@@ -82,7 +96,7 @@ const ActionInfoView = (a: Action) => {
         s.textColor = theme().red
         s.paddingHorizontal = '20px'
         s.paddingVertical = '5px'
-        s.width = '100px'
+        s.width = '120px'
         s.whiteSpace = 'nowrap'
         s.textAlign = 'right'
       })
@@ -92,8 +106,7 @@ const ActionInfoView = (a: Action) => {
           s.text = a.desc
           s.textColor = theme().statusFg
           s.width = '100%'
-          //s.whiteSpace = 'pre'
-          s.paddingHorizontal = '20px'
+          s.whiteSpace = 'nowrap'
           s.paddingVertical = '5px'
         })
     })
@@ -107,12 +120,13 @@ export const MessangerView = () => {
       const msg = ctx.$msg.value
       s.visible = msg !== undefined
       s.fontFamily = FontFamily.MONO
-      s.fontSize = '18px'
+      s.fontSize = theme().defMenuFontSize
       s.text = msg?.text ?? ''
       //s.bgColor = theme().appBg
-      s.paddingHorizontal = '2px'
       s.whiteSpace = 'nowrap'
-
+      s.paddingLeft = '20px'
+      s.paddingRight = '2px'
+      
       if (msg?.level === 'error')
         s.textColor = theme().red
       else if (msg?.level === 'warning')

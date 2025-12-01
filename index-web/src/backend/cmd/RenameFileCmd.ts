@@ -19,9 +19,8 @@ export class RenameFileCmd implements Runnable {
   }
 
   private async rename(op: RXOperation<any, RestApiError>) {
-    const path = 'file/rn'
     const requestBody = { from_src: this.fromPath, to_src: this.toPath }
-    const [response, body] = await this.api.sendRequest('POST', path, JSON.stringify(requestBody))
+    const [response, body] = await this.api.sendRequest('POST', '/file/rn', JSON.stringify(requestBody))
     if (response?.ok) {
       op.success(body)
     } else {

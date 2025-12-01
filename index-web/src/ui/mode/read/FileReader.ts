@@ -154,14 +154,14 @@ export class FileReader extends OperatingModeClass {
     if (f.hasChanges) {
       if (discardChanges) {
         f.discardChanges()
-        globalContext.app.navigate('/' + Path.parentPathOf(f.path))
+        globalContext.app.navigate(Path.parentPathOf(f.path))
         this.ctx.explorer.activate()
       }
       else {
         this.ctx.$msg.value = { text: 'Save the file or discard changes before quitting', level: 'warning' }
       }
     } else {
-      globalContext.app.navigate('/' + Path.parentPathOf(f.path))
+      globalContext.app.navigate(Path.parentPathOf(f.path))
       this.ctx.explorer.activate()
     }
   }
@@ -363,14 +363,14 @@ export class FileReader extends OperatingModeClass {
     console.log('FileViewMode:parseBrowserLocation, pathname:', document.location.pathname)
     // document.location.pathname === directoryId/fileId#hash
     let path = document.location.pathname.split('#')[0]
-    if (path.startsWith('/')) path = path.slice(1)
+    //if (path.startsWith('/')) path = path.slice(1)
     console.log('Reader.parseBrowserLocation, path:', path)
     //const selectedChapter = document.location.hash //#hash
     if (this.cache[path]) {
       this.$selectedFile.value = this.cache[path]
       this.scrollWindowTo(this.$selectedFile.value.scrollPos)
       console.log('FileViewMode:parseBrowserLocation, file got from cache, scrollPos:', this.$selectedFile.value.scrollPos)
-    } else {
+    } else if(!path.endsWith('/')) {
       this.ctx.$msg.value = { text: 'Loading...', level: 'info' }
       globalContext.indexServer.loadFile(path).pipe()
         .onReceive((data: any) => {
@@ -399,6 +399,8 @@ export class FileReader extends OperatingModeClass {
           this.ctx.$msg.value = { text: e.message, level: 'error' }
         })
         .subscribe()
+    } else {
+      this.$selectedFile.value = undefined
     }
   }
 

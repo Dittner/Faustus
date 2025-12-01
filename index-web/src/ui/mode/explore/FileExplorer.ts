@@ -119,10 +119,10 @@ export class FileExplorer extends OperatingModeClass {
       const children = this.$openedDirFiles.value
       if (children.length > 0)
         this.$selectedFilePath.value = children[0].path
-      globalContext.app.navigate('/' + this.$openedDirPath.value)
+      globalContext.app.navigate(this.$openedDirPath.value)
     }
     else if (this.$selectedFilePath.value) {
-      globalContext.app.navigate('/' + this.$selectedFilePath.value)
+      globalContext.app.navigate( this.$selectedFilePath.value)
       this.ctx.reader.activate()
     }
   }
@@ -252,7 +252,7 @@ export class FileExplorer extends OperatingModeClass {
   }
 
   private addNewFiles(data: []) {
-    console.log('parseRawFiles: data=', data)
+    //console.log('parseRawFiles: data=', data)
     const hash = new Set<string>()
     this.$allFiles.value.forEach(f => hash.add(f.path))
     data.forEach((d: any) => {
@@ -331,7 +331,7 @@ export class FileExplorer extends OperatingModeClass {
 
   private selectFileSpecifiedInAdressBar() {
     let path = document.location.pathname.split('#')[0]
-    if (path.startsWith('/')) path = path.slice(1)
+    //if (path.startsWith('/')) path = path.slice(1)
     let isDir = path.endsWith('/')
     const dirPath = isDir ? path : Path.parentPathOf(path)
     for (const f of this.$allFiles.value)

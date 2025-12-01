@@ -3,6 +3,10 @@ import { LoadAllLangsCmd } from './cmd/LoadAllLangsCmd'
 import { RestApi, RestApiError } from './RestApi'
 import { LoadVocabulariesCmd } from './cmd/LoadVocabulariesCmd'
 import { LoadNotesCmd } from './cmd/LoadNotesCmd'
+import { Note } from '../domain/DomainModel'
+import { UpdateNoteCmd } from './cmd/UpdateNoteCmd'
+import { ValidateMp3LinkCmd } from './cmd/ValidateMp3LinkCmd'
+import { CreateNoteCmd } from './cmd/CreateNoteCmd'
 
 export class DertutorServer extends RestApi {
   readonly resourceUrl: string
@@ -42,4 +46,21 @@ export class DertutorServer extends RestApi {
     return cmd.run()
   }
 
+  createNote(n: Note): RXObservable<any, RestApiError> {
+    const cmd = new CreateNoteCmd(this, n)
+    return cmd.run()
+  }
+
+  updateNote(n: Note): RXObservable<any, RestApiError> {
+    const cmd = new UpdateNoteCmd(this, n)
+    return cmd.run()
+  }
+
+  //--------------------------------------
+  //  resources
+  //--------------------------------------
+  validateMp3Link(link: string): RXObservable<any, RestApiError> {
+    const cmd = new ValidateMp3LinkCmd(this, link)
+    return cmd.run()
+  }
 }

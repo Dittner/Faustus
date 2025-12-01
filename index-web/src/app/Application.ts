@@ -37,6 +37,7 @@ export class Application {
   }
 
   navigate(to: string) {
+    //console.log('Application:navigate:', to)
     window.history.pushState('', '', to);
   }
 

@@ -1,5 +1,4 @@
 //import css at first!!!!
-import './code.css'
 import './index.css'
 import { App } from './App'
 

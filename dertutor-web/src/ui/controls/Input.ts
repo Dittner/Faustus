@@ -1,7 +1,7 @@
+import { RXObservableValue } from "flinker"
 import { hstack, input, p, span, StackProps, vstack } from "flinker-dom"
 import { theme } from "../theme/ThemeManager"
 import { FontFamily } from "./Font"
-import { RXObservableValue } from "flinker"
 
 export interface NumberProtocol {
   value: number
@@ -57,10 +57,18 @@ export class InputBufferController {
   readonly $buffer = new RXObservableValue('')
   readonly $cursorPos = new RXObservableValue(-1)
   readonly $title = new RXObservableValue('Title:')
-  allowedSymbols: Set<string>
 
-  constructor(allowedSymbols: Set<string>) {
-    this.allowedSymbols = allowedSymbols
+  constructor() { }
+
+  async pasteFromKeyboard() {
+    const text = await navigator.clipboard.readText()
+    if (text) {
+      const i = this.$cursorPos.value === -1 ? this.$buffer.value.length : this.$cursorPos.value
+      const t1 = this.$buffer.value.slice(0, i)
+      const t2 = this.$buffer.value.slice(i)
+      this.$buffer.value = t1 + text + t2
+      this.$cursorPos.value = this.$cursorPos.value === -1 ? -1 : this.$cursorPos.value + text.length
+    }
   }
 
   onKeyDown(e: KeyboardEvent) {
@@ -96,7 +104,7 @@ export class InputBufferController {
       else if (this.$cursorPos.value !== -1 && this.$cursorPos.value < this.$buffer.value.length - 1)
         this.$cursorPos.value = this.$cursorPos.value + 1
     }
-    else if (e.key.length === 1 && this.allowedSymbols.has(e.key)) {
+    else if (e.key.length === 1) {
       if (this.$cursorPos.value === -1)
         this.$buffer.value += e.key
       else {
@@ -121,10 +129,11 @@ export const LineInput = ($buffer: RXObservableValue<string>, $cursorPos: RXObse
       s.fontSize = theme().defMenuFontSize
       s.valign = 'top'
       s.height = '100%'
+      s.lineHeight = '1.7'
       s.paddingHorizontal = '20px'
       s.margin = '0'
       s.wrap = false
-      s.whiteSpace = 'nowrap'
+      s.whiteSpace = 'pre'
       s.textColor = theme().black
       s.bgColor = theme().mark
     })
@@ -136,6 +145,7 @@ export const LineInput = ($buffer: RXObservableValue<string>, $cursorPos: RXObse
         .react(s => {
           s.fontSize = 'inherit'
           s.text = $sharedState.value.title
+          s.paddingRight = '5px'
         })
 
       span()
@@ -160,7 +170,7 @@ export const LineInput = ($buffer: RXObservableValue<string>, $cursorPos: RXObse
           s.textColor = i === -1 ? theme().black : theme().mark
           s.bgColor = theme().black
           s.height = '100%'
-          s.text = i === -1 ? '█' : t.at(i)
+          s.text = i === -1 ? ' ' : t.at(i)
         })
 
       span()

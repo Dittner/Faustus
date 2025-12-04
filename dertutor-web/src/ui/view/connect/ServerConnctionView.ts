@@ -23,7 +23,7 @@ export const ServerConnectionView = () => {
         .react(s => {
           s.fontFamily = FontFamily.MONO
           s.text = vm.$logs.value
-          s.textColor = theme().white
+          s.textColor = theme().accent
           s.fontSize = '16px'
           s.padding = '20px'
           s.whiteSpace = 'pre'

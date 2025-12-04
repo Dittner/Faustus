@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Integer, LargeBinary, MetaData, String, Text, UniqueConstraint
+from sqlalchemy import ForeignKey, Integer, MetaData, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -43,14 +43,14 @@ class Note(Base):
     level: Mapped[int] = mapped_column(Integer)
     vocabulary_id: Mapped[int] = mapped_column(ForeignKey('vocabularies.id'))
     audio_url: Mapped[str] = mapped_column(String(256))
-    resources: Mapped[list['Resource']] = relationship(cascade='all, delete')
+    media: Mapped[list['Media']] = relationship(cascade='all, delete')
     __table_args__ = (UniqueConstraint('vocabulary_id', 'title'),)
 
 
-class Resource(Base):
-    __tablename__ = 'resources'
-    id: Mapped[int] = mapped_column(primary_key=True)
+class Media(Base):
+    __tablename__ = 'media'
+    uid: Mapped[str] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(256))
-    url: Mapped[str] = mapped_column(String(256), unique=True)
+    media_type: Mapped[str] = mapped_column(String(256))
     note_id: Mapped[int] = mapped_column(ForeignKey('notes.id'))
-    __table_args__ = (UniqueConstraint('note_id', 'id'),)
+    __table_args__ = (UniqueConstraint('note_id', 'uid'),)

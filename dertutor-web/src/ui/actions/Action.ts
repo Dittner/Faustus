@@ -51,6 +51,6 @@ export class KeyParser {
 
   keyToCode(e: KeyboardEvent) {
     const key = this.keyMap.get(e.key) ?? e.key
-    return e.ctrlKey ? '<C-' + key + '>' : key
+    return e.ctrlKey || e.metaKey ? '<C-' + key + '>' : key
   }
 }

@@ -44,7 +44,7 @@ export const TextInput = (inputBinding: RXObservableValue<string>) => {
           s.padding = '10px'
           s.autoCorrect = 'off'
           s.autoComplete = 'off'
-          s.borderBottom = ['1px', 'solid', theme().violet + '50']
+          s.borderBottom = ['1px', 'solid', theme().red + '50']
         })
         .whenFocused(s => {
           s.borderBottom = ['1px', 'solid', theme().red]
@@ -121,6 +121,7 @@ export interface LineInputProps extends StackProps {
 
 export const LineInput = ($buffer: RXObservableValue<string>, $cursorPos: RXObservableValue<number>) => {
   const $sharedState = new RXObservableValue<LineInputProps>({ title: '' })
+  const textColor = '#111111'
   return hstack<LineInputProps>()
     .react(s => {
       s.fontFamily = FontFamily.MONO
@@ -129,12 +130,12 @@ export const LineInput = ($buffer: RXObservableValue<string>, $cursorPos: RXObse
       s.fontSize = theme().defMenuFontSize
       s.valign = 'top'
       s.height = '100%'
-      s.lineHeight = '1.7'
+      s.lineHeight = '1.9'
       s.paddingHorizontal = '20px'
       s.margin = '0'
       s.wrap = false
       s.whiteSpace = 'pre'
-      s.textColor = theme().black
+      s.textColor = textColor
       s.bgColor = theme().mark
     })
     .propsDidChange(props => $sharedState.value = props)
@@ -167,8 +168,8 @@ export const LineInput = ($buffer: RXObservableValue<string>, $cursorPos: RXObse
           const t = $buffer.value
           const i = $cursorPos.value
           s.fontSize = 'inherit'
-          s.textColor = i === -1 ? theme().black : theme().mark
-          s.bgColor = theme().black
+          s.textColor = i === -1 ? textColor : theme().mark
+          s.bgColor = textColor
           s.height = '100%'
           s.text = i === -1 ? ' ' : t.at(i)
         })

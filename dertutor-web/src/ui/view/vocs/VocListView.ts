@@ -57,7 +57,7 @@ const VocRenderer = (voc: Vocabulary) => {
     //   })
     // }
 
-    const textColor = theme().menuFocused
+    const textColor = theme().menu
     const bgColor = theme().appBg
     s.fontSize = theme().defFontSize
     s.fontFamily = FontFamily.APP

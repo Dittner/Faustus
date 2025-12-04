@@ -46,13 +46,13 @@ export class RestApi {
   //  sendRequest
   //--------------------------------------
 
-  async sendRequest(method: HttpMethod, path: string, body: string | null = null): Promise<[Response | null, any | null]> {
+  async sendRequest(method: HttpMethod, path: string, body: string | FormData | null = null, headers: any | null = null): Promise<[Response | null, any | null]> {
     try {
       const url = path.indexOf('http') === 0 ? path : this.baseUrl + path
       console.log('===>', method + ':', url)
       const response = await fetch(url, {
         method,
-        headers: this.headers,
+        headers: headers ?? this.headers,
         //credentials: 'same-origin',
         body
       })

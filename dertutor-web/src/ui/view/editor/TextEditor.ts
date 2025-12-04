@@ -5,7 +5,7 @@ import { theme } from "../../theme/ThemeManager"
 import { FontFamily } from "../../controls/Font"
 
 export const TextEditor = (formatter: TextFormatter) => {
-  console.log('new TextEditor.TextArea')
+  console.log('new TextEditor')
 
   const keyDownFn = (e: KeyboardEvent) => {
     const ta = e.currentTarget as HTMLTextAreaElement
@@ -99,9 +99,9 @@ export const TextEditor = (formatter: TextFormatter) => {
       s.width = '100%'
       s.bgColor = theme().appBg
       s.caretColor = theme().isLight ? '#000000' : theme().red
-      s.fontFamily = FontFamily.MONO
+      s.fontFamily = FontFamily.ARTICLE
       s.fontSize = theme().defFontSize
-      s.textColor = theme().red
+      s.textColor = theme().editor
       s.textAlign = 'left'
       s.autoCorrect = 'off'
       s.autoFocus = true

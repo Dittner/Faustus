@@ -1,5 +1,5 @@
 import logging
-
+import shutil
 from fastapi import APIRouter, Response, status
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -94,6 +94,10 @@ async def delete_note(n: NoteDelete):
             if item:
                 await session.delete(item)
                 await session.commit()
+                p = dertutor_context.local_store_path / 'media'/ str(n.id)
+                if p.exists():
+                    log.info(f'All MediaFiles of note with id: <{p.as_posix()}> are deleted')
+                    shutil.rmtree(p.absolute().as_posix())
                 return Response(content='deleted', status_code=status.HTTP_200_OK)
             else:
                 return Response(content='Note not found', status_code=status.HTTP_404_NOT_FOUND)

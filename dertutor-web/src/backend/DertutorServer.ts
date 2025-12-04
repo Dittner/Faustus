@@ -1,21 +1,24 @@
 import { type RXObservable } from 'flinker'
-import { LoadAllLangsCmd } from './cmd/LoadAllLangsCmd'
-import { RestApi, RestApiError } from './RestApi'
-import { LoadVocabulariesCmd } from './cmd/LoadVocabulariesCmd'
-import { LoadNotesCmd } from './cmd/LoadNotesCmd'
 import { Note } from '../domain/DomainModel'
-import { UpdateNoteCmd } from './cmd/UpdateNoteCmd'
-import { ValidateMp3LinkCmd } from './cmd/ValidateMp3LinkCmd'
 import { CreateNoteCmd } from './cmd/CreateNoteCmd'
+import { LoadAllLangsCmd } from './cmd/LoadAllLangsCmd'
+import { LoadAllMediaFilesCmd } from './cmd/LoadAllMediaFilesCmd'
+import { LoadEnRuTranslationCmd } from './cmd/LoadEnRuTranslationCmd'
+import { LoadNotesCmd } from './cmd/LoadNotesCmd'
+import { LoadVocabulariesCmd } from './cmd/LoadVocabulariesCmd'
+import { UpdateNoteCmd } from './cmd/UpdateNoteCmd'
+import { UploadFileCmd } from './cmd/UploadFileCmd'
+import { ValidateMp3LinkCmd } from './cmd/ValidateMp3LinkCmd'
+import { RestApi, RestApiError } from './RestApi'
+import { DeleteFileCmd } from './cmd/DeleteFileCmd'
+import { DeleteNoteCmd } from './cmd/DeleteNoteCmd'
 
 export class DertutorServer extends RestApi {
-  readonly resourceUrl: string
   constructor() {
     //env is defined in dockerfile
     const baseUrl = import.meta.env.VITE_DERTUTOR_API_URL ?? 'http://localhost:3456/api'
     super(baseUrl)
 
-    this.resourceUrl = this.baseUrl + '/resource'
     this.ping()
   }
 
@@ -56,11 +59,37 @@ export class DertutorServer extends RestApi {
     return cmd.run()
   }
 
+  deleteNote(n: Note): RXObservable<any, RestApiError> {
+    const cmd = new DeleteNoteCmd(this, n)
+    return cmd.run()
+  }
+
+
   //--------------------------------------
-  //  resources
+  //  media
   //--------------------------------------
   validateMp3Link(link: string): RXObservable<any, RestApiError> {
     const cmd = new ValidateMp3LinkCmd(this, link)
+    return cmd.run()
+  }
+
+  loadEnRuTranslation(key: string): RXObservable<any, RestApiError> {
+    const cmd = new LoadEnRuTranslationCmd(this, key)
+    return cmd.run()
+  }
+
+  loadAllMediaFiles(noteId: number): RXObservable<any[], RestApiError> {
+    const cmd = new LoadAllMediaFilesCmd(this, noteId)
+    return cmd.run()
+  }
+
+  uploadFile(noteId: number, file: File, fileName:string): RXObservable<any, RestApiError> {
+    const cmd = new UploadFileCmd(this, noteId, file, fileName)
+    return cmd.run()
+  }
+
+  deleteFile(fileUID:string): RXObservable<any, RestApiError> {
+    const cmd = new DeleteFileCmd(this, fileUID)
     return cmd.run()
   }
 }

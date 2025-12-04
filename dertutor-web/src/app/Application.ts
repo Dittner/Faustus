@@ -55,15 +55,15 @@ export class Application {
   }
 
   private watchHistoryEvents() {
-    const {pushState, replaceState} = window.history
+    const { pushState, replaceState } = window.history
 
-    window.history.pushState = function(...args) {
+    window.history.pushState = function (...args) {
       pushState.apply(window.history, args)
       window.dispatchEvent(new Event('pushState'))
       console.log('!!!! cur location:', document.location.pathname)
     }
 
-    window.history.replaceState = function(...args) {
+    window.history.replaceState = function (...args) {
       replaceState.apply(window.history, args)
       window.dispatchEvent(new Event('replaceState'))
       console.log('!!!! cur location:', document.location.pathname)
@@ -76,5 +76,19 @@ export class Application {
 
   private updateLocation() {
     this.$location.value = document.location.hash ? document.location.pathname + '#' + document.location.hash : document.location.pathname
+  }
+
+  async copyTextToClipboard(value: string) {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        console.warn('Clipboard API or writeText is not available in this browser.');
+        // Fallback for older browsers if necessary (e.g., using document.execCommand('copy'))
+        // This fallback is more complex and often requires creating a temporary element.
+      }
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
   }
 }

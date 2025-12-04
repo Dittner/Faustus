@@ -130,8 +130,8 @@ export const MessangerView = () => {
       if (msg?.level === 'error')
         s.textColor = theme().red
       else if (msg?.level === 'warning')
-        s.textColor = theme().warn
+        s.textColor = theme().yellow
       else
-        s.textColor = theme().id === 'light' ? theme().black : theme().white
+        s.textColor = theme().accent
     })
 }

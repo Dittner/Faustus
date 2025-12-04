@@ -1,8 +1,8 @@
 """creating tables
 
-Revision ID: 52b2fbf7308e
+Revision ID: 940fff0fde75
 Revises:
-Create Date: 2025-11-30 08:48:52.109154
+Create Date: 2025-12-02 05:29:44.899765
 
 """
 
@@ -11,8 +11,7 @@ from collections.abc import Sequence
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
-revision: str = '52b2fbf7308e'
+revision: str = '940fff0fde75'
 down_revision: str | Sequence[str] | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -48,21 +47,19 @@ def upgrade() -> None:
         sa.UniqueConstraint('vocabulary_id', 'title', name=op.f('uq_notes_vocabulary_id_title')),
     )
     op.create_table(
-        'resources',
-        sa.Column('id', sa.Integer(), nullable=False),
+        'media',
+        sa.Column('uid', sa.String(), nullable=False),
         sa.Column('name', sa.String(length=256), nullable=False),
-        sa.Column('url', sa.String(length=256), nullable=False),
+        sa.Column('media_type', sa.String(length=256), nullable=False),
         sa.Column('note_id', sa.Integer(), nullable=False),
-        sa.PrimaryKeyConstraint('id', name=op.f('pk_resources')),
-        sa.UniqueConstraint('note_id', 'id', name=op.f('uq_resources_note_id_id')),
-        sa.UniqueConstraint('url', name=op.f('uq_resources_url')),
+        sa.PrimaryKeyConstraint('uid', name=op.f('pk_media')),
+        sa.UniqueConstraint('note_id', 'uid', name=op.f('uq_media_note_id_uid')),
     )
-    # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_table('resources')
+    op.drop_table('media')
     op.drop_table('notes')
     op.drop_table('vocabularies')
     op.drop_table('langs')

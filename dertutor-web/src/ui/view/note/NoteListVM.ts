@@ -24,14 +24,13 @@ export class NoteListVM extends ViewModel {
     this.actionsList.add('<Right>', 'Select next note', () => this.moveCursor(1))
     this.actionsList.add('<Left>', 'Select prev note', () => this.moveCursor(-1))
 
-    this.actionsList.add('n', 'New note (ADMIN)', () => this.newNote())
+    this.actionsList.add('n', 'New note (ADMIN)', () => this.createNote())
+    this.actionsList.add(':d<CR>', 'Delete note (ADMIN)', () => this.deleteNote())
     this.actionsList.add('<Space>', 'Play Audio', () => this.playAudio())
 
     this.actionsList.add('q', 'Quit', () => this.quit())
     this.actionsList.add('e', 'Edit (ADMIN)', () => this.edit())
 
-    //this.actionsList.add(':n<CR>', 'New file', () => this.newFile())
-    //this.actionsList.add(':d<CR>', 'Delete file', () => this.deleteFile())
     //this.actionsList.add(':r<CR>', 'Rename file', () => this.renameFile())
     //this.actionsList.add('/', 'Search file', () => this.searchFile())
   }
@@ -83,12 +82,30 @@ export class NoteListVM extends ViewModel {
     }
   }
 
-  private newNote() {
+  private createNote() {
     if (this.$mode.value === 'explore') {
       this.bufferController.$buffer.value = ''
       this.bufferController.$title.value = 'New:'
       this.$mode.value = 'create'
     }
+  }
+
+  private deleteNote() {
+    if (this.$mode.value !== 'explore') return
+    if (!this.ctx.$selectedNote.value) return
+    const note = this.ctx.$selectedNote.value
+    globalContext.server.deleteNote(note).pipe()
+      .onReceive(_ => {
+        console.log('NoteListVM:deleteNote complete')
+        this.ctx.$msg.value = { level: 'info', text: 'deleted' }
+        this.moveCursor(1)
+        this.ctx.$selectedVoc.value?.remove(note)
+        this.$notes.value = this.ctx.$selectedVoc.value?.notes ? [...this.ctx.$selectedVoc.value.notes] : []
+      })
+      .onError(e => {
+        this.ctx.$msg.value = { level: 'error', text: e.message }
+      })
+      .subscribe()
   }
 
   private playAudio() {
@@ -128,10 +145,13 @@ export class NoteListVM extends ViewModel {
               parent.add(n)
               this.$notes.value = this.ctx.$selectedVoc.value?.notes ? [...this.ctx.$selectedVoc.value.notes] : []
               this.ctx.$selectedNote.value = n
+              if (this.ctx.$selectedNote.value)
+                this.ctx.navigate(this.ctx.$selectedNote.value.path)
             }
           })
           .onError(e => {
-            this.ctx.$msg.value = { level: 'error', text: e.message }
+            const msg = e.message.indexOf('duplicate key') ? 'Note allready exists' : e.message
+            this.ctx.$msg.value = { level: 'error', text: msg }
           })
           .subscribe()
       }

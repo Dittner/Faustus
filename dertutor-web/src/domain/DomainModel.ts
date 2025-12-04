@@ -210,6 +210,7 @@ export class Vocabulary extends RXObservableEntity<Vocabulary> {
   createNote(title: string): Note {
     const res = new Note(this)
     res.title = title
+    res.text = '# ' + title + '\n\n' + (this.lang.code === 'en' ? '## Examples\n' : '## Beispiele\n')
     return res
   }
 
@@ -263,7 +264,8 @@ export class Note {
   level = 0
   audioUrl = ''
   vocabulary: Vocabulary
-
+  mediaFiles: Array<MediaFile> = []
+  mediaLoaded = false
   data: any = {}
 
 
@@ -285,7 +287,7 @@ export class Note {
   deserialize(data: any) {
     try {
       this.data = data
-      console.log('Note: ' + data?.id + ', value1:', data.title)
+      console.log('Note: ' + data?.id + ', title:', data.title)
 
       if (data === undefined || data.id === undefined || data.title === undefined || data.text === undefined || data.audio_url === undefined || data.level === undefined) {
         console.log('Note:deserialize, Note is damaged, data:', data)
@@ -319,5 +321,72 @@ export class Note {
     if (this.audioUrl)
       new Audio(globalContext.server.baseUrl + this.audioUrl).play()
   }
+
+  private loadOp: AnyRXObservable | undefined
+  loadMediaFiles() {
+    if (this.loadOp && !this.loadOp.isComplete) return this.loadOp
+
+    const op = globalContext.server.loadAllMediaFiles(this.id)
+    op.pipe()
+      .onReceive((data: any[]) => {
+        console.log('MediaFile:loadMediaFiles, complete, data: ', data)
+        this.mediaFiles = data.map(d => {
+          const n = new MediaFile()
+          n.deserialize(d)
+          return n
+        }).filter(n => !n.isDamaged)
+        this.mediaLoaded = true
+      })
+      .onError(e => {
+        this.mediaFiles = []
+        this.mediaLoaded = false
+      })
+      .subscribe()
+
+    this.loadOp = op
+    return op
+  }
 }
 
+/*
+*
+*
+* DOMAIN ENTITY
+*
+*
+* */
+
+export class MediaFile {
+  isDamaged = false
+  uid = ''
+  name = ''
+  mediaType = ''
+  noteId = -1
+
+  data: any = {}
+
+  get url() { return '/media/' + this.noteId + '/' + this.uid }
+
+
+  deserialize(data: any) {
+    try {
+      this.data = data
+      console.log(`MediaFile: {data?.uid}`)
+
+      if (data === undefined || data.uid === undefined || data.note_id === undefined || data.name === undefined || data.media_type === undefined) {
+        console.log(`MediaFile:deserialize, MediaFile is damaged, data: {data}`)
+        this.isDamaged = true
+      }
+      else {
+        this.uid = data.uid
+        this.noteId = data.note_id
+        this.mediaType = data.media_type
+        this.name = data.name
+        this.isDamaged = false
+      }
+    } catch (e: any) {
+      this.isDamaged = true
+      console.log(`MediaFile:deserialize, err: {e.message}, data: {data}`)
+    }
+  }
+}

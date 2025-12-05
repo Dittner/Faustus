@@ -1,5 +1,8 @@
 import array
+import logging
 from pathlib import Path
+
+log = logging.getLogger('uvicorn')
 
 INT_SIZE = 4
 META_DATA_SIZE = 1
@@ -26,7 +29,7 @@ class KeyValueDB:
     """
 
     def __init__(self, db_path: Path) -> None:
-        print('new KeyValueDB')
+        log.info(f'new KeyValueDB: {db_path}')
         self.db_file_path = db_path
         self.hash: dict[str, tuple[int, int, int]] = {}  # pos_of_record, pos_of_file_bytes, size_of_file
         self.max_bytes_len = 256 ** (array.array('I').itemsize) - 1
@@ -63,17 +66,17 @@ class KeyValueDB:
                     # print(f'Key:{key}, pos:{cursor + full_record_len - value_len}, size:{value_len}')
                     self.hash[key] = (cursor, cursor + full_record_len - value_len, value_len)
                 else:
-                    print(f'Key:{key}, pos:{cursor + full_record_len - value_len}, size:{value_len} (DELETED)')
+                    log.info(f'Key:{key}, pos:{cursor + full_record_len - value_len}, size:{value_len} (DELETED)')
                     total_size_of_deleted_files += META_DATA_SIZE + INT_SIZE + key_len + INT_SIZE + value_len
 
                 cursor += full_record_len
 
             if total_size_of_deleted_files > 0:
-                print(f'KeyValueDB: {total_size_of_deleted_files} bytes may be deleted by compression')
+                log.info(f'KeyValueDB: {total_size_of_deleted_files} bytes may be deleted by compression')
 
         self.db_file = self.db_file_path.open('r+b')
         self.db_file.seek(0, 2)
-        print(f'DB file size: {self.db_file.tell()} bytes, {self.db_file.tell() / 1024 / 1024} Mb')
+        log.info(f'DB file size: {self.db_file.tell()} bytes, {self.db_file.tell() / 1024 / 1024} Mb')
 
     def has(self, key: str):
         if not self.db_file:
@@ -93,7 +96,7 @@ class KeyValueDB:
 
         if self.hash.get(key):
             # raise InvalidDBOperationError(f'Key {key} is a duplicate. File can not be written.')
-            print(f'KeyValueDB.write. Value with key:{key} allready exists.')
+            log.info(f'KeyValueDB.write. Value with key:{key} allready exists.')
             return
 
         key_in_bytes = key.encode()

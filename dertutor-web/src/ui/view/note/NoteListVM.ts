@@ -86,7 +86,6 @@ export class NoteListVM extends ViewModel {
   private createNote() {
     if (this.$mode.value === 'explore') {
       this.bufferController.$buffer.value = ''
-      this.bufferController.$title.value = 'New:'
       this.$mode.value = 'create'
     }
   }
@@ -95,7 +94,6 @@ export class NoteListVM extends ViewModel {
     if (!this.ctx.$selectedNote.value) return
     if (this.$mode.value !== 'explore') return
     this.bufferController.$buffer.value = this.ctx.$selectedNote.value.title
-    this.bufferController.$title.value = 'Rename:'
     this.$mode.value = 'rename'
   }
 
@@ -103,11 +101,14 @@ export class NoteListVM extends ViewModel {
     if (this.$mode.value !== 'explore') return
     if (!this.ctx.$selectedNote.value) return
     const note = this.ctx.$selectedNote.value
-    globalContext.server.deleteNote(note).pipe()
+    globalContext.server.deleteNote(note.id).pipe()
       .onReceive(_ => {
         console.log('NoteListVM:deleteNote complete')
         this.ctx.$msg.value = { level: 'info', text: 'deleted' }
         this.moveCursor(1)
+        if (this.ctx.$selectedNote.value === note)
+          this.moveCursor(-1)
+
         this.ctx.$selectedVoc.value?.remove(note)
         this.$notes.value = this.ctx.$selectedVoc.value?.notes ? [...this.ctx.$selectedVoc.value.notes] : []
       })
@@ -180,12 +181,12 @@ export class NoteListVM extends ViewModel {
     if (!this.ctx.$selectedNote.value) return
     const newTitle = this.bufferController.$buffer.value.trim()
     const note = this.ctx.$selectedNote.value
-    if (newTitle === note.title) {
+    if (newTitle && newTitle === note.title) {
       this.ctx.$msg.value = { level: 'info', text: 'No changes' }
       return
     }
 
-    globalContext.server.renameNote(note, newTitle).pipe()
+    globalContext.server.renameNote(note.id, newTitle).pipe()
       .onReceive((data: any[]) => {
         console.log('NoteListVM:applyInput, renaming note, result: ', data)
         note.deserialize(data)

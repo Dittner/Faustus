@@ -56,7 +56,6 @@ export const TextInput = (inputBinding: RXObservableValue<string>) => {
 export class InputBufferController {
   readonly $buffer = new RXObservableValue('')
   readonly $cursorPos = new RXObservableValue(-1)
-  readonly $title = new RXObservableValue('Title:')
 
   constructor() { }
 

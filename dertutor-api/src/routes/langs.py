@@ -8,7 +8,7 @@ from src.context import dertutor_context
 from src.repo.model import Lang
 
 router = APIRouter(prefix='', tags=['Languages'])
-log = logging.getLogger(__name__)
+log = logging.getLogger('uvicorn')
 
 
 class LangCreate(BaseModel):
@@ -31,7 +31,6 @@ async def get_languages():
     async with dertutor_context.session_manager.make_session() as session:
         res = await session.execute(select(Lang))
         langs = res.scalars().all()
-        print(langs)
         return langs
 
 

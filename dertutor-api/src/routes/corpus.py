@@ -7,7 +7,7 @@ from src.context import dertutor_context
 
 
 router = APIRouter(prefix='', tags=['Corpus'])
-log = logging.getLogger(__name__)
+log = logging.getLogger('uvicorn')
 
 
 @router.head('/corpus/de_pron/search')

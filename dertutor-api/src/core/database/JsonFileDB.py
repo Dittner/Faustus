@@ -1,7 +1,9 @@
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
+log = logging.getLogger('uvicorn')
 
 class JsonFileDB:
     def __init__(self, db_path: Path) -> None:
@@ -19,7 +21,7 @@ class JsonFileDB:
         with self.db_file_path.open('rt') as file:
             data = json.loads(file.read())
             file.seek(0, 2)
-            print(f'JsonFileDB file size: {file.tell()} bytes, {file.tell() / 1024 / 1024} Mb')
+            log.info(f'JsonFileDB file size: {file.tell()} bytes, {file.tell() / 1024 / 1024} Mb')
             for item in data:
                 self.hash[item['key']] = item
         self.store()

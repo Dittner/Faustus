@@ -1,14 +1,13 @@
 import { type RXObservable, RXOperation } from 'flinker'
 import { type RestApi, type RestApiError, type Runnable } from '../RestApi'
-import { Note } from '../../domain/DomainModel'
 
 export class DeleteNoteCmd implements Runnable {
   private readonly api: RestApi
-  private readonly note: Note
+  private readonly noteId: number
 
-  constructor(api: RestApi, note: Note) {
+  constructor(api: RestApi, noteId: number) {
     this.api = api
-    this.note = note
+    this.noteId = noteId
   }
 
   run(): RXObservable<any[], RestApiError> {
@@ -22,7 +21,7 @@ export class DeleteNoteCmd implements Runnable {
   private async sending(op: RXOperation<any, RestApiError>) {
     console.log('DeleteNoteCmd:sending')
 
-    const [response, body] = await this.api.sendRequest('DELETE', '/notes', JSON.stringify({ id: this.note.id }))
+    const [response, body] = await this.api.sendRequest('DELETE', '/notes', JSON.stringify({ id: this.noteId }))
     if (response?.ok) {
       op.success(body)
     } else {

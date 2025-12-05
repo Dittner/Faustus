@@ -11,7 +11,7 @@ from src.context import dertutor_context
 from src.repo.model import Media
 
 router = APIRouter(prefix='', tags=['Media'])
-log = logging.getLogger(__name__)
+log = logging.getLogger('uvicorn')
 
 
 class MediaRead(BaseModel):
@@ -35,7 +35,7 @@ async def get_all_media_files(note_id: int):
 
 @router.post('/media/uploadfile/{note_id}', response_model=MediaRead)
 async def upload_file(file: UploadFile, note_id: int):
-    log.info(f'Uploading to: {note_id}')
+    log.info(f'Uploading to note.id: {note_id}')
     uid = str(uuid.uuid4())
     bb = await file.read()
     # Read the entire file
@@ -75,6 +75,7 @@ async def get_media_file(note_id: int, media_uid: str):
             content=f'Media <{p.relative_to(dertutor_context.local_store_path).as_posix()}> not found', status_code=status.HTTP_404_NOT_FOUND
         )
 
+
 @router.delete('/media', response_model=str)
 async def delete_media_file(m: MediaDelete):
     async with dertutor_context.session_manager.make_session() as session:
@@ -85,7 +86,7 @@ async def delete_media_file(m: MediaDelete):
             if item:
                 await session.delete(item)
                 await session.commit()
-                p = dertutor_context.local_store_path / 'media'/ str(item.note_id) / item.uid
+                p = dertutor_context.local_store_path / 'media' / str(item.note_id) / item.uid
                 if p.exists():
                     log.info(f'MdeifaFile <{p.as_posix()}> is deleted')
                     p.unlink()

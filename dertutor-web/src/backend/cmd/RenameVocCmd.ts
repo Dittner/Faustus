@@ -1,15 +1,15 @@
 import { type RXObservable, RXOperation } from 'flinker'
 import { type RestApi, type RestApiError, type Runnable } from '../RestApi'
 
-export class RenameNoteCmd implements Runnable {
+export class RenameVocCmd implements Runnable {
   private readonly api: RestApi
-  private readonly noteId: number
-  private readonly newTitle: string
+  private readonly vocId: number
+  private readonly newName: string
 
-  constructor(api: RestApi, noteId: number, newTitle: string) {
+  constructor(api: RestApi, vocId: number, newName:string) {
     this.api = api
-    this.noteId = noteId
-    this.newTitle = newTitle
+    this.vocId = vocId
+    this.newName = newName
   }
 
   run(): RXObservable<any[], RestApiError> {
@@ -21,9 +21,9 @@ export class RenameNoteCmd implements Runnable {
   }
 
   private async sending(op: RXOperation<any, RestApiError>) {
-    console.log('RenameNoteCmd:sending')
-    const renameNoteModel = { title: this.newTitle }
-    const [response, body] = await this.api.sendRequest('PATCH', '/notes/' + this.noteId + '/rename', JSON.stringify(renameNoteModel))
+    console.log('RenameVocCmd:sending')
+    const renameVocModel = {name: this.newName}
+    const [response, body] = await this.api.sendRequest('PATCH', '/vocabularies/' + this.vocId + '/rename', JSON.stringify(renameVocModel))
     if (response?.ok) {
       op.success(body)
     } else {

@@ -104,6 +104,14 @@ export class Lang extends RXObservableEntity<Lang> {
     return -1
   }
 
+  add(voc: Vocabulary) {
+    if (!voc.isDamaged) {
+      this.vocabularies.push(voc)
+      this.hasChanges = true
+      this.mutated()
+    }
+  }
+
   discardChanges() {
     if (this.hasChanges) {
       this.deserialize(this.data)
@@ -237,6 +245,13 @@ export class Vocabulary extends RXObservableEntity<Vocabulary> {
     if (this.hasChanges) {
       this.deserialize(this.data)
       this.hasChanges = false
+    }
+  }
+
+  serialize(): any {
+    return {
+      lang_id: this.lang.id,
+      name: this.name
     }
   }
 

@@ -7,6 +7,7 @@ import { StatusBar, StatusBarModeName } from "../../controls/StatusBar"
 import { DertutorContext } from "../../DertutorContext"
 import { theme } from "../../theme/ThemeManager"
 import { IViewModel } from "../ViewModel"
+import { LineInput } from "../../controls/Input"
 
 export const VocListView = () => {
   const ctx = DertutorContext.self
@@ -26,7 +27,7 @@ export const VocListView = () => {
         .observe(ctx.$selectedVoc, 'affectsChildrenProps')
         .items(() => vm.$vocs.value)
         .itemRenderer(VocRenderer)
-        .itemHash((item: Vocabulary) => item.id + ':' + (item === ctx.$selectedVoc.value))
+        .itemHash((item: Vocabulary) => item.id + item.name + ':' + (item === ctx.$selectedVoc.value))
         .react(s => {
           s.className = 'listScrollbar'
           s.enableOwnScroller = true
@@ -42,6 +43,19 @@ export const VocListView = () => {
           s.width = '100%'
           s.bottom = '0'
           s.left = '0'
+          s.layer = LayoutLayer.MODAL
+        })
+
+      LineInput(vm.bufferController.$buffer, vm.bufferController.$cursorPos)
+        .observe(vm.$mode)
+        .react(s => {
+          const mode = vm.$mode.value
+          s.visible = vm.$mode.value !== 'explore'
+          s.title = mode === 'create' ? 'New:' : mode === 'rename' ? 'Rename:' : 'Input:'
+          s.position = 'fixed'
+          s.width = '100%'
+          s.height = theme().statusBarHeight + 'px'
+          s.bottom = '0'
           s.layer = LayoutLayer.MODAL
         })
     })
@@ -82,7 +96,7 @@ const Footer = (vm: IViewModel) => {
 
         StatusBarModeName()
           .react(s => {
-            s.text = 'Select a dictionary'
+            s.text = 'Select a vocabulary'
           })
 
         span()

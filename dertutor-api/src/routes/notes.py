@@ -1,14 +1,16 @@
 import logging
 import shutil
+
 from fastapi import APIRouter, Response, status
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import event, select
 from sqlalchemy.exc import DBAPIError
+from sqlalchemy.orm import Session
 from src.context import dertutor_context
 from src.repo.model import Note
 
 router = APIRouter(prefix='', tags=['Notes'])
-log = logging.getLogger(__name__)
+log = logging.getLogger('uvicorn')
 
 
 class NoteCreate(BaseModel):
@@ -86,7 +88,8 @@ async def update_note(n: NoteUpdate, note_id: int):
             await session.rollback()  # Rollback the session to clear the failed transaction
             log.warning(f'DBAPIError: {e}')
             return Response(content=str(e.orig), status_code=status.HTTP_400_BAD_REQUEST)
-        
+
+
 @router.patch('/notes/{note_id}/rename', response_model=NoteRead | None)
 async def rename_note(n: NoteRename, note_id: int):
     async with dertutor_context.session_manager.make_session() as session:
@@ -116,10 +119,6 @@ async def delete_note(n: NoteDelete):
             if item:
                 await session.delete(item)
                 await session.commit()
-                p = dertutor_context.local_store_path / 'media'/ str(n.id)
-                if p.exists():
-                    log.info(f'All MediaFiles of note with id: <{p.as_posix()}> are deleted')
-                    shutil.rmtree(p.absolute().as_posix())
                 return Response(content='deleted', status_code=status.HTTP_200_OK)
             else:
                 return Response(content='Note not found', status_code=status.HTTP_404_NOT_FOUND)
@@ -127,3 +126,12 @@ async def delete_note(n: NoteDelete):
             await session.rollback()  # Rollback the session to clear the failed transaction
             log.warning(f'DBAPIError: {e}')
             return Response(content=str(e.orig), status_code=status.HTTP_400_BAD_REQUEST)
+
+
+@event.listens_for(Note, 'before_delete')
+def receive_before_delete(mapper, connection, target):
+    if isinstance(target, Note):
+        p = dertutor_context.local_store_path / 'media' / str(target.id)
+        if p.exists():
+            log.info(f'All MediaFiles of note with id: <{p.as_posix()}> are deleted')
+            shutil.rmtree(p.absolute().as_posix())

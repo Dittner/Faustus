@@ -17,6 +17,7 @@ lint.ignore = [
     "COM812", # To avoid unexpected behavior
     "EM102", #Exception must not use an f-string literal, assign to variable first
     "ERA001", # Found commented-out codeRuff
+    "G004", # Logging statement uses f-string 
     "RET505", # superfluous-else-return
     "T201", # remove-print
     "D100", # ignore missing docs

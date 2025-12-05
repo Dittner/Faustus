@@ -87,6 +87,7 @@ export const EditorView = () => {
             s.textColor = theme().text
             s.cornerRadius = '5px'
             s.text = vm.$buffer.value
+            s.mode = 'md'
             s.fontSize = theme().defFontSize
             s.absolutePathPrefix = globalContext.server.baseUrl
             s.paddingHorizontal = '5px'

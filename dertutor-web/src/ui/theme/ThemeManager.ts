@@ -254,8 +254,8 @@ export class ThemeManager {
       //fontFamily: '--font-family-article-bi',
       fontSize: 'inherit',
       textColor: t.strong,
-      fontWeight: 'bold',
-      fontStyle: 'italic'
+      fontWeight: 'inherit',
+      fontStyle: 'inherit'
     }
     buildRule(strongProps, parentSelector, 'strong')
 
@@ -269,7 +269,7 @@ export class ThemeManager {
     const italicProps: UIComponentProps = {
       fontSize: 'inherit',
       textColor: 'inherit',
-      fontWeight: t.defFontWeight,
+      fontWeight: 'inherit',
       fontStyle: 'italic'
     }
     buildRule(italicProps, parentSelector, 'i')
@@ -424,18 +424,6 @@ export class ThemeManager {
       textAlign: 'center'
     }
     buildRule(delimProps, parentSelector, '.md-delim')
-
-    /******************************/
-    // Paragraph accent
-    /******************************/
-
-    const heighlightProps: UIComponentProps = {
-      width: '100%',
-      fontWeight: 'inherit',
-      fontSize: 'inherit',
-      textColor: t.accent
-    }
-    buildRule(heighlightProps, parentSelector, 'p.md-tilde')
 
     /******************************/
     // alignment

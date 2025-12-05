@@ -340,8 +340,8 @@ export class ThemeManager {
     const strongProps: UIComponentProps = {
       //fontFamily: '--font-family-article-bi',
       fontSize: 'inherit',
-      textColor: 'inherit',
-      fontWeight: 'bold',
+      textColor: t.header,
+      fontWeight: 'inherit',
       fontStyle: 'italic'
     }
     buildRule(strongProps, parentSelector, 'strong')
@@ -356,7 +356,7 @@ export class ThemeManager {
     const italicProps: UIComponentProps = {
       fontSize: 'inherit',
       textColor: 'inherit',
-      fontWeight: t.defFontWeight,
+      fontWeight: 'inherit',
       fontStyle: 'italic'
     }
     buildRule(italicProps, parentSelector, 'i')

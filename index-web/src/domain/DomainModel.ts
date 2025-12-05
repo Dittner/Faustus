@@ -255,7 +255,7 @@ export class TextFile extends RXObservableEntity<TextFile> {
 *
 * */
 
-const PAGE_TILE_REG = /^\$?(#+) (.*)/
+const PAGE_TILE_REG = /^(#+) (.*)/
 export class Page extends RXObservableEntity<Page> implements Serializable {
   readonly uid = generateUID()
   readonly file: TextFile

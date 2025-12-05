@@ -50,6 +50,7 @@ export const NoteListView = () => {
         .react(s => {
           s.className = theme().id
           s.position = 'absolute'
+          s.mode = 'md'
           s.left = theme().menuWidth + 'px'
           s.fontFamily = FontFamily.ARTICLE
           s.textColor = theme().text

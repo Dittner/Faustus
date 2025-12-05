@@ -90,11 +90,11 @@ export class FileSearcher extends OperatingModeClass {
 
   private openFile() {
     if (this.$selectedFilePath.value.endsWith('/')) {
-      globalContext.app.navigate('/' + this.$selectedFilePath.value)
+      globalContext.app.navigate(this.$selectedFilePath.value)
       this.ctx.explorer.activate()
     }
     else if (this.$selectedFilePath.value) {
-      globalContext.app.navigate('/' + this.$selectedFilePath.value)
+      globalContext.app.navigate(this.$selectedFilePath.value)
       this.ctx.reader.activate()
     }
   }

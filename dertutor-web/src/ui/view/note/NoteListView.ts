@@ -8,7 +8,7 @@ import { LineInput } from "../../controls/Input"
 import { StatusBar, StatusBarModeName } from "../../controls/StatusBar"
 import { DertutorContext } from "../../DertutorContext"
 import { MaterialIcon } from "../../icons/MaterialIcon"
-import { Markdown } from "../../markdown/Markdown"
+import { Markdown } from "../../controls/Markdown"
 import { theme } from "../../theme/ThemeManager"
 import { IViewModel } from "../ViewModel"
 
@@ -25,7 +25,7 @@ export const NoteListView = () => {
         .observe(ctx.$selectedNote, 'affectsChildrenProps')
         .items(() => vm.$notes.value)
         .itemRenderer(NoteRenderer)
-        .itemHash((item: Note) => item.id + ':' + (item === ctx.$selectedNote.value))
+        .itemHash((item: Note) => item.id + item.title + ':' + (item === ctx.$selectedNote.value))
         .react(s => {
           s.className = 'listScrollbar'
           s.position = 'fixed'

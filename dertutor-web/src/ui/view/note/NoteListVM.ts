@@ -25,6 +25,7 @@ export class NoteListVM extends ViewModel {
     this.actionsList.add('<Left>', 'Select prev note', () => this.moveCursor(-1))
 
     this.actionsList.add('n', 'New note (ADMIN)', () => this.createNote())
+    this.actionsList.add('r', 'Rename note (ADMIN)', () => this.renameNote())
     this.actionsList.add(':d<CR>', 'Delete note (ADMIN)', () => this.deleteNote())
     this.actionsList.add('<Space>', 'Play Audio', () => this.playAudio())
 
@@ -90,6 +91,14 @@ export class NoteListVM extends ViewModel {
     }
   }
 
+  private renameNote() {
+    if (!this.ctx.$selectedNote.value) return
+    if (this.$mode.value !== 'explore') return
+    this.bufferController.$buffer.value = this.ctx.$selectedNote.value.title
+    this.bufferController.$title.value = 'Rename:'
+    this.$mode.value = 'rename'
+  }
+
   private deleteNote() {
     if (this.$mode.value !== 'explore') return
     if (!this.ctx.$selectedNote.value) return
@@ -131,32 +140,67 @@ export class NoteListVM extends ViewModel {
 
   private applyInput() {
     if (this.$mode.value === 'create') {
-      const parent = this.ctx.$selectedVoc.value
-      const title = this.bufferController.$buffer.value.trim()
-      if (parent && title) {
-        const n = parent.createNote(title)
-        globalContext.server.createNote(n).pipe()
-          .onReceive((data: any[]) => {
-            console.log('NoteListVM:applyInput, creating note, result: ', data)
-            n.deserialize(data)
-            if (n.isDamaged) {
-              this.ctx.$msg.value = { level: 'warning', text: 'Created note is demaged' }
-            } else {
-              parent.add(n)
-              this.$notes.value = this.ctx.$selectedVoc.value?.notes ? [...this.ctx.$selectedVoc.value.notes] : []
-              this.ctx.$selectedNote.value = n
-              if (this.ctx.$selectedNote.value)
-                this.ctx.navigate(this.ctx.$selectedNote.value.path)
-            }
-          })
-          .onError(e => {
-            const msg = e.message.indexOf('duplicate key') ? 'Note allready exists' : e.message
-            this.ctx.$msg.value = { level: 'error', text: msg }
-          })
-          .subscribe()
-      }
+      this.completeCreation()
+      this.$mode.value = 'explore'
+    } else if (this.$mode.value === 'rename') {
+      this.completeRenaming()
       this.$mode.value = 'explore'
     }
+  }
+
+  private completeCreation() {
+    const parent = this.ctx.$selectedVoc.value
+    const title = this.bufferController.$buffer.value.trim()
+    if (parent && title) {
+      const n = parent.createNote(title)
+      globalContext.server.createNote(n).pipe()
+        .onReceive((data: any[]) => {
+          console.log('NoteListVM:applyInput, creating note, result: ', data)
+          n.deserialize(data)
+          if (n.isDamaged) {
+            this.ctx.$msg.value = { level: 'warning', text: 'Created note is demaged' }
+          } else {
+            parent.add(n)
+            this.$notes.value = this.ctx.$selectedVoc.value?.notes ? [...this.ctx.$selectedVoc.value.notes] : []
+            this.ctx.$selectedNote.value = n
+            if (this.ctx.$selectedNote.value)
+              this.ctx.navigate(this.ctx.$selectedNote.value.path)
+          }
+        })
+        .onError(e => {
+          const msg = e.message.indexOf('duplicate key') ? 'Note already exists' : e.message
+          this.ctx.$msg.value = { level: 'error', text: msg }
+        })
+        .subscribe()
+    }
+  }
+
+
+  private completeRenaming() {
+    if (!this.ctx.$selectedNote.value) return
+    const newTitle = this.bufferController.$buffer.value.trim()
+    const note = this.ctx.$selectedNote.value
+    if (newTitle === note.title) {
+      this.ctx.$msg.value = { level: 'info', text: 'No changes' }
+      return
+    }
+
+    globalContext.server.renameNote(note, newTitle).pipe()
+      .onReceive((data: any[]) => {
+        console.log('NoteListVM:applyInput, renaming note, result: ', data)
+        note.deserialize(data)
+        if (note.isDamaged) {
+          this.ctx.$msg.value = { level: 'warning', text: 'Renamed note is demaged' }
+        } else {
+          this.ctx.$msg.value = { level: 'warning', text: 'renamed' }
+          this.$notes.value = this.ctx.$selectedVoc.value?.notes ? [...this.ctx.$selectedVoc.value.notes] : []
+        }
+      })
+      .onError(e => {
+        const msg = e.message.indexOf('duplicate key') ? 'Note already exists' : e.message
+        this.ctx.$msg.value = { level: 'error', text: msg }
+      })
+      .subscribe()
   }
 
   /*

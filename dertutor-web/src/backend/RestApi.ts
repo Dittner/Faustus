@@ -2,7 +2,7 @@ import { type AnyRXObservable, type RXObservable, RXObservableValue } from 'flin
 
 import { PingCmd } from './cmd/PingCmd'
 
-export type HttpMethod = 'HEAD' | 'GET' | 'POST' | 'PUT' | 'DELETE'
+export type HttpMethod = 'HEAD' | 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 export type RestApiErrorCategory = 'noConnection' | 'notAuthorized' | 'serverError' | 'clientError' | 'unknownError' | 'aborted'
 export const NO_CONNECTION_STATUS = 0
 

@@ -27,6 +27,10 @@ class NoteUpdate(BaseModel):
     audio_url: str
 
 
+class NoteRename(BaseModel):
+    title: str
+
+
 class NoteRead(BaseModel):
     id: int
     title: str
@@ -74,6 +78,24 @@ async def update_note(n: NoteUpdate, note_id: int):
                 item.text = n.text
                 item.level = n.level
                 item.audio_url = n.audio_url
+                await session.commit()
+                return item
+            else:
+                return Response(content='Note not found', status_code=status.HTTP_404_NOT_FOUND)
+        except DBAPIError as e:
+            await session.rollback()  # Rollback the session to clear the failed transaction
+            log.warning(f'DBAPIError: {e}')
+            return Response(content=str(e.orig), status_code=status.HTTP_400_BAD_REQUEST)
+        
+@router.patch('/notes/{note_id}/rename', response_model=NoteRead | None)
+async def rename_note(n: NoteRename, note_id: int):
+    async with dertutor_context.session_manager.make_session() as session:
+        try:
+            query = select(Note).where(Note.id == note_id)
+            res = await session.execute(query)
+            item = res.scalars().first()
+            if item:
+                item.title = n.title
                 await session.commit()
                 return item
             else:

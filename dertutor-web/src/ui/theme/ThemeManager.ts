@@ -138,8 +138,8 @@ export class ThemeManager {
 
 
   createDarkTheme(t: GlobalTheme): GlobalTheme {
-    const text = '#707786' //707786 
-    const accent = '#99a1b2'
+    const text = '#608086' //707786 
+    const accent = '#aaAAaa'
     const red = '#eb6c6c'
     const blue = '#6fafe7'
     const black = '#111111'
@@ -151,11 +151,11 @@ export class ThemeManager {
       text50: text + 'bb',
       red,
       green: '#5ea0a5',
-      h1: '#a6afc3',
-      header: '#41687fff',
-      em: '#a3abbb',
+      h1: '#b0c2c1',
+      header: '#2a7098',
+      em: '#b0c8b3',
       accent,
-      strong: '#a3abbb',
+      strong: '#89bac1',
       blue,
       mark: '#cb6565',
       comment: '#74a7aa',

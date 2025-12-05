@@ -12,6 +12,7 @@ import { ValidateMp3LinkCmd } from './cmd/ValidateMp3LinkCmd'
 import { RestApi, RestApiError } from './RestApi'
 import { DeleteFileCmd } from './cmd/DeleteFileCmd'
 import { DeleteNoteCmd } from './cmd/DeleteNoteCmd'
+import { RenameNoteCmd } from './cmd/RenameNoteCmd'
 
 export class DertutorServer extends RestApi {
   constructor() {
@@ -56,6 +57,11 @@ export class DertutorServer extends RestApi {
 
   updateNote(n: Note): RXObservable<any, RestApiError> {
     const cmd = new UpdateNoteCmd(this, n)
+    return cmd.run()
+  }
+
+  renameNote(n: Note, newTitle:string): RXObservable<any, RestApiError> {
+    const cmd = new RenameNoteCmd(this, n, newTitle)
     return cmd.run()
   }
 

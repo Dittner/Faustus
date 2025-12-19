@@ -4,6 +4,7 @@ from fastapi import APIRouter, Response, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import DBAPIError
+from sqlalchemy.orm import selectinload
 from src.context import dertutor_context
 from src.repo.model import Lang
 
@@ -26,15 +27,42 @@ class LangDelete(BaseModel):
     id: int
 
 
-@router.get('/languages', response_model=list[LangRead])
+class VocRead(BaseModel):
+    id: int
+    lang_id: int
+    name: str
+
+
+class TagRead(BaseModel):
+    id: int
+    lang_id: int
+    name: str
+
+
+class LangReadFull(BaseModel):
+    id: int
+    code: str
+    name: str
+    vocs: list[VocRead]
+    tags: list[TagRead]
+
+
+@router.get('/langs', response_model=list[LangRead])
 async def get_languages():
     async with dertutor_context.session_manager.make_session() as session:
         res = await session.execute(select(Lang))
-        langs = res.scalars().all()
-        return langs
+        return res.scalars().all()
 
 
-@router.post('/languages', response_model=LangRead)
+@router.get('/langs/full', response_model=list[LangReadFull])
+async def get_languages_with_vocs_and_tags():
+    async with dertutor_context.session_manager.make_session() as session:
+        q = select(Lang).options(selectinload(Lang.vocs), selectinload(Lang.tags))
+        res = await session.execute(q)
+        return res.unique().scalars().all()
+
+
+@router.post('/langs', response_model=LangRead)
 async def create_language(lang: LangCreate):
     async with dertutor_context.session_manager.make_session() as session:
         try:
@@ -44,11 +72,11 @@ async def create_language(lang: LangCreate):
             return res
         except DBAPIError as e:
             await session.rollback()  # Rollback the session to clear the failed transaction
-            log.warning(f'DBAPIError: {e}')
+            log.warning('DBAPIError: %s', e)
             return Response(content=str(e.orig), status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@router.delete('/languages', response_model=LangRead | None)
+@router.delete('/langs', response_model=LangRead | None)
 async def delete_language(lang: LangDelete):
     async with dertutor_context.session_manager.make_session() as session:
         try:
@@ -63,7 +91,7 @@ async def delete_language(lang: LangDelete):
                 return Response(content='Language not found', status_code=status.HTTP_404_NOT_FOUND)
         except DBAPIError as e:
             await session.rollback()  # Rollback the session to clear the failed transaction
-            log.warning(f'DBAPIError: {e}')
+            log.warning('DBAPIError: %s', e)
             return Response(content=str(e.orig), status_code=status.HTTP_404_NOT_FOUND)
 
 

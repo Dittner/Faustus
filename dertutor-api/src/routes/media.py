@@ -35,7 +35,7 @@ async def get_all_media_files(note_id: int):
 
 @router.post('/media/uploadfile/{note_id}', response_model=MediaRead)
 async def upload_file(file: UploadFile, note_id: int):
-    log.info(f'Uploading to note.id: {note_id}')
+    log.info('Uploading to note.id: %s', note_id)
     uid = str(uuid.uuid4())
     bb = await file.read()
     # Read the entire file
@@ -61,7 +61,7 @@ async def upload_file(file: UploadFile, note_id: int):
             await session.rollback()
             if p.exists():
                 p.unlink()
-            log.warning(f'DBAPIError: {e}')
+            log.warning('DBAPIError: %s', e)
             return Response(content=str(e.orig), status_code=status.HTTP_400_BAD_REQUEST)
 
 
@@ -72,7 +72,8 @@ async def get_media_file(note_id: int, media_uid: str):
         return FileResponse(p.as_posix())
     else:
         return Response(
-            content=f'Media <{p.relative_to(dertutor_context.local_store_path).as_posix()}> not found', status_code=status.HTTP_404_NOT_FOUND
+            content=f'Media <{p.relative_to(dertutor_context.local_store_path).as_posix()}> not found',
+            status_code=status.HTTP_404_NOT_FOUND,
         )
 
 
@@ -88,12 +89,12 @@ async def delete_media_file(m: MediaDelete):
                 await session.commit()
                 p = dertutor_context.local_store_path / 'media' / str(item.note_id) / item.uid
                 if p.exists():
-                    log.info(f'MdeifaFile <{p.as_posix()}> is deleted')
+                    log.info('MdeifaFile <%s> is deleted', p.as_posix())
                     p.unlink()
                 return Response(content='deleted', status_code=status.HTTP_200_OK)
             else:
                 return Response(content='Media not found', status_code=status.HTTP_404_NOT_FOUND)
         except DBAPIError as e:
             await session.rollback()  # Rollback the session to clear the failed transaction
-            log.warning(f'DBAPIError: {e}')
+            log.warning('DBAPIError: %s', e)
             return Response(content=str(e.orig), status_code=status.HTTP_400_BAD_REQUEST)

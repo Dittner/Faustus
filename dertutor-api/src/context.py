@@ -15,10 +15,16 @@ logger = logging.getLogger(__name__)
 
 class SessionManager:
     def __init__(self) -> None:
-        self.postgres_db_url = os.getenv('POSTGRES_DB_URL') or 'postgresql+asyncpg://postgres:postgres@localhost:5432/postgres'
+        self.postgres_db_url = (
+            os.getenv('POSTGRES_DB_URL')
+            or 'postgresql+asyncpg://postgres:postgres@localhost:5432/postgres'
+        )
 
         if not os.getenv('POSTGRES_DB_URL'):
-            logger.warning(f'POSTGRES_DB_URL env is None! The default one will be used: {self.postgres_db_url}')
+            logger.warning(
+                'POSTGRES_DB_URL env is None! The default one will be used: %s',
+                self.postgres_db_url,
+            )
 
         self.engine: AsyncEngine = create_async_engine(
             url=self.postgres_db_url,

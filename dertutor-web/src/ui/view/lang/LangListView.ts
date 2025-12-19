@@ -1,12 +1,8 @@
-import { hstack, p, spacer, span, vlist, vstack } from "flinker-dom"
-import { ActionsHelpView, MessangerView } from "../../../App"
-import { LayoutLayer } from "../../../app/Application"
-import { Lang } from "../../../domain/DomainModel"
+import { h2, p, vlist, vstack } from "flinker-dom"
+import { ILang } from "../../../domain/DomainModel"
 import { FontFamily } from "../../controls/Font"
-import { StatusBar, StatusBarModeName } from "../../controls/StatusBar"
-import { DertutorContext } from "../../DertutorContext"
+import { DertutorContext } from "../../../DertutorContext"
 import { theme } from "../../theme/ThemeManager"
-import { IViewModel } from "../ViewModel"
 
 export const LangListView = () => {
   const ctx = DertutorContext.self
@@ -17,58 +13,37 @@ export const LangListView = () => {
       s.height = '100vh'
       s.halign = 'center'
       s.valign = 'center'
+      s.paddingBottom = '100px'
       s.gap = '10px'
     }).children(() => {
-      hstack()
+      h2()
         .react(s => {
-          s.position = 'fixed'
-          s.top = '0'
-          s.width = '100%'
-          s.paddingHorizontal = '20px'
-          s.halign = 'left'
-          s.valign = 'center'
-        })
-        .children(() => {
-          HelpAction('→', 'Next')
-          spacer()
-          HelpAction('←', 'Prev')
-          spacer()
-          HelpAction('<Enter>', 'Accept')
-          spacer()
-          HelpAction('T', 'Switch theme')
-          spacer()
-          HelpAction('?', 'Help')
+          s.textColor = theme().text
+          s.paddingVertical = '50px'
+          s.text = 'Select a language'
         })
 
-      vlist<Lang>()
-        .observe(vm.$allLangs, 'recreateChildren')
-        .observe(ctx.$selectedLang, 'affectsChildrenProps')
-        .items(() => vm.$allLangs.value)
+      vlist<ILang>()
+        .observe(vm.$langs, 'recreateChildren')
+        .observe(vm.$selectedLang, 'affectsChildrenProps')
+        .items(() => vm.$langs.value)
         .itemRenderer(LangRenderer)
-        .itemHash((item: Lang) => item.id + ':' + (item === ctx.$selectedLang.value))
+        .itemHash((item: ILang) => item.id + ':' + (item === vm.$selectedLang.value))
         .react(s => {
           s.width = '100%'
           s.maxWidth = theme().menuWidth + 'px'
           s.paddingBottom = theme().statusBarHeight - 40 + 'px'
           s.gap = '0'
         })
-
-      Footer(vm)
-        .react(s => {
-          s.position = 'fixed'
-          s.width = '100%'
-          s.bottom = '0'
-          s.left = '0'
-          s.layer = LayoutLayer.MODAL
-        })
     })
 }
 
-const LangRenderer = (lang: Lang) => {
+const LangRenderer = (lang: ILang) => {
   const ctx = DertutorContext.self
+  const vm = ctx.langListVM
   return p()
     .react(s => {
-      const selected = ctx.$selectedLang.value === lang
+      const selected = vm.$selectedLang.value === lang
 
       let textColor = theme().red
 
@@ -84,53 +59,5 @@ const LangRenderer = (lang: Lang) => {
     })
     .whenHovered(s => {
       s.textDecoration = 'underline'
-    })
-}
-
-const Footer = (vm: IViewModel) => {
-  return vstack()
-    .react(s => {
-      s.gap = '0'
-    })
-    .children(() => {
-
-      ActionsHelpView(vm)
-      StatusBar().children(() => {
-
-        StatusBarModeName()
-          .react(s => {
-            s.text = 'Select a language'
-          })
-
-        spacer()
-
-        MessangerView()
-      })
-    })
-}
-
-
-const HelpAction = (cmd: string, desc: string) => {
-  return p()
-    .react(s => {
-      s.fontSize = theme().defMenuFontSize
-      s.fontFamily = FontFamily.APP
-      s.paddingVertical = '5px'
-      s.whiteSpace = 'nowrap'
-    }).children(() => {
-      span()
-        .react(s => {
-          s.text = desc
-          s.textColor = theme().text
-          s.whiteSpace = 'nowrap'
-        })
-
-      span().react(s => {
-        s.display = 'inline-block'
-        s.text = cmd
-        s.textColor = theme().header
-        s.whiteSpace = 'nowrap'
-        s.paddingLeft = '5px'
-      })
     })
 }

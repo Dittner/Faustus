@@ -29,7 +29,7 @@ class KeyValueDB:
     """
 
     def __init__(self, db_path: Path) -> None:
-        log.info(f'new KeyValueDB: {db_path}')
+        log.info('new KeyValueDB: %s', db_path)
         self.db_file_path = db_path
         self.hash: dict[str, tuple[int, int, int]] = {}  # pos_of_record, pos_of_file_bytes, size_of_file
         self.max_bytes_len = 256 ** (array.array('I').itemsize) - 1
@@ -43,6 +43,7 @@ class KeyValueDB:
             f = self.db_file_path.open('w')
             f.close()
 
+        log.info('Connecting to: %s...', self.db_file_path.as_posix())
         with self.db_file_path.open('rb') as dbf:
             cursor = 0
             dbf.seek(0, 2)
@@ -66,17 +67,17 @@ class KeyValueDB:
                     # print(f'Key:{key}, pos:{cursor + full_record_len - value_len}, size:{value_len}')
                     self.hash[key] = (cursor, cursor + full_record_len - value_len, value_len)
                 else:
-                    log.info(f'Key:{key}, pos:{cursor + full_record_len - value_len}, size:{value_len} (DELETED)')
+                    log.info('Key: %s, pos: %s, size: %s (DELETED)', key, cursor + full_record_len - value_len, value_len)
                     total_size_of_deleted_files += META_DATA_SIZE + INT_SIZE + key_len + INT_SIZE + value_len
 
                 cursor += full_record_len
 
             if total_size_of_deleted_files > 0:
-                log.info(f'KeyValueDB: {total_size_of_deleted_files} bytes may be deleted by compression')
+                log.info('KeyValueDB: %s bytes may be deleted by compression', total_size_of_deleted_files)
 
         self.db_file = self.db_file_path.open('r+b')
         self.db_file.seek(0, 2)
-        log.info(f'DB file size: {self.db_file.tell()} bytes, {self.db_file.tell() / 1024 / 1024} Mb')
+        log.info('DB file size: %s bytes, %s Mb', self.db_file.tell(), self.db_file.tell() / 1024 / 1024)
 
     def has(self, key: str):
         if not self.db_file:
@@ -89,14 +90,16 @@ class KeyValueDB:
 
         value_size = len(bb)
         if value_size == 0:
-            raise InvalidFileSizeError(f'File <{key}> can not be empty')
+            msg = f'File <{key}> can not be empty'
+            raise InvalidFileSizeError(msg)
 
         if value_size > self.max_bytes_len:
-            raise InvalidFileSizeError(f'Size of <{key}>: {value_size} > maximum of unsigned integer ({self.max_bytes_len})')
+            msg = f'Size of <{key}>: {value_size} > maximum of unsigned integer ({self.max_bytes_len})'
+            raise InvalidFileSizeError(msg)
 
         if self.hash.get(key):
             # raise InvalidDBOperationError(f'Key {key} is a duplicate. File can not be written.')
-            log.info(f'KeyValueDB.write. Value with key:{key} allready exists.')
+            log.info('KeyValueDB.write. Value with key: %s allready exists.', key)
             return
 
         key_in_bytes = key.encode()

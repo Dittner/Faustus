@@ -19,38 +19,49 @@ class Lang(Base):
     __tablename__ = 'langs'
     id: Mapped[int] = mapped_column(primary_key=True)
     code: Mapped[str] = mapped_column(String(2), unique=True)  # en, de, ru
-    name: Mapped[str] = mapped_column(String(256))
-    vocabularies: Mapped[list['Vocabulary']] = relationship(cascade='all, delete')
+    name: Mapped[str] = mapped_column(String(255))
+    vocs: Mapped[list['Voc']] = relationship(cascade='all, delete')
+    tags: Mapped[list['Tag']] = relationship(cascade='all, delete')
 
     def __repr__(self):
         return f"<Lang(id='{self.id}', code='{self.code}')>"
 
 
-class Vocabulary(Base):
-    __tablename__ = 'vocabularies'
+class Voc(Base):
+    __tablename__ = 'vocs'
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(256))
+    name: Mapped[str] = mapped_column(String(255))
     lang_id: Mapped[int] = mapped_column(ForeignKey('langs.id'))
     notes: Mapped[list['Note']] = relationship(cascade='all, delete')
+    __table_args__ = (UniqueConstraint('lang_id', 'name'),)
+
+
+class Tag(Base):
+    __tablename__ = 'tags'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(Text, default='', server_default='')
+    lang_id: Mapped[int] = mapped_column(ForeignKey('langs.id'))
     __table_args__ = (UniqueConstraint('lang_id', 'name'),)
 
 
 class Note(Base):
     __tablename__ = 'notes'
     id: Mapped[int] = mapped_column(primary_key=True)
-    title: Mapped[str] = mapped_column(Text, default='', server_default='')
+    name: Mapped[str] = mapped_column(Text, default='', server_default='')
     text: Mapped[str] = mapped_column(Text, default='', server_default='')
-    level: Mapped[int] = mapped_column(Integer)
-    vocabulary_id: Mapped[int] = mapped_column(ForeignKey('vocabularies.id'))
-    audio_url: Mapped[str] = mapped_column(String(256))
+    lang_id: Mapped[int] = mapped_column(ForeignKey('langs.id'))
+    voc_id: Mapped[int] = mapped_column(ForeignKey('vocs.id'))
+    audio_url: Mapped[str] = mapped_column(String(255), default='')
+    level: Mapped[int | None] = mapped_column(Integer)
+    tag_id: Mapped[int | None] = mapped_column(ForeignKey('tags.id'))
     media: Mapped[list['Media']] = relationship(cascade='all, delete')
-    __table_args__ = (UniqueConstraint('vocabulary_id', 'title'),)
+    __table_args__ = (UniqueConstraint('voc_id', 'name'),)
 
 
 class Media(Base):
     __tablename__ = 'media'
     uid: Mapped[str] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(256))
-    media_type: Mapped[str] = mapped_column(String(256))
+    name: Mapped[str] = mapped_column(String(255))
+    media_type: Mapped[str] = mapped_column(String(255))
     note_id: Mapped[int] = mapped_column(ForeignKey('notes.id'))
     __table_args__ = (UniqueConstraint('note_id', 'uid'),)

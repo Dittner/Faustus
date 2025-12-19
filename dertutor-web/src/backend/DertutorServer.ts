@@ -1,21 +1,7 @@
 import { type RXObservable } from 'flinker'
-import { Note, Vocabulary } from '../domain/DomainModel'
-import { CreateNoteCmd } from './cmd/CreateNoteCmd'
-import { CreateVocCmd } from './cmd/CreateVocCmd'
-import { DeleteFileCmd } from './cmd/DeleteFileCmd'
-import { DeleteNoteCmd } from './cmd/DeleteNoteCmd'
-import { LoadAllLangsCmd } from './cmd/LoadAllLangsCmd'
-import { LoadAllMediaFilesCmd } from './cmd/LoadAllMediaFilesCmd'
-import { LoadEnRuTranslationCmd } from './cmd/LoadEnRuTranslationCmd'
-import { LoadNotesCmd } from './cmd/LoadNotesCmd'
-import { LoadVocabulariesCmd } from './cmd/LoadVocabulariesCmd'
-import { RenameNoteCmd } from './cmd/RenameNoteCmd'
-import { RenameVocCmd } from './cmd/RenameVocCmd'
-import { UpdateNoteCmd } from './cmd/UpdateNoteCmd'
-import { UploadFileCmd } from './cmd/UploadFileCmd'
-import { ValidateMp3LinkCmd } from './cmd/ValidateMp3LinkCmd'
 import { RestApi, RestApiError } from './RestApi'
-import { DeleteVocCmd } from './cmd/DeleteVocCmd'
+import { CreateNoteSchema, CreateVocSchema, DeleteMedialFileSchema, DeleteNoteSchema, DeleteVocSchema, GetPageOfNotesSchema, RenameNoteSchema, RenameVocSchema, UpdateNoteSchema } from './Schema'
+import { Path } from '../app/Utils'
 
 export class DertutorServer extends RestApi {
   constructor() {
@@ -31,89 +17,79 @@ export class DertutorServer extends RestApi {
   //--------------------------------------
 
   loadAllLangs(): RXObservable<any[], RestApiError> {
-    const cmd = new LoadAllLangsCmd(this)
-    return cmd.run()
+    return this.get('/langs/full')
   }
 
   //--------------------------------------
-  //  vocabularies
+  //  vocs
   //--------------------------------------
 
-  loadVocabularies(landId: number): RXObservable<any[], RestApiError> {
-    const cmd = new LoadVocabulariesCmd(this, landId)
-    return cmd.run()
+  createVoc(schema: CreateVocSchema): RXObservable<any, RestApiError> {
+    return this.post('/vocs', schema)
   }
 
-  createVocabulary(voc: Vocabulary): RXObservable<any, RestApiError> {
-    const cmd = new CreateVocCmd(this, voc)
-    return cmd.run()
+  renameVoc(schema: RenameVocSchema): RXObservable<any, RestApiError> {
+    return this.patch('/vocs/rename', schema)
   }
 
-  renameVocabulary(vocId: number, newName: string): RXObservable<any, RestApiError> {
-    const cmd = new RenameVocCmd(this, vocId, newName)
-    return cmd.run()
-  }
-
-  deleteVocabulary(vocId: number): RXObservable<any, RestApiError> {
-    const cmd = new DeleteVocCmd(this, vocId)
-    return cmd.run()
+  deleteVoc(schema: DeleteVocSchema): RXObservable<any, RestApiError> {
+    return this.delete('/vocs', schema)
   }
 
   //--------------------------------------
   //  notes
   //--------------------------------------
 
-  loadNotes(vocId: number): RXObservable<any[], RestApiError> {
-    const cmd = new LoadNotesCmd(this, vocId)
-    return cmd.run()
+  loadNotes(scheme: GetPageOfNotesSchema): RXObservable<any, RestApiError> {
+    const queryParams = Path.querify(scheme)
+    return this.get('/notes/search?' + queryParams)
   }
 
-  createNote(n: Note): RXObservable<any, RestApiError> {
-    const cmd = new CreateNoteCmd(this, n)
-    return cmd.run()
+  loadNote(noteId: number): RXObservable<any, RestApiError> {
+    return this.get('/notes?note_id=' + noteId)
   }
 
-  updateNote(n: Note): RXObservable<any, RestApiError> {
-    const cmd = new UpdateNoteCmd(this, n)
-    return cmd.run()
+  createNote(scheme: CreateNoteSchema): RXObservable<any, RestApiError> {
+    return this.post('/notes', scheme)
   }
 
-  renameNote(noteId: number, newTitle: string): RXObservable<any, RestApiError> {
-    const cmd = new RenameNoteCmd(this, noteId, newTitle)
-    return cmd.run()
+  updateNote(scheme: UpdateNoteSchema): RXObservable<any, RestApiError> {
+    return this.put('/notes', scheme)
   }
 
-  deleteNote(noteId: number): RXObservable<any, RestApiError> {
-    const cmd = new DeleteNoteCmd(this, noteId)
-    return cmd.run()
+  renameNote(scheme: RenameNoteSchema): RXObservable<any, RestApiError> {
+    return this.patch('/notes/rename', scheme)
   }
 
+  deleteNote(scheme: DeleteNoteSchema): RXObservable<any, RestApiError> {
+    return this.delete('/notes', scheme)
+  }
 
   //--------------------------------------
   //  media
   //--------------------------------------
   validateMp3Link(link: string): RXObservable<any, RestApiError> {
-    const cmd = new ValidateMp3LinkCmd(this, link)
-    return cmd.run()
+    return this.head(link)
   }
 
   loadEnRuTranslation(key: string): RXObservable<any, RestApiError> {
-    const cmd = new LoadEnRuTranslationCmd(this, key)
-    return cmd.run()
-  }
-
-  loadAllMediaFiles(noteId: number): RXObservable<any[], RestApiError> {
-    const cmd = new LoadAllMediaFilesCmd(this, noteId)
-    return cmd.run()
+    const encodedKey = encodeURIComponent(key)
+    const path = '/corpus/en_ru/search?key=' + encodedKey
+    return this.get(path)
   }
 
   uploadFile(noteId: number, file: File, fileName: string): RXObservable<any, RestApiError> {
-    const cmd = new UploadFileCmd(this, noteId, file, fileName)
-    return cmd.run()
+    console.log('UploadFileCmd:startLoading, f=', file)
+    const formData = new FormData();
+    formData.append('file', file, fileName)
+
+    //DO NOT USE THESE HEADERS: { 'Content-Type': 'multipart/form-data' }
+    //let browser to add 'Content-Type': 'multipart/form-data; boundary=----WebKitFormBou...' 
+    const headers = {}
+    return this.post('/media/uploadfile/' + noteId, formData, headers)
   }
 
-  deleteFile(fileUID: string): RXObservable<any, RestApiError> {
-    const cmd = new DeleteFileCmd(this, fileUID)
-    return cmd.run()
+  deleteFile(schema: DeleteMedialFileSchema): RXObservable<any, RestApiError> {
+    return this.delete('/media', schema)
   }
 }

@@ -3,6 +3,7 @@ import { md, MDGrammar, MDParser } from "flinker-markdown"
 
 interface MarkdownProps extends TextProps {
   absolutePathPrefix?: string
+  mark?: string
   mode: 'md' | 'rawText' | 'rawHtml'
 }
 
@@ -11,10 +12,12 @@ export const Markdown = () => {
   return div<MarkdownProps>()
     .map(s => {
       if (s.mode === 'md') {
-        s.htmlText = s.text ? md(parser, s.text, s.absolutePathPrefix) : ''
+        const value = s.text ? md(parser, s.text, s.absolutePathPrefix) : ''
+        s.htmlText = s.mark ? value.replaceAll(s.mark, `<mark>${s.mark}</mark>`) : value
         s.text = ''
       } else if (s.mode === 'rawHtml') {
-        s.text = s.text ? md(parser, s.text, s.absolutePathPrefix) : ''
+        const value = s.text ? md(parser, s.text, s.absolutePathPrefix) : ''
+        s.text = s.mark ? value.replaceAll(s.mark, `<mark>${s.mark}</mark>`) : value
       }
     })
 }

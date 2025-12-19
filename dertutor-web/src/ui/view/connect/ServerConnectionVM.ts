@@ -1,6 +1,6 @@
 import { RXObservableValue } from "flinker";
 import { globalContext } from "../../../App";
-import { DertutorContext } from "../../DertutorContext";
+import { DertutorContext } from "../../../DertutorContext";
 import { ViewModel } from "../ViewModel";
 
 export class ServerConnectionVM extends ViewModel {

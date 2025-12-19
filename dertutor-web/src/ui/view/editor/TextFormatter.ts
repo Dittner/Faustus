@@ -71,6 +71,7 @@ export class TextFormatter {
   replaceQuotes(s: string): string {
     return s
       .replace(/[”„“]/g, '"')
+      .replace(/[’´]/g, "'")
       .replace(/…/g, '...')
   }
 

@@ -2,7 +2,7 @@ import { p, vstack } from "flinker-dom"
 import { MessangerView } from "../../../App"
 import { LayoutLayer } from "../../../app/Application"
 import { FontFamily } from "../../controls/Font"
-import { DertutorContext } from "../../DertutorContext"
+import { DertutorContext } from "../../../DertutorContext"
 import { theme } from "../../theme/ThemeManager"
 
 export const ServerConnectionView = () => {
@@ -14,6 +14,7 @@ export const ServerConnectionView = () => {
       s.position = 'fixed'
       s.width = '100vw'
       s.height = '100vh'
+      s.paddingTop = theme().navBarHeight + 'px'
       s.layer = LayoutLayer.MODAL
       s.mouseEnabled = false
     }).children(() => {
@@ -25,7 +26,7 @@ export const ServerConnectionView = () => {
           s.text = vm.$logs.value
           s.textColor = theme().accent
           s.fontSize = '16px'
-          s.padding = '20px'
+          s.paddingHorizontal = '20px'
           s.whiteSpace = 'pre'
           s.height = '100%'
         })

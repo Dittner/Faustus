@@ -62,7 +62,9 @@ export class FileReader extends OperatingModeClass {
     this.actionsList.add('G', 'Select last chapter', () => this.moveCursorToTheLast())
 
     this.actionsList.add('j', 'Select next chapter', () => this.moveCursor(1))
+    this.actionsList.add('<Right>', 'Select next chapter', () => this.moveCursor(1))
     this.actionsList.add('k', 'Select prev chapter', () => this.moveCursor(-1))
+    this.actionsList.add('<Left>', 'Select prev chapter', () => this.moveCursor(-1))
 
     this.actionsList.add('q', 'Quit', () => this.quit(false))
     this.actionsList.add(':q!<CR>', 'Quit without saving', () => this.quit(true))

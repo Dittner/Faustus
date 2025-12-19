@@ -81,26 +81,6 @@ export const IconBtn = () => {
 *
 **/
 
-export const Btn = () => {
-  return IconBtn()
-    .react(s => {
-      s.fontFamily = FontFamily.APP
-      s.fontSize = theme().defMenuFontSize
-      s.iconSize = theme().defFontSize
-      s.minHeight = '25px'
-      s.gap = '2px'
-      s.textColor = theme().btn + 'cc'
-      s.cornerRadius = '4px'
-    })
-    .whenHovered(s => {
-      s.textColor = theme().btn
-    })
-    .whenSelected(s => {
-      s.textColor = '#ffFFff'
-      s.bgColor = theme().header
-    })
-}
-
 export const RedBtn = () => {
   return IconBtn()
     .react(s => {
@@ -138,5 +118,45 @@ export const BlueBtn = () => {
     .whenSelected(s => {
       s.textColor = theme().accent
       s.bgColor = theme().header
+    })
+}
+
+export const GreenBtn = () => {
+  return IconBtn()
+    .react(s => {
+      s.fontFamily = FontFamily.MONO
+      s.fontSize = theme().defMenuFontSize
+      s.iconSize = theme().defFontSize
+      s.minHeight = '25px'
+      s.gap = '2px'
+      s.textColor = theme().green + 'cc'
+      s.cornerRadius = '4px'
+    })
+    .whenHovered(s => {
+      s.textColor = theme().green
+    })
+    .whenSelected(s => {
+      s.textColor = theme().accent
+      s.bgColor = theme().header
+    })
+}
+
+
+export const Btn = () => {
+  return IconBtn()
+    .react(s => {
+      s.fontFamily = FontFamily.MONO
+      s.fontSize = theme().defMenuFontSize
+      s.iconSize = theme().defFontSize
+      s.minHeight = '25px'
+      s.gap = '2px'
+      s.textColor = theme().text50
+      s.cornerRadius = '4px'
+    })
+    .whenHovered(s => {
+      s.textColor = theme().text
+    })
+    .whenSelected(s => {
+      s.textColor = theme().btn
     })
 }

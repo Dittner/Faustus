@@ -1,12 +1,12 @@
 import { RXObservableValue } from 'flinker'
-import { globalContext } from '../App'
-import { Lang, Note, Vocabulary } from '../domain/DomainModel'
-import { ServerConnectionVM } from './view/connect/ServerConnectionVM'
-import { LangListVM } from './view/lang/LangListVM'
-import { NoteListVM } from './view/note/NoteListVM'
-import { IViewModel } from './view/ViewModel'
-import { VocListVM } from './view/vocs/VocListVM'
-import { EditorVM } from './view/editor/EditorVM'
+import { ServerConnectionVM } from './ui/view/connect/ServerConnectionVM'
+import { LangListVM } from './ui/view/lang/LangListVM'
+import { NoteListVM } from './ui/view/note/NoteListVM'
+import { IViewModel } from './ui/view/ViewModel'
+import { VocListVM } from './ui/view/vocs/VocListVM'
+import { EditorVM } from './ui/view/editor/EditorVM'
+import { ILang } from './domain/DomainModel'
+import { URLNavigator } from './app/URLNavigator'
 
 export interface Message {
   readonly level: 'warning' | 'error' | 'info'
@@ -14,6 +14,7 @@ export interface Message {
 }
 
 export class DertutorContext {
+  static readonly PAGE_SIZE = 20
   readonly $activeVM: RXObservableValue<IViewModel>
   readonly connectionVM: ServerConnectionVM
   readonly langListVM: LangListVM
@@ -21,11 +22,10 @@ export class DertutorContext {
   readonly noteListVM: NoteListVM
   readonly editorVM: EditorVM
 
-  readonly $selectedLang = new RXObservableValue<Lang | undefined>(undefined)
-  readonly $selectedVoc = new RXObservableValue<Vocabulary | undefined>(undefined)
-  readonly $selectedNote = new RXObservableValue<Note | undefined>(undefined)
+  readonly $allLangs = new RXObservableValue<ILang[]>([])
   readonly $msg = new RXObservableValue<Message | undefined>(undefined)
 
+  readonly navigator: URLNavigator
   static self: DertutorContext
 
   static init() {
@@ -46,16 +46,13 @@ export class DertutorContext {
     this.$activeVM = new RXObservableValue(this.connectionVM)
     this.connectionVM.activate()
 
+    this.navigator = new URLNavigator()
     document.addEventListener('keydown', this.onKeyDown.bind(this))
   }
 
   onKeyDown(e: KeyboardEvent): void {
-    this.$activeVM.value.onKeyDown(e)
-  }
-
-  navigate(to: string) {
-    console.log('Navigate to:', to)
-    globalContext.app.navigate(to)
+    if (document.activeElement?.tagName !== 'INPUT')
+      this.$activeVM.value.onKeyDown(e)
   }
 }
 

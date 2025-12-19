@@ -5,77 +5,77 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import DBAPIError
 from src.context import dertutor_context
-from src.repo.model import Vocabulary
+from src.repo.model import Tag
 
-router = APIRouter(prefix='', tags=['Vocabularies'])
+router = APIRouter(prefix='', tags=['Tags'])
 log = logging.getLogger('uvicorn')
 
 
-class VocCreate(BaseModel):
+class TagCreate(BaseModel):
     lang_id: int
     name: str
 
 
-class VocRename(BaseModel):
+class TagRename(BaseModel):
     name: str
 
 
-class VocRead(BaseModel):
+class TagRead(BaseModel):
     id: int
     lang_id: int
     name: str
 
 
-class VocDelete(BaseModel):
+class TagDelete(BaseModel):
     id: int
 
 
-@router.get('/languages/{lang_id}/vocabularies', response_model=list[VocRead])
-async def get_vocabularies(lang_id: int):
+@router.get('/tags', response_model=list[TagRead])
+async def get_tags(lang_id: int):
     async with dertutor_context.session_manager.make_session() as session:
-        query = select(Vocabulary).where(Vocabulary.lang_id == lang_id)
+        query = select(Tag).where(Tag.lang_id == lang_id)
         res = await session.execute(query)
         return res.scalars().all()
 
 
-@router.post('/vocabularies', response_model=VocRead)
-async def create_vocabulary(v: VocCreate):
+@router.post('/tags', response_model=TagRead)
+async def create_tag(t: TagCreate):
     async with dertutor_context.session_manager.make_session() as session:
         try:
-            res = Vocabulary(**v.model_dump())
+            res = Tag(**t.model_dump())
             session.add(res)
             await session.commit()
             return res
         except DBAPIError as e:
             await session.rollback()
-            log.warning(f'DBAPIError: {e}')
+            log.warning('DBAPIError: %s', e)
             return Response(content=str(e.orig), status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@router.patch('/vocabularies/{voc_id}/rename', response_model=VocRead | None)
-async def rename_vocabulary(v: VocRename, voc_id: int):
+@router.patch('/tags/{tag_id}/rename', response_model=TagRead | None)
+async def rename_tag(t: TagRename, tag_id: int):
     async with dertutor_context.session_manager.make_session() as session:
         try:
-            query = select(Vocabulary).where(Vocabulary.id == voc_id)
+            query = select(Tag).where(Tag.id == tag_id)
             res = await session.execute(query)
             item = res.scalars().first()
             if item:
-                item.name = v.name
+                item.name = t.name
                 await session.commit()
                 return item
             else:
-                return Response(content='Vocabulary not found', status_code=status.HTTP_404_NOT_FOUND)
+                return Response(content='Tag not found', status_code=status.HTTP_404_NOT_FOUND)
         except DBAPIError as e:
-            await session.rollback()  # Rollback the session to clear the failed transaction
-            log.warning(f'DBAPIError: {e}')
+            await session.rollback()
+            log.warning('DBAPIError: %s', e)
             return Response(content=str(e.orig), status_code=status.HTTP_400_BAD_REQUEST)
 
 
-@router.delete('/vocabularies', response_model=VocRead | None)
-async def delete_vocabulary(v: VocDelete):
+@router.delete('/tags', response_model=TagRead | None)
+async def delete_tag(t: TagDelete):
     async with dertutor_context.session_manager.make_session() as session:
         try:
-            query = select(Vocabulary).where(Vocabulary.id == v.id)
+            query = select(Tag).where(Tag.id == t.id)
             res = await session.execute(query)
             item = res.scalars().first()
             if item:
@@ -83,8 +83,8 @@ async def delete_vocabulary(v: VocDelete):
                 await session.commit()
                 return Response(content='deleted', status_code=status.HTTP_200_OK)
             else:
-                return Response(content='Vocabulary not found', status_code=status.HTTP_404_NOT_FOUND)
+                return Response(content='Tag not found', status_code=status.HTTP_404_NOT_FOUND)
         except DBAPIError as e:
-            await session.rollback()  # Rollback the session to clear the failed transaction
-            log.warning(f'DBAPIError: {e}')
+            await session.rollback()
+            log.warning('DBAPIError: %s', e)
             return Response(content=str(e.orig), status_code=status.HTTP_400_BAD_REQUEST)

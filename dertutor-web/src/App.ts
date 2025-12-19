@@ -1,15 +1,14 @@
 import { div, hstack, observer, p, span, vlist } from "flinker-dom"
 import { GlobalContext } from "./app/GlobalContext"
-import { DertutorContext } from "./ui/DertutorContext"
+import { DertutorContext } from "./DertutorContext"
 import { Action } from "./ui/actions/Action"
 import { FontFamily } from "./ui/controls/Font"
 import { theme, themeManager } from "./ui/theme/ThemeManager"
-import { IViewModel } from "./ui/view/ViewModel"
 import { ServerConnectionView } from "./ui/view/connect/ServerConnctionView"
+import { EditorView } from "./ui/view/editor/EditorView"
 import { LangListView } from "./ui/view/lang/LangListView"
 import { NoteListView } from "./ui/view/note/NoteListView"
 import { VocListView } from "./ui/view/vocs/VocListView"
-import { EditorView } from "./ui/view/editor/EditorView"
 
 export const globalContext = GlobalContext.init()
 
@@ -23,6 +22,7 @@ export function App() {
       s.width = '100%'
     })
     .children(() => {
+
       observer(ctx.$activeVM)
         .onReceive(vm => {
           if (vm === ctx.connectionVM) return ServerConnectionView()
@@ -33,52 +33,33 @@ export function App() {
           else return undefined
         })
 
-      // p()
-      //   .observe(ctx.$selectedLang)
-      //   .react(s => {
-      //     const code = ctx.$selectedLang.value?.code ?? ''
-      //     s.visible = ctx.$selectedLang.value !== undefined
-      //     s.position = 'fixed'
-      //     s.width = '100%'
-      //     s.height = '1px'
-      //     s.top = '0'
-      //     s.bgColor = code === 'de' ? theme().yellow : theme().red
-      //   })
+      ActionsHelpView()
+      Footer()
     })
 }
 
-export const ActionsHelpView = (vm: IViewModel) => {
-  const total = vm.actionsList.actions.length
-  const col1 = vm.actionsList.actions.slice(0, Math.ceil(total / 2))
-  const col2 = vm.actionsList.actions.slice(Math.ceil(total / 2))
-  return hstack()
-    .observe(vm.$showActions)
-    .react(s => {
-      s.visible = vm.$showActions.value
-      s.fontFamily = FontFamily.MONO
-      s.fontSize = '18px'
-      s.width = '100%'
-      s.gap = '0'
-      s.paddingVertical = '20px'
-      s.borderColor = theme().statusFg
-      s.bgColor = theme().statusBg + '88'
-      s.blur = '10px'
-    }).children(() => {
-      vlist<Action>()
-        .items(() => col1)
-        .itemHash(a => a.cmd)
-        .itemRenderer(ActionInfoView)
-        .react(s => {
-          s.width = '50%'
-          s.gap = '0'
-        })
+export const ActionsHelpView = () => {
+  const ctx = DertutorContext.self
 
+  return div()
+    .observe(ctx.$activeVM.pipe().flatMap(vm => vm.$showActions).fork())
+    .observe(ctx.$activeVM, 'recreateChildren')
+    .react(s => {
+      const vm = ctx.$activeVM.value
+      s.visible = vm.$showActions.value
+      s.position = 'fixed'
+      s.bottom = theme().statusBarHeight + 'px'
+      s.right = '0'
+      s.paddingHorizontal = '20px'
+      s.gap = '0'
+    }).children(() => {
+      const vm = ctx.$activeVM.value
       vlist<Action>()
-        .items(() => col2)
+        .items(() => vm.actionsList.actions)
         .itemHash(a => a.cmd)
         .itemRenderer(ActionInfoView)
         .react(s => {
-          s.width = '50%'
+          s.width = '100%'
           s.gap = '0'
         })
     })
@@ -88,12 +69,13 @@ const ActionInfoView = (a: Action) => {
   return p()
     .react(s => {
       s.width = '100%'
-      s.fontSize = '18px'
+      s.fontFamily = FontFamily.MONO
+      s.fontSize = theme().defMenuFontSize
     }).children(() => {
       span().react(s => {
         s.display = 'inline-block'
         s.text = a.cmd
-        s.textColor = theme().red
+        s.textColor = theme().em
         s.paddingHorizontal = '20px'
         s.paddingVertical = '5px'
         s.width = '120px'
@@ -104,11 +86,36 @@ const ActionInfoView = (a: Action) => {
       span()
         .react(s => {
           s.text = a.desc
-          s.textColor = theme().statusFg
+          s.textColor = theme().accent
           s.width = '100%'
           s.whiteSpace = 'nowrap'
           s.paddingVertical = '5px'
         })
+    })
+}
+
+const Footer = () => {
+  return hstack()
+    .react(s => {
+      s.position = 'fixed'
+      s.bottom = '0'
+      s.left = '0'
+      s.fontFamily = FontFamily.MONO
+      s.fontSize = theme().defMenuFontSize
+      s.gap = '10px'
+      s.width = '100%'
+      s.minHeight = theme().statusBarHeight + 'px'
+      s.valign = 'center'
+      s.bgColor = theme().accent + '10'
+      s.blur = '5px'
+    })
+    .children(() => {
+
+      MessangerView().react(s => {
+        s.width = '100%'
+      })
+
+      CmdView()
     })
 }
 
@@ -118,20 +125,32 @@ export const MessangerView = () => {
     .observe(ctx.$msg)
     .react(s => {
       const msg = ctx.$msg.value
-      s.visible = msg !== undefined
       s.fontFamily = FontFamily.MONO
       s.fontSize = theme().defMenuFontSize
       s.text = msg?.text ?? ''
       //s.bgColor = theme().appBg
-      s.whiteSpace = 'nowrap'
-      s.paddingLeft = '20px'
-      s.paddingRight = '2px'
-      
+      s.width = '100%'
+      s.paddingHorizontal = '20px'
+
       if (msg?.level === 'error')
         s.textColor = theme().red
       else if (msg?.level === 'warning')
         s.textColor = theme().yellow
       else
-        s.textColor = theme().accent
+        s.textColor = theme().text50
+    })
+}
+
+export const CmdView = () => {
+  const ctx = DertutorContext.self
+  return p()
+    .observe(ctx.$activeVM.pipe().flatMap(vm => vm.$cmd).fork())
+    .react(s => {
+      s.fontFamily = FontFamily.MONO
+      s.fontSize = theme().defMenuFontSize
+      s.text = ctx.$activeVM.value.$cmd.value
+      s.whiteSpace = 'nowrap'
+      s.paddingHorizontal = '10px'
+      s.textColor = theme().text
     })
 }

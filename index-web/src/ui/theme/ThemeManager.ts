@@ -405,7 +405,7 @@ export class ThemeManager {
       fontSize: 'inherit',
       textColor: 'inherit',
       fontWeight: 'inherit',
-      border: '1px solid ' + t.text50,
+      border: '1px solid ' + t.text + 40,
       padding: '10px'
     }
 

@@ -18,12 +18,11 @@ export interface GlobalTheme {
   strong: string
   link: string
   blue: string
+  pynk: string
   editor: string
   mark: string
   btn: string
-  statusFg: string
-  statusBg: string
-  comment: string
+  border: string
   transparent: string
   h1: string
   header: string
@@ -33,6 +32,7 @@ export interface GlobalTheme {
   maxNoteViewWidth: number
   menuWidth: number
   statusBarHeight: number
+  navBarHeight: number
 }
 
 export class ThemeManager {
@@ -105,6 +105,7 @@ export class ThemeManager {
       yellow: '#a56a26',
       mark: '#ac2f2f',
       btn: '#d14141',
+      border: '#d14141',
       text: black,
       text50: black + '88',
       red,
@@ -117,16 +118,15 @@ export class ThemeManager {
       blue: '#0a4277',
       link: '#b16441',
       editor: black,
-      comment: '#0b6039',
       transparent: '#00000000',
-      statusFg: black,
-      statusBg: white,
+      pynk: '#462962',
       menu: '#462962',
       menuDe: '#b16441',
       menuEn: '#ac2f2f',
       maxNoteViewWidth: 850,
-      menuWidth: 500,
+      menuWidth: 400,
       statusBarHeight: 30,
+      navBarHeight: 30,
     }
   }
 
@@ -138,8 +138,8 @@ export class ThemeManager {
 
 
   createDarkTheme(t: GlobalTheme): GlobalTheme {
-    const text = '#608086' //707786 
-    const accent = '#aaAAaa'
+    const text = '#707786' //707f8b 
+    const accent = '#8e94a5' //8da2a9
     const red = '#eb6c6c'
     const blue = '#6fafe7'
     const black = '#111111'
@@ -148,23 +148,22 @@ export class ThemeManager {
       isLight: false,
       appBg: black,
       text,
-      text50: text + 'bb',
+      text50: text + 'aa',
       red,
-      green: '#5ea0a5',
-      h1: '#b0c2c1',
-      header: '#2a7098',
-      em: '#b0c8b3',
+      green: '#307c7d',
+      h1: '#969dad',
+      header: '#307c7d',
+      em: '#ac7570ff',
       accent,
-      strong: '#89bac1',
+      strong: accent,
       blue,
-      mark: '#cb6565',
-      comment: '#74a7aa',
-      link: '#aa8657',
+      mark: '#eed07c',
+      link: '#c5e2c9',
       yellow: '#b0c8b3',
-      btn: '#ffd195',
+      pynk: '#685473',
+      btn: '#eed07c',
+      border: text + '20',
       editor: text,
-      statusFg: '#b0c8b3',
-      statusBg: '#181f23',
       menu: '#489fbd',
       menuDe: '#aa8657',
       menuEn: '#cb6582',
@@ -174,7 +173,6 @@ export class ThemeManager {
   buildThemeSelectors(t: GlobalTheme) {
     const parentSelector = t.id
     const monoFont = 'var(--font-family-mono)'
-    const articleFont = 'var(--font-family-article)'
     const textColor = t.text
     const headerPadingTop = '0px'
     // const textProps: StylableComponentProps = { textColor: '#86b3c7' }
@@ -237,7 +235,7 @@ export class ThemeManager {
     /******************************/
 
     const globalProps: UIComponentProps = {
-      fontFamily: articleFont,
+      fontFamily: 'inherit',
       fontSize: 'inherit',
       fontWeight: t.defFontWeight,
       textColor: 'inherit'
@@ -286,16 +284,17 @@ export class ThemeManager {
       padding: '0px'
     }
     buildRule(listItemProps, parentSelector, 'li')
+    buildRule(listItemProps, parentSelector, 'ol')
 
     const listProps: UIComponentProps = {
       fontSize: 'inherit',
       fontWeight: t.defFontWeight,
       textColor: 'inherit',
       margin: '0px',
+      marginLeft: '20px',
       padding: '0px'
     }
     buildRule(listProps, parentSelector, 'ul')
-    buildRule(listProps, parentSelector, 'ol')
 
     /******************************/
     // table
@@ -326,7 +325,6 @@ export class ThemeManager {
     /******************************/
 
     const emphasizeProps: UIComponentProps = {
-      fontFamily: articleFont,
       bgColor: t.isLight ? '#edf4ee' : 'undefined',
       textColor: t.em,
       fontStyle: 'normal',
@@ -356,8 +354,8 @@ export class ThemeManager {
     const markProps: UIComponentProps = {
       fontSize: 'inherit',
       fontWeight: 'inherit',
-      textColor: t.mark,
-      bgColor: t.transparent
+      textColor: t.appBg,
+      bgColor: t.mark,
     }
 
     buildRule(markProps, parentSelector, 'mark')
@@ -390,8 +388,8 @@ export class ThemeManager {
       //bgColor: '#e5f0df',
       margin: '0px',
       fontSize: '0.9rem',
-      textColor: t.comment,
-      borderLeft: '1px solid ' + t.comment + '88'
+      textColor: t.green,
+      borderLeft: '1px solid ' + t.green + '88'
     }
     buildRule(blockquoteContentProps, parentSelector, 'blockquote')
 

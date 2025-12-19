@@ -1,14 +1,16 @@
 import { RXObservableValue } from "flinker"
 
-import { Path } from "../../../app/Utils"
-import { Lang, Vocabulary } from "../../../domain/DomainModel"
-import { InputBufferController } from "../../controls/Input"
-import { DertutorContext } from "../../DertutorContext"
-import { ViewModel } from "../ViewModel"
 import { globalContext } from "../../../App"
+import { InputBufferController } from "../../controls/Input"
+import { DertutorContext } from "../../../DertutorContext"
+import { ViewModel } from "../ViewModel"
+import { DomainService, ILang, IVoc } from "../../../domain/DomainModel"
+import { CreateVocSchema, DeleteVocSchema, RenameVocSchema } from "../../../backend/Schema"
 
 export class VocListVM extends ViewModel {
-  readonly $vocs = new RXObservableValue<Array<Vocabulary>>([])
+  readonly $selectedLang = new RXObservableValue<ILang | undefined>(undefined)
+  readonly $vocs = new RXObservableValue<IVoc[]>([])
+  readonly $selectedVoc = new RXObservableValue<IVoc | undefined>(undefined)
   readonly $mode = new RXObservableValue<'explore' | 'create' | 'rename'>('explore')
   readonly bufferController = new InputBufferController()
 
@@ -22,7 +24,9 @@ export class VocListVM extends ViewModel {
     this.actionsList.add('G', 'Select last vocabulary', () => this.moveCursorToTheLast())
 
     this.actionsList.add('<Right>', 'Select next vocabulary', () => this.moveCursor(1))
+    this.actionsList.add('<Down>', 'Select next vocabulary', () => this.moveCursor(1))
     this.actionsList.add('<Left>', 'Select prev vocabulary', () => this.moveCursor(-1))
+    this.actionsList.add('<Up>', 'Select prev vocabulary', () => this.moveCursor(-1))
 
     this.actionsList.add('n', 'New vocabulary (ADMIN)', () => this.createVoc())
     this.actionsList.add('r', 'Rename vocabulary (ADMIN)', () => this.renameVoc())
@@ -30,35 +34,47 @@ export class VocListVM extends ViewModel {
     this.actionsList.add('q', 'Quit', () => this.quit())
 
     this.actionsList.add('<CR>', 'Go [Enter]', () => this.applySelection())
- }
+    this.actionsList.add(':id<CR>', 'Print ID of vocabulary', () => this.printID())
+  }
 
   private moveCursor(step: number) {
-    const children = this.ctx.$selectedLang.value?.vocabularies ?? []
+    const children = this.$vocs.value
 
     for (let i = 0; i < children.length; i++) {
-      if (this.ctx.$selectedVoc.value === children[i]) {
+      if (this.$selectedVoc.value === children[i]) {
         if ((i + step) >= 0 && (i + step) < children.length)
-          this.ctx.$selectedVoc.value = children[i + step]
+          this.$selectedVoc.value = children[i + step]
         break
       }
     }
   }
 
   private moveCursorToTheLast() {
-    const vocabularies = this.ctx.$selectedLang.value?.vocabularies ?? []
-    this.ctx.$selectedVoc.value = vocabularies.length > 0 ? vocabularies[vocabularies.length - 1] : undefined
+    const children = this.$vocs.value
+    this.$selectedVoc.value = children.length > 0 ? children[children.length - 1] : undefined
   }
 
   private moveCursorToTheFirst() {
-    const vocabularies = this.ctx.$selectedLang.value?.vocabularies ?? []
-    this.ctx.$selectedVoc.value = vocabularies.length > 0 ? vocabularies[0] : undefined
+    const children = this.$vocs.value
+    this.$selectedVoc.value = children.length > 0 ? children[0] : undefined
   }
 
   private applySelection() {
-    if (this.ctx.$selectedVoc.value) {
-      this.ctx.navigate(this.ctx.$selectedVoc.value.path)
+    if (this.$selectedLang.value && this.$selectedVoc.value) {
+      this.ctx.navigator.navigateTo({ langCode: this.$selectedLang.value.code, vocCode: this.encodeName(this.$selectedVoc.value) })
       this.ctx.noteListVM.activate()
     }
+  }
+
+  private encodeName(voc:IVoc) {
+    return DomainService.encodeName(voc.name)
+  }
+
+  private printID() {
+    if (this.$selectedVoc.value)
+      this.ctx.$msg.value = { 'level': 'info', 'text': `ID=${this.$selectedVoc.value}` }
+    else
+      this.ctx.$msg.value = { 'level': 'info', 'text': 'Not selected' }
   }
 
   private createVoc() {
@@ -69,16 +85,15 @@ export class VocListVM extends ViewModel {
   }
 
   private renameVoc() {
-    if (!this.ctx.$selectedVoc.value) return
+    if (!this.$selectedVoc.value) return
     if (this.$mode.value !== 'explore') return
-    this.bufferController.$buffer.value = this.ctx.$selectedVoc.value.name
+    this.bufferController.$buffer.value = this.$selectedVoc.value.name
     this.$mode.value = 'rename'
   }
 
   private quit() {
-    this.ctx.navigate('/')
+    this.ctx.navigator.navigateTo({})
     this.ctx.langListVM.activate()
-    this.ctx.$selectedVoc.value = undefined
   }
 
   override async onKeyDown(e: KeyboardEvent): Promise<void> {
@@ -109,20 +124,22 @@ export class VocListVM extends ViewModel {
   }
 
   private completeCreation() {
-    const parent = this.ctx.$selectedLang.value
-    const title = this.bufferController.$buffer.value.trim()
-    if (parent && title) {
-      const v = parent.createVoc(title)
-      globalContext.server.createVocabulary(v).pipe()
-        .onReceive((data: any[]) => {
+    const lang = this.$selectedLang.value
+    const name = this.bufferController.$buffer.value.trim()
+    if (lang && name) {
+      const schema = {} as CreateVocSchema
+      schema.lang_id = lang.id
+      schema.name = name
+      
+      globalContext.server.createVoc(schema).pipe()
+        .onReceive((data: IVoc) => {
           console.log('VocListVM:applyInput, creating voc, result: ', data)
-          v.deserialize(data)
-          if (v.isDamaged) {
-            this.ctx.$msg.value = { level: 'warning', text: 'Created vocabulary is demaged' }
+          if (data) {
+            lang.vocs.splice(0, 0, data)
+            this.$vocs.value = [...lang.vocs]
+            this.$selectedVoc.value = data
           } else {
-            parent.add(v)
-            this.$vocs.value = this.ctx.$selectedLang.value?.vocabularies ? [...this.ctx.$selectedLang.value.vocabularies] : []
-            this.ctx.$selectedVoc.value = v
+            this.ctx.$msg.value = { level: 'warning', text: 'Created vocabulary is demaged' }
           }
         })
         .onError(e => {
@@ -134,51 +151,65 @@ export class VocListVM extends ViewModel {
   }
 
   private completeRenaming() {
-    if (!this.ctx.$selectedVoc.value) return
-    const newName = this.bufferController.$buffer.value.trim()
-    const voc = this.ctx.$selectedVoc.value
-    if (newName && newName === voc?.name) {
-      this.ctx.$msg.value = { level: 'info', text: 'No changes' }
-      return
-    }
+    const lang = this.$selectedLang.value
+    const voc = this.$selectedVoc.value
 
-    globalContext.server.renameVocabulary(voc.id, newName).pipe()
-      .onReceive((data: any[]) => {
-        console.log('VocListVM:applyInput, renaming voc, result: ', data)
-        voc.deserialize(data)
-        if (voc.isDamaged) {
-          this.ctx.$msg.value = { level: 'warning', text: 'Renamed vocabulary is demaged' }
-        } else {
-          this.ctx.$msg.value = { level: 'warning', text: 'renamed' }
-          this.$vocs.value = this.ctx.$selectedLang.value?.vocabularies ? [...this.ctx.$selectedLang.value.vocabularies] : []
-        }
-      })
-      .onError(e => {
-        const msg = e.message.indexOf('duplicate key') ? 'Note already exists' : e.message
-        this.ctx.$msg.value = { level: 'error', text: msg }
-      })
-      .subscribe()
+    if (lang && voc) {
+      const newName = this.bufferController.$buffer.value.trim()
+      if (!newName) {
+        this.ctx.$msg.value = { level: 'warning', text: 'Empty name' }
+        return
+      } else if (newName === voc.name) {
+        this.ctx.$msg.value = { level: 'info', text: 'No changes' }
+        return
+      }
+
+      const schema = { id: voc.id, name: newName } as RenameVocSchema
+      globalContext.server.renameVoc(schema).pipe()
+        .onReceive((data: IVoc) => {
+          console.log('VocListVM:applyInput, renaming voc, result: ', data)
+          if (data) {
+            this.ctx.$msg.value = { level: 'info', text: 'renamed' }
+            const ind = lang.vocs.findIndex(v => v.id === voc.id)
+            if (ind !== -1)
+              lang.vocs[ind] = { id: voc.id, lang_id: lang.id, name: newName } as IVoc
+            this.$vocs.value = [...lang.vocs]
+          } else {
+            this.ctx.$msg.value = { level: 'info', text: 'Renamed vocabulary is demaged' }
+          }
+        })
+        .onError(e => {
+          const msg = e.message.indexOf('duplicate key') ? 'Note already exists' : e.message
+          this.ctx.$msg.value = { level: 'error', text: msg }
+        })
+        .subscribe()
+    }
   }
 
   private deleteVoc() {
     if (this.$mode.value !== 'explore') return
-    if (!this.ctx.$selectedVoc.value) return
-    const voc = this.ctx.$selectedVoc.value
-    globalContext.server.deleteVocabulary(voc.id).pipe()
-      .onReceive(_ => {
-        console.log('VocListVM:deleteNote complete')
-        this.ctx.$msg.value = { level: 'info', text: 'deleted' }
-        this.moveCursor(1)
-        if (this.ctx.$selectedVoc.value === voc)
-          this.moveCursor(-1)
+    const lang = this.$selectedLang.value
+    const voc = this.$selectedVoc.value
+    if (lang && voc) {
+      const schema = { id: voc.id } as DeleteVocSchema
+      globalContext.server.deleteVoc(schema).pipe()
+        .onReceive(_ => {
+          console.log('VocListVM:deleteNote complete')
+          this.ctx.$msg.value = { level: 'info', text: 'deleted' }
+          this.moveCursor(1)
+          if (this.$selectedVoc.value === voc)
+            this.moveCursor(-1)
 
-        this.ctx.$selectedLang.value?.remove(voc)
-        this.$vocs.value = this.ctx.$selectedLang.value?.vocabularies ? [...this.ctx.$selectedLang.value.vocabularies] : []
-      })
-      .onError(e => {
-        this.ctx.$msg.value = { level: 'error', text: e.message }
-      })
-      .subscribe()
+          const ind = lang.vocs.findIndex(v => v.id === voc.id)
+          if (ind !== -1)
+            lang.vocs.splice(ind, 1)
+          this.$vocs.value = [...lang.vocs]
+        })
+        .onError(e => {
+          this.ctx.$msg.value = { level: 'error', text: e.message }
+        })
+        .subscribe()
+    }
   }
 
   /*
@@ -189,50 +220,24 @@ export class VocListVM extends ViewModel {
 
   override activate(): void {
     super.activate()
-    if (this.ctx.$selectedLang.value) {
-      if (this.ctx.$selectedLang.value.vocabulariesLoaded) {
-        this.$vocs.value = this.ctx.$selectedLang.value.vocabularies
-        this.parseLocation(this.ctx.$selectedLang.value)
-      }
-      else {
-        this.loadVocabularies(this.ctx.$selectedLang.value)
-      }
+    const k = this.ctx.navigator.$keys.value
+    const lang = k.langCode ? this.ctx.$allLangs.value.find(l => l.code === k.langCode) : undefined
+    this.$selectedLang.value = lang
+    if (lang) {
+      this.$vocs.value = lang.vocs
+      this.selectFromUrl()
     } else {
       this.ctx.langListVM.activate()
     }
   }
 
-  private loadVocabularies(l: Lang) {
-    console.log('VocListVM:loadVocabularies')
-    this.ctx.$msg.value = { text: 'Loading...', level: 'info' }
-    l.loadVocabularies().pipe()
-      .onReceive(_ => {
-        this.ctx.$msg.value = undefined
-        this.$vocs.value = l.vocabularies
-        this.parseLocation(l)
-      })
-      .onError(e => {
-        this.ctx.$msg.value = { text: e.message, level: 'error' }
-      })
-      .subscribe()
-  }
-
-
-  private parseLocation(l: Lang) {
-    const keys = Path.parseAdressBar()
-    let selectedVoc: Vocabulary | undefined
-
-    for (const v of l.vocabularies)
-      if (v.code === keys.vocCode) {
-        selectedVoc = v
-        break
-      }
-
-    if (selectedVoc) {
-      this.ctx.$selectedVoc.value = selectedVoc
+  private selectFromUrl() {
+    const k = this.ctx.navigator.$keys.value
+    if (k.vocCode) {
+      this.$selectedVoc.value = this.$vocs.value.find(v => this.encodeName(v) === k.vocCode)
       this.ctx.noteListVM.activate()
-    } else if (!this.ctx.$selectedVoc.value) {
-      this.ctx.$selectedVoc.value = l.vocabularies.length > 0 ? l.vocabularies[0] : undefined
+    } else {
+      this.$selectedVoc.value = this.$vocs.value.length > 0 ? this.$vocs.value[0] : undefined
     }
   }
 }

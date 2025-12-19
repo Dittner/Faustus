@@ -5,7 +5,6 @@ from fastapi import APIRouter, Response, status
 from pydantic import BaseModel
 from src.context import dertutor_context
 
-
 router = APIRouter(prefix='', tags=['Corpus'])
 log = logging.getLogger('uvicorn')
 
@@ -16,7 +15,11 @@ async def check_de_audio_file(key: str):
     if dertutor_context.de_pron_db.has(decoded_key):
         return Response(status_code=status.HTTP_200_OK)
     else:
-        return Response(content=f'Audio <{decoded_key}> not found', status_code=status.HTTP_404_NOT_FOUND, media_type='text/html')
+        return Response(
+            content=f'Audio <{decoded_key}> not found',
+            status_code=status.HTTP_404_NOT_FOUND,
+            media_type='text/html',
+        )
 
 
 @router.get('/corpus/de_pron/search')
@@ -26,7 +29,11 @@ async def get_de_audio_file(key: str):
     if bb:
         return Response(content=bb, media_type='audio/mpeg')
     else:
-        return Response(content=f'Audio <{decoded_key}> not found', status_code=status.HTTP_404_NOT_FOUND, media_type='text/html')
+        return Response(
+            content=f'Audio <{decoded_key}> not found',
+            status_code=status.HTTP_404_NOT_FOUND,
+            media_type='text/html',
+        )
 
 
 @router.head('/corpus/en_pron/search')
@@ -35,7 +42,11 @@ async def check_en_audio_file(key: str):
     if dertutor_context.en_pron_db.has(decoded_key):
         return Response(status_code=status.HTTP_200_OK)
     else:
-        return Response(content=f'Audio <{decoded_key}> not found', status_code=status.HTTP_404_NOT_FOUND, media_type='text/html')
+        return Response(
+            content=f'Audio <{decoded_key}> not found',
+            status_code=status.HTTP_404_NOT_FOUND,
+            media_type='text/html',
+        )
 
 
 @router.get('/corpus/en_pron/search')
@@ -45,7 +56,12 @@ async def get_en_audio_file(key: str):
     if bb:
         return Response(content=bb, media_type='audio/mpeg')
     else:
-        return Response(content=f'Audio <{decoded_key}> not found', status_code=status.HTTP_404_NOT_FOUND, media_type='text/html')
+        return Response(
+            content=f'Audio <{decoded_key}> not found',
+            status_code=status.HTTP_404_NOT_FOUND,
+            media_type='text/html',
+        )
+
 
 @router.head('/corpus/en_ru/search')
 async def check_translation(key: str):
@@ -53,12 +69,17 @@ async def check_translation(key: str):
     if dertutor_context.en_ru_db.has(decoded_key):
         return Response(status_code=status.HTTP_200_OK)
     else:
-        return Response(content=f'Audio <{decoded_key}> not found', status_code=status.HTTP_404_NOT_FOUND, media_type='text/html')
+        return Response(
+            content=f'Audio <{decoded_key}> not found',
+            status_code=status.HTTP_404_NOT_FOUND,
+            media_type='text/html',
+        )
 
 
 class EnRuExample(BaseModel):
     en: str
     ru: str
+
 
 class EnRuResponse(BaseModel):
     key: str
@@ -73,4 +94,8 @@ async def get_translation(key: str):
     if item:
         return item
     else:
-        return Response(content=f'Translation of <{decoded_key}> not found', status_code=status.HTTP_404_NOT_FOUND, media_type='text/html')
+        return Response(
+            content=f'Translation of <{decoded_key}> not found',
+            status_code=status.HTTP_404_NOT_FOUND,
+            media_type='text/html',
+        )

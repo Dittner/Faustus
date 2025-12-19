@@ -1,9 +1,10 @@
 import { RX, RXObservableValue } from "flinker"
 
 import { globalContext } from "../../../App"
-import { MediaFile, Note } from "../../../domain/DomainModel"
-import { DertutorContext } from "../../DertutorContext"
+import { IMediaFile, INote, ILang, AVAILABLE_LEVELS } from "../../../domain/DomainModel"
+import { DertutorContext } from "../../../DertutorContext"
 import { ViewModel } from "../ViewModel"
+import { UpdateNoteSchema } from "../../../backend/Schema"
 
 export class FileWrapper {
   readonly file: File
@@ -15,25 +16,31 @@ export class FileWrapper {
 }
 
 export class EditorVM extends ViewModel {
-  readonly $editingNote = new RXObservableValue<Note | undefined>(undefined)
+  readonly $selectedLang = new RXObservableValue<ILang | undefined>(undefined)
+  readonly $editingNote = new RXObservableValue<INote | undefined>(undefined)
   readonly $level = new RXObservableValue(0)
+  readonly $tagId = new RXObservableValue<number | undefined>(undefined)
   readonly $audioUrl = new RXObservableValue('')
   readonly $buffer = new RXObservableValue('')
   readonly $hasChanges = new RXObservableValue(false)
   readonly $filesPendingUpload = new RXObservableValue<Array<FileWrapper>>([])
-  readonly $mediaFiles = new RXObservableValue<Array<MediaFile>>([])
+  readonly $mediaFiles = new RXObservableValue<Array<IMediaFile>>([])
 
   constructor(ctx: DertutorContext) {
     super('editor', ctx)
-    RX.combine(this.$buffer, this.$level, this.$audioUrl).pipe()
+    RX.combine(this.$buffer, this.$level, this.$tagId, this.$audioUrl).pipe()
       .skipFirst()
       .onReceive(values => {
         const buffer = values[0]
-        const level = values[1]
-        const audioUrl = values[2]
+        const level = values[1] as number
+        const tagId = values[2] as number | undefined
+        const audioUrl = values[3]
         const note = this.$editingNote.value
         if (note) {
-          this.$hasChanges.value = buffer !== note.text || level !== note.level || audioUrl !== note.audioUrl
+          this.$hasChanges.value = buffer !== note.text ||
+            level !== note.level ||
+            tagId !== note.tag_id ||
+            audioUrl !== note.audio_url
         } else {
           this.$hasChanges.value = false
         }
@@ -58,7 +65,7 @@ export class EditorVM extends ViewModel {
 
   quit() {
     if (this.$hasChanges.value) {
-      this.ctx.$msg.value = { text: 'Discard/Save changes before quitting', level: 'warning' }
+      this.ctx.$msg.value = { text: this.noteToString(this.$editingNote.value) + ', discard/save changes before quitting', level: 'warning' }
     } else {
       this.ctx.noteListVM.activate()
     }
@@ -72,47 +79,55 @@ export class EditorVM extends ViewModel {
     }
 
     if (this.$hasChanges.value) {
-      note.text = this.$buffer.value
-      note.level = this.$level.value
-      note.audioUrl = this.$audioUrl.value
+      const schema = {} as UpdateNoteSchema
+      schema.id = note.id
+      schema.voc_id = note.voc_id
+      schema.name = note.name
+      schema.text = this.$buffer.value
+      schema.level = this.$level.value
+      schema.tag_id = this.$tagId.value
+      schema.audio_url = this.$audioUrl.value
+
       this.$hasChanges.value = false
 
-      globalContext.server.updateNote(note).pipe()
+      globalContext.server.updateNote(schema).pipe()
         .onReceive((data: any) => {
-          this.ctx.$msg.value = { text: 'written', level: 'info' }
-          note.deserialize(data)
+          this.ctx.$msg.value = { text: this.noteToString(note) + ', written', level: 'info' }
         })
         .onError(e => {
-          this.ctx.$msg.value = { text: e.message, level: 'error' }
+          this.ctx.$msg.value = { text: this.noteToString(note) + ', ' + e.message, level: 'error' }
         })
         .subscribe()
 
     } else {
-      this.ctx.$msg.value = { text: 'Note has no changes', level: 'info' }
+      this.ctx.$msg.value = { text: this.noteToString(note) + ', no changes', level: 'info' }
     }
   }
 
   discardChanges() {
-    if (this.$editingNote.value) {
-      this.$buffer.value = this.$editingNote.value.text
-      this.$level.value = this.$editingNote.value.level
-      this.$audioUrl.value = this.$editingNote.value.audioUrl
+    const note = this.$editingNote.value
+    if (note) {
+      this.$buffer.value = note.text
+      this.$level.value = note.level
+      this.$tagId.value = note.tag_id
+      this.$audioUrl.value = note.audio_url
     }
   }
 
-  getAudioLink() {
+  loadAudioLink() {
+    const lang = this.$selectedLang.value
     const note = this.$editingNote.value
-    if (note) {
-      const key = encodeURIComponent(note.title)
-      const link = note.vocabulary.lang.code === 'en' ? '/corpus/en_pron/search?key=' + key : '/corpus/de_pron/search?key=' + key
+    if (lang && note) {
+      const key = encodeURIComponent(note.name)
+      const link = lang.code === 'en' ? '/corpus/en_pron/search?key=' + key : '/corpus/de_pron/search?key=' + key
       globalContext.server.validateMp3Link(link).pipe()
         .onReceive(_ => {
           this.$audioUrl.value = link
-          this.ctx.$msg.value = { text: 'audio_url:' + link, level: 'info' }
+          this.ctx.$msg.value = { text: this.noteToString(note) + ', audio_url:' + link, level: 'info' }
         })
         .onError(e => {
           this.$audioUrl.value = ''
-          this.ctx.$msg.value = { text: e.message, level: 'warning' }
+          this.ctx.$msg.value = { text: this.noteToString(note) + ', ' + e.message, level: 'warning' }
         })
         .subscribe()
     }
@@ -126,7 +141,7 @@ export class EditorVM extends ViewModel {
   loadTranslation() {
     const note = this.$editingNote.value
     if (note) {
-      globalContext.server.loadEnRuTranslation(note.title).pipe()
+      globalContext.server.loadEnRuTranslation(note.name).pipe()
         .onReceive(data => {
           let res = '## ' + data.key + '\n'
           res += data.description
@@ -138,11 +153,11 @@ export class EditorVM extends ViewModel {
             })
           }
           this.$buffer.value = res
-          this.ctx.$msg.value = undefined
+          this.ctx.$msg.value = { text: this.noteToString(note), level: 'info' }
         })
         .onError(e => {
           this.$audioUrl.value = ''
-          this.ctx.$msg.value = { text: e.message, level: 'warning' }
+          this.ctx.$msg.value = { text: this.noteToString(note) + ', ' + e.message, level: 'warning' }
         })
         .subscribe()
     }
@@ -158,21 +173,19 @@ export class EditorVM extends ViewModel {
     let uploadingFiles = this.$filesPendingUpload.value.length
     this.$filesPendingUpload.value.forEach(w => {
       globalContext.server.uploadFile(note.id, w.file, w.$name.value).pipe()
-        .onReceive((data: any[]) => {
-          this.ctx.$msg.value = undefined
+        .onReceive((data: IMediaFile | undefined) => {
+          this.ctx.$msg.value = { text: this.noteToString(note), level: 'info' }
           console.log('EditorVM:uploadFile, complete, data: ', data)
-          const mf = new MediaFile()
-          mf.deserialize(data)
-          if (mf.isDamaged) {
-            this.ctx.$msg.value = { text: 'Mediaresource is uploaded, but received damaged result', level: 'error' }
-          } else {
-            this.ctx.$msg.value = { text: 'uploaded', level: 'info' }
-            note.mediaFiles.push(mf)
+          if (data) {
+            this.ctx.$msg.value = { text: this.noteToString(note) + ', uploaded', level: 'info' }
+            this.$editingNote.value = { ...note, media: note.media ? [...note.media, data] : [data] }
             this.$mediaFiles.value = [...this.$mediaFiles.value]
+          } else {
+            this.ctx.$msg.value = { text: this.noteToString(note) + ', mediaresource is uploaded, but received damaged result', level: 'error' }
           }
         })
         .onError(e => {
-          this.ctx.$msg.value = { text: e.message, level: 'error' }
+          this.ctx.$msg.value = { text: this.noteToString(note) + ', ' + e.message, level: 'error' }
         })
         .onComplete(() => {
           uploadingFiles--
@@ -190,23 +203,32 @@ export class EditorVM extends ViewModel {
     }
   }
 
-  deleteMediaFile(mf: MediaFile) {
-    if (!this.$editingNote.value) return
+  deleteMediaFile(mf: IMediaFile) {
     const note = this.$editingNote.value
-    globalContext.server.deleteFile(mf.uid).pipe()
+    if (!note) return
+    globalContext.server.deleteFile({ uid: mf.uid }).pipe()
       .onReceive((data: any[]) => {
-        this.ctx.$msg.value = { text: 'deleted', level: 'info' }
+        this.ctx.$msg.value = { text: this.noteToString(note) + ', deleted', level: 'info' }
         console.log('EditorVM:deleteMediaFile, complete, data: ', data)
-        const index = note.mediaFiles.indexOf(mf)
-        if(index !== -1) {
-          note.mediaFiles.splice(index, 1)
-          this.$mediaFiles.value = [...note.mediaFiles]
+        const index = note.media?.indexOf(mf)
+        if (index && index !== -1) {
+          note.media && note.media.splice(index, 1)
+          this.$mediaFiles.value = note.media ? [...note.media] : []
         }
       })
       .onError(e => {
-        this.ctx.$msg.value = { text: e.message, level: 'error' }
+        this.ctx.$msg.value = { text: this.noteToString(note) + ', ' + e.message, level: 'error' }
       })
       .subscribe()
+  }
+
+  reprLevel(level: number) {
+    return level < AVAILABLE_LEVELS.length ? AVAILABLE_LEVELS[level] : ''
+  }
+
+  getMediaFileLink(mf: IMediaFile) {
+    const note = this.$editingNote.value
+    return note ? `/media/${note.id}/${mf.uid}` : ''
   }
 
   /*
@@ -217,30 +239,39 @@ export class EditorVM extends ViewModel {
 
   override activate(): void {
     super.activate()
-    if (this.ctx.$selectedNote.value) {
-      this.$editingNote.value = this.ctx.$selectedNote.value
-      this.$buffer.value = this.$editingNote.value.text
-      this.$level.value = this.$editingNote.value.level
-      this.$audioUrl.value = this.$editingNote.value.audioUrl
-      if (this.ctx.$selectedNote.value.mediaLoaded) this.$mediaFiles.value = this.ctx.$selectedNote.value.mediaFiles
-      else this.loadMediaFiles(this.ctx.$selectedNote.value)
+    const k = this.ctx.navigator.$keys.value
+    this.$selectedLang.value = k.langCode ? this.ctx.$allLangs.value.find(l => l.code === k.langCode) : undefined
+    if (k.noteId && this.$selectedLang.value) {
+      this.loadNote(k.noteId)
     } else {
-      this.ctx.vocListVM.activate()
+      this.ctx.noteListVM.activate()
     }
   }
 
-  private loadMediaFiles(n: Note) {
-    console.log('EditorVM:loadMediaFiles')
-    this.ctx.$msg.value = { text: 'Loading media...', level: 'info' }
-    n.loadMediaFiles().pipe()
-      .onReceive(_ => {
-        this.$mediaFiles.value = n.mediaFiles
-        this.ctx.$msg.value = { text: 'Ready', level: 'info' }
-      })
-      .onError(e => {
+  private loadNote(id: number) {
+    globalContext.server.loadNote(id).pipe()
+      .onReceive((note: INote | undefined) => {
+        this.$editingNote.value = note
+        this.$mediaFiles.value = note?.media ?? []
+        this.ctx.$msg.value = { text: this.noteToString(note), level: 'info' }
+        if (note) {
+          this.$editingNote.value = note
+          this.$buffer.value = note.text
+          this.$level.value = note.level
+          this.$tagId.value = note.tag_id
+          this.$audioUrl.value = note.audio_url
+        } else {
+          this.ctx.noteListVM.activate()
+        }
+      }).onError(e => {
         this.$mediaFiles.value = []
         this.ctx.$msg.value = { text: e.message, level: 'error' }
       })
-      .subscribe()
+  }
+
+  private noteToString(n: INote | undefined) {
+    const lang = this.$selectedLang.value
+    const voc = this.$selectedLang.value?.vocs.find(v => v.id === n?.voc_id)
+    return n && voc && lang ? `${lang.name} › ${voc.name} › ${n.name}(ID:${n.id})` : 'Note not found'
   }
 }

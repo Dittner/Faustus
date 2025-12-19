@@ -1,19 +1,33 @@
 import { RXObservableValue } from "flinker"
 
 import { globalContext } from "../../../App"
-import { Path } from "../../../app/Utils"
-import { Note, Vocabulary } from "../../../domain/DomainModel"
+import { AVAILABLE_LEVELS, DomainService, ILang, INote, IPage, IVoc } from "../../../domain/DomainModel"
 import { InputBufferController } from "../../controls/Input"
-import { DertutorContext } from "../../DertutorContext"
+import { DertutorContext } from "../../../DertutorContext"
 import { ViewModel } from "../ViewModel"
+import { CreateNoteSchema, DeleteNoteSchema, GetPageOfNotesSchema, RenameNoteSchema } from "../../../backend/Schema"
+
 
 export class NoteListVM extends ViewModel {
-  readonly $notes = new RXObservableValue<Array<Note>>([])
+  readonly $selectedLang = new RXObservableValue<ILang | undefined>(undefined)
+  readonly $selectedVoc = new RXObservableValue<IVoc | undefined>(undefined)
+  readonly $selectedNote = new RXObservableValue<INote | undefined>(undefined)
+  readonly $page = new RXObservableValue<IPage | undefined>(undefined)
+  readonly $level = new RXObservableValue<number | undefined>(undefined)
+  readonly $tagId = new RXObservableValue<number | undefined>(undefined)
+  readonly $searchKey = new RXObservableValue('')
+  readonly $searchBuffer = new RXObservableValue('')
+  readonly $searchGlobally = new RXObservableValue(false)
+
   readonly $mode = new RXObservableValue<'explore' | 'create' | 'rename'>('explore')
   readonly bufferController = new InputBufferController()
 
   constructor(ctx: DertutorContext) {
     super('notes', ctx)
+    this.$level.pipe().skipFirst().onReceive(_ => this.reloadPage(1, 'auto'))
+    this.$tagId.pipe().skipFirst().onReceive(_ => this.reloadPage(1, 'auto'))
+    this.$searchKey.pipe().skipFirst().onReceive(_ => this.reloadPage(1, 'auto'))
+    this.$searchGlobally.pipe().skipFirst().onReceive(_ => this.$searchKey.value && this.reloadPage(1, 'auto'))
     this.addKeybindings()
   }
 
@@ -21,58 +35,63 @@ export class NoteListVM extends ViewModel {
     this.actionsList.add('g', 'Select first note', () => this.moveCursorToTheFirst())
     this.actionsList.add('G', 'Select last note', () => this.moveCursorToTheLast())
 
-    this.actionsList.add('<Right>', 'Select next note', () => this.moveCursor(1))
-    this.actionsList.add('<Left>', 'Select prev note', () => this.moveCursor(-1))
+    this.actionsList.add('<Right>', 'Select next note', () => this.moveNext())
+    this.actionsList.add('<Left>', 'Select prev note', () => this.movePrev())
 
     this.actionsList.add('n', 'New note (ADMIN)', () => this.createNote())
     this.actionsList.add('r', 'Rename note (ADMIN)', () => this.renameNote())
+    this.actionsList.add('e', 'Edit note (ADMIN)', () => this.edit())
     this.actionsList.add(':d<CR>', 'Delete note (ADMIN)', () => this.deleteNote())
-    this.actionsList.add('<Space>', 'Play Audio', () => this.playAudio())
 
+    this.actionsList.add('<Space>', 'Play audio', () => this.playAudio())
+    this.actionsList.add(':id<CR>', 'Print ID of note', () => this.printID())
     this.actionsList.add('q', 'Quit', () => this.quit())
-    this.actionsList.add('e', 'Edit (ADMIN)', () => this.edit())
-
-    //this.actionsList.add(':r<CR>', 'Rename file', () => this.renameFile())
-    //this.actionsList.add('/', 'Search file', () => this.searchFile())
   }
 
-  private moveCursor(step: number) {
-    const children = this.ctx.$selectedVoc.value?.notes ?? []
+  private moveNext() {
+    const p = this.$page.value
+    const n = this.$selectedNote.value
+    if (!p || !n) return
 
-    for (let i = 0; i < children.length; i++) {
-      if (this.ctx.$selectedNote.value === children[i]) {
-        if ((i + step) >= 0 && (i + step) < children.length)
-          this.ctx.$selectedNote.value = children[i + step]
-        break
-      }
+    const children = p.items
+    const index = children.findIndex(child => child.id === n.id)
+    if (index !== -1) {
+      if (index < children.length - 1)
+        this.selectNote(children[index + 1])
+      else if (p.page < p.pages)
+        this.reloadPage(p.page + 1, 'first')
     }
+  }
 
-    if (this.ctx.$selectedNote.value)
-      this.ctx.navigate(this.ctx.$selectedNote.value.path)
+  private movePrev() {
+    const p = this.$page.value
+    const n = this.$selectedNote.value
+    if (!p || !n) return
+
+    const children = p.items
+    const index = children.findIndex(child => child.id === n.id)
+    if (index !== -1) {
+      if (index > 0)
+        this.selectNote(children[index - 1])
+      else if (p.page > 1)
+        this.reloadPage(p.page - 1, 'last')
+    }
   }
 
   private moveCursorToTheLast() {
-    const children = this.ctx.$selectedVoc.value?.notes ?? []
-    this.ctx.$selectedNote.value = children.length > 0 ? children[children.length - 1] : undefined
-    if (this.ctx.$selectedNote.value)
-      this.ctx.navigate(this.ctx.$selectedNote.value.path)
+    const children = this.$page.value?.items ?? []
+    this.selectNote(children.length > 0 ? children[children.length - 1] : undefined)
   }
 
   private moveCursorToTheFirst() {
-    const children = this.ctx.$selectedVoc.value?.notes ?? []
-    this.ctx.$selectedNote.value = children.length > 0 ? children[0] : undefined
-    if (this.ctx.$selectedNote.value)
-      this.ctx.navigate(this.ctx.$selectedNote.value.path)
+    const children = this.$page.value?.items ?? []
+    this.selectNote(children.length > 0 ? children[0] : undefined)
   }
 
-
   private quit() {
-    const keys = Path.parseAdressBar()
-    if (keys.langCode && keys.vocCode) {
-      this.ctx.navigate('/' + keys.langCode)
-      this.ctx.vocListVM.activate()
-      this.ctx.$selectedNote.value = undefined
-    }
+    this.$page.value = undefined
+    this.ctx.navigator.navigateTo({ langCode: this.$selectedLang.value?.code })
+    this.ctx.vocListVM.activate()
   }
 
   private edit() {
@@ -91,26 +110,28 @@ export class NoteListVM extends ViewModel {
   }
 
   private renameNote() {
-    if (!this.ctx.$selectedNote.value) return
+    if (!this.$selectedNote.value) return
     if (this.$mode.value !== 'explore') return
-    this.bufferController.$buffer.value = this.ctx.$selectedNote.value.title
+    this.bufferController.$buffer.value = this.$selectedNote.value.name
     this.$mode.value = 'rename'
   }
 
   private deleteNote() {
     if (this.$mode.value !== 'explore') return
-    if (!this.ctx.$selectedNote.value) return
-    const note = this.ctx.$selectedNote.value
-    globalContext.server.deleteNote(note.id).pipe()
+    const note = this.$selectedNote.value
+    if (!note) return
+    const schema = { id: note.id } as DeleteNoteSchema
+    globalContext.server.deleteNote(schema).pipe()
       .onReceive(_ => {
         console.log('NoteListVM:deleteNote complete')
         this.ctx.$msg.value = { level: 'info', text: 'deleted' }
-        this.moveCursor(1)
-        if (this.ctx.$selectedNote.value === note)
-          this.moveCursor(-1)
+        this.moveNext()
+        if (this.$selectedNote.value === note)
+          this.movePrev()
+        if (this.$selectedNote.value === note)
+          this.selectNote(undefined)
 
-        this.ctx.$selectedVoc.value?.remove(note)
-        this.$notes.value = this.ctx.$selectedVoc.value?.notes ? [...this.ctx.$selectedVoc.value.notes] : []
+        this.reloadPage(this.$page.value?.page ?? 1)
       })
       .onError(e => {
         this.ctx.$msg.value = { level: 'error', text: e.message }
@@ -118,8 +139,58 @@ export class NoteListVM extends ViewModel {
       .subscribe()
   }
 
-  private playAudio() {
-    this.ctx.$selectedNote.value?.play()
+  playAudio() {
+    if (this.$selectedNote.value?.audio_url)
+      new Audio(globalContext.server.baseUrl + this.$selectedNote.value?.audio_url).play()
+  }
+
+
+  reprLevel(level: number) {
+    return level < AVAILABLE_LEVELS.length ? AVAILABLE_LEVELS[level] : ''
+  }
+
+  reprTag(tagId: number | undefined) {
+    if (tagId)
+      return this.$selectedLang.value?.tags.find(t => t.id === tagId)?.name ?? ''
+    else
+      return ''
+  }
+
+  getNoteLink(n: INote) {
+    return this.ctx.navigator.buildUrl(this.getNoteLinkKeys(n))
+  }
+
+  getPageLink(p: number) {
+    return this.ctx.navigator.buildUrl({
+      langCode: this.$selectedLang.value?.code,
+      vocCode: this.encodeName(this.$selectedVoc.value),
+      page: p,
+      level: this.$level.value,
+      tagId: this.$tagId.value,
+    })
+  }
+
+  encodeName(voc: IVoc | undefined) {
+    return voc && DomainService.encodeName(voc.name)
+  }
+
+  private getNoteLinkKeys(n: INote | undefined) {
+    return {
+      langCode: this.$selectedLang.value?.code,
+      vocCode: this.encodeName(this.$selectedVoc.value),
+      page: this.$page.value?.page,
+      noteId: n?.id,
+      level: this.$level.value,
+      tagId: this.$tagId.value,
+      searchKey: this.$searchKey.value,
+      searchGlobally: this.$searchGlobally.value,
+    }
+  }
+
+  selectNote(n: INote | undefined) {
+    this.$selectedNote.value = n
+    this.ctx.navigator.navigateTo(this.getNoteLinkKeys(n))
+    window.scrollTo(0, 0)
   }
 
   override async onKeyDown(e: KeyboardEvent): Promise<void> {
@@ -150,22 +221,69 @@ export class NoteListVM extends ViewModel {
   }
 
   private completeCreation() {
-    const parent = this.ctx.$selectedVoc.value
-    const title = this.bufferController.$buffer.value.trim()
-    if (parent && title) {
-      const n = parent.createNote(title)
-      globalContext.server.createNote(n).pipe()
-        .onReceive((data: any[]) => {
-          console.log('NoteListVM:applyInput, creating note, result: ', data)
-          n.deserialize(data)
-          if (n.isDamaged) {
-            this.ctx.$msg.value = { level: 'warning', text: 'Created note is demaged' }
+    const lang = this.$selectedLang.value
+    const voc = this.$selectedVoc.value
+    const name = this.bufferController.$buffer.value.trim()
+    if (lang && voc && name) {
+      const scheme = {} as CreateNoteSchema
+      scheme.lang_id = lang.id
+      scheme.voc_id = voc.id
+      scheme.name = name
+      scheme.text = '# ' + name + '\n\n' + (lang.code === 'en' ? '## Examples\n' : '## Beispiele\n')
+      scheme.level = this.ctx.navigator.$keys.value.level ?? 0
+      scheme.tag_id = this.ctx.navigator.$keys.value.tagId
+      scheme.audio_url = ''
+
+      console.log('Creating note, schema:', scheme)
+      console.log('Creating note, json:', JSON.stringify(scheme))
+
+      globalContext.server.createNote(scheme).pipe()
+        .onReceive((n: INote | undefined) => {
+          console.log('NoteListVM:applyInput, creating note, result: ', n)
+          if (n) {
+            this.selectNote(n)
+            this.ctx.editorVM.activate()
+          }
+        })
+        .onError(e => {
+          const msg = e.message.indexOf('duplicate key') !== -1 ? 'Note already exists' : e.message
+          this.ctx.$msg.value = { level: 'error', text: msg }
+        })
+        .subscribe()
+    }
+  }
+
+  private completeRenaming() {
+    const page = this.$page.value
+    const note = this.$selectedNote.value
+    if (page && note) {
+      const newName = this.bufferController.$buffer.value.trim()
+      if (!newName) {
+        this.ctx.$msg.value = { level: 'info', text: 'Empty name' }
+        return
+      }
+      else if (newName === note.name) {
+        this.ctx.$msg.value = { level: 'info', text: 'No changes' }
+        return
+      }
+
+      const scheme = {} as RenameNoteSchema
+      scheme.id = note.id
+      scheme.name = newName
+
+      globalContext.server.renameNote(scheme).pipe()
+        .onReceive((note: INote | undefined) => {
+          console.log('NoteListVM:completeRenaming, res: ', note)
+          if (note) {
+            this.ctx.$msg.value = { level: 'info', text: 'renamed' }
+
+            const ind = page.items.findIndex(n => n.id === note.id)
+            if (ind !== -1 && page) {
+              page.items[ind] = { ...note, name: newName } as INote
+              this.$page.value = { ...page }
+            }
           } else {
-            parent.add(n)
-            this.$notes.value = this.ctx.$selectedVoc.value?.notes ? [...this.ctx.$selectedVoc.value.notes] : []
-            this.ctx.$selectedNote.value = n
-            if (this.ctx.$selectedNote.value)
-              this.ctx.navigate(this.ctx.$selectedNote.value.path)
+            this.ctx.$msg.value = { level: 'warning', text: 'Renamed note is failed' }
           }
         })
         .onError(e => {
@@ -176,32 +294,12 @@ export class NoteListVM extends ViewModel {
     }
   }
 
-
-  private completeRenaming() {
-    if (!this.ctx.$selectedNote.value) return
-    const newTitle = this.bufferController.$buffer.value.trim()
-    const note = this.ctx.$selectedNote.value
-    if (newTitle && newTitle === note.title) {
-      this.ctx.$msg.value = { level: 'info', text: 'No changes' }
-      return
-    }
-
-    globalContext.server.renameNote(note.id, newTitle).pipe()
-      .onReceive((data: any[]) => {
-        console.log('NoteListVM:applyInput, renaming note, result: ', data)
-        note.deserialize(data)
-        if (note.isDamaged) {
-          this.ctx.$msg.value = { level: 'warning', text: 'Renamed note is demaged' }
-        } else {
-          this.ctx.$msg.value = { level: 'warning', text: 'renamed' }
-          this.$notes.value = this.ctx.$selectedVoc.value?.notes ? [...this.ctx.$selectedVoc.value.notes] : []
-        }
-      })
-      .onError(e => {
-        const msg = e.message.indexOf('duplicate key') ? 'Note already exists' : e.message
-        this.ctx.$msg.value = { level: 'error', text: msg }
-      })
-      .subscribe()
+  private printID() {
+    const n = this.$selectedNote.value
+    if (n)
+      this.ctx.$msg.value = { 'level': 'info', 'text': `ID=${n.id}` }
+    else
+      this.ctx.$msg.value = { 'level': 'info', 'text': 'Not selected' }
   }
 
   /*
@@ -211,50 +309,68 @@ export class NoteListVM extends ViewModel {
   */
 
   override activate(): void {
+    this.ctx.$msg.value = undefined
+    const k = this.ctx.navigator.$keys.value
+    const lang = k.langCode ? this.ctx.$allLangs.value.find(l => l.code === k.langCode) : undefined
+    const voc = lang && k.vocCode ? lang.vocs.find(v => DomainService.encodeName(v.name) === k.vocCode) : undefined
+
+    if (this.$selectedVoc.value !== voc)
+      this.$page.value = undefined
+
+    this.$selectedLang.value = lang
+    this.$selectedVoc.value = voc
+    this.$level.value = k.level
+    this.$tagId.value = k.tagId
+    this.$searchKey.value = k.searchKey ?? ''
+    this.$searchBuffer.value = k.searchKey ?? ''
+
     super.activate()
-    if (this.ctx.$selectedVoc.value) {
-      if (this.ctx.$selectedVoc.value.notesLoaded) {
-        this.$notes.value = this.ctx.$selectedVoc.value.notes
-        this.parseLocation(this.ctx.$selectedVoc.value)
-      }
-      else {
-        this.loadNotes(this.ctx.$selectedVoc.value)
-      }
+
+    if (lang) {
+      this.reloadPage(k.page ?? 1)
     } else {
-      this.ctx.vocListVM.activate()
+      this.ctx.langListVM.activate()
     }
   }
 
-  private loadNotes(v: Vocabulary) {
-    console.log('DertutorContext:loadNotes')
-    this.ctx.$msg.value = { text: 'Loading...', level: 'info' }
-    v.loadNotes().pipe()
-      .onReceive(_ => {
-        this.ctx.$msg.value = undefined
-        this.$notes.value = v.notes
-        this.parseLocation(v)
+  reloadPage(pageIndex: number, selectNote: 'auto' | 'first' | 'last' = 'auto') {
+    if (!this.isActive) return
+    const lang = this.$selectedLang.value
+    const voc = this.$selectedVoc.value
+    if (!lang || !voc) {
+      this.ctx.vocListVM.activate()
+      return
+    }
+
+    const scheme = {} as GetPageOfNotesSchema
+    scheme.lang_id = lang.id
+    scheme.page = pageIndex
+    scheme.size = DertutorContext.PAGE_SIZE
+    scheme.voc_id = this.$searchKey.value && this.$searchGlobally.value ? undefined : voc.id
+    scheme.key = this.$searchKey.value.length > 1 ? this.$searchKey.value : undefined
+    scheme.level = this.$level.value
+    scheme.tag_id = this.$tagId.value
+
+    console.log('NoteListVN.reloadPage, page:', pageIndex)
+    globalContext.server.loadNotes(scheme).pipe()
+      .onReceive((p: IPage) => {
+        console.log('NoteListVM:reloadPage, res:', p)
+        console.log('NoteListVM:reloadPage, keys:', this.ctx.navigator.$keys.value)
+        this.$page.value = p
+        const noteId = this.ctx.navigator.$keys.value.noteId
+        const note = p.items.find(n => n.id === noteId)
+        if (selectNote === 'auto' && note)
+          this.selectNote(note)
+        else if (selectNote !== 'last' && p.items.length > 0)
+          this.selectNote(p.items[0])
+        else if (selectNote === 'last' && p.items.length > 0)
+          this.selectNote(p.items[p.items.length - 1])
+        else
+          this.selectNote(undefined)
       })
       .onError(e => {
-        this.ctx.$msg.value = { text: e.message, level: 'error' }
+        this.ctx.$msg.value = { level: 'error', text: e.message }
       })
       .subscribe()
-  }
-
-
-  private parseLocation(v: Vocabulary) {
-    const keys = Path.parseAdressBar()
-    let selectedNote: Note | undefined
-
-    for (const n of v.notes)
-      if (n.id === keys.noteId) {
-        selectedNote = n
-        break
-      }
-
-    if (selectedNote) {
-      this.ctx.$selectedNote.value = selectedNote
-    } else {
-      this.ctx.$selectedNote.value = v.notes.length > 0 ? v.notes[0] : undefined
-    }
   }
 }

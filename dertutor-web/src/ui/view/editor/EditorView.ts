@@ -1,12 +1,10 @@
 import { div, hlist, hstack, input, p, spacer, span, vstack } from "flinker-dom"
-import { globalContext, MessangerView } from "../../../App"
-import { LayoutLayer } from "../../../app/Application"
-import { MediaFile, Note, noteLevels } from "../../../domain/DomainModel"
+import { globalContext } from "../../../App"
+import { IMediaFile, INote, ITag } from "../../../domain/DomainModel"
 import { BlueBtn, Btn, RedBtn } from "../../controls/Button"
 import { FontFamily } from "../../controls/Font"
-import { StatusBar, StatusBarModeName } from "../../controls/StatusBar"
-import { DertutorContext } from "../../DertutorContext"
 import { Markdown } from "../../controls/Markdown"
+import { DertutorContext } from "../../../DertutorContext"
 import { theme } from "../../theme/ThemeManager"
 import { FileWrapper } from "./EditorVM"
 import { TextEditor } from "./TextEditor"
@@ -18,7 +16,7 @@ export const EditorView = () => {
   const ctx = DertutorContext.self
   const vm = ctx.editorVM
 
-  let noteInFocus: Note | undefined = undefined
+  let noteInFocus: INote | undefined = undefined
   const formatter = new TextFormatter()
 
   const onFocus = (e: FocusEvent) => {
@@ -44,12 +42,9 @@ export const EditorView = () => {
       .bind(vm.$buffer)
       .react(s => {
         s.position = 'fixed'
-        s.width = window.innerWidth / 2 - 50 + 'px'
-        // s.height = window.innerHeight - theme().statusBarHeight + 'px'
+        s.width = window.innerWidth / 2 + 'px'
+        s.height = window.innerHeight - theme().statusBarHeight + 'px'
         s.cornerRadius = '5px'
-        s.paddingBottom = theme().statusBarHeight + 'px'
-        s.top = '0px'
-        s.bottom = theme().statusBarHeight + 'px'
         s.borderRight = '1px solid ' + theme().text50
       })
       .whenFocused(s => {
@@ -59,7 +54,7 @@ export const EditorView = () => {
 
     vstack()
       .react(s => {
-        s.paddingLeft = window.innerWidth / 2 - 25 + 'px'
+        s.paddingLeft = window.innerWidth / 2 + 20 + 'px'
         s.width = '100%'
         s.paddingRight = '10px'
         s.paddingTop = '50px'
@@ -67,6 +62,7 @@ export const EditorView = () => {
       })
       .children(() => {
         LevelsPanel()
+        TagSelector()
         PronunciationPanel()
         MediaFileList()
         PendingUploadResources()
@@ -93,15 +89,6 @@ export const EditorView = () => {
             s.paddingHorizontal = '5px'
             s.paddingBottom = theme().statusBarHeight + 15 + 'px'
           })
-      })
-
-    Footer()
-      .react(s => {
-        s.position = 'fixed'
-        s.width = '100%'
-        s.bottom = '0'
-        s.left = '0'
-        s.layer = LayoutLayer.MODAL
       })
   })
 }
@@ -156,18 +143,63 @@ const LevelRenderer = (level: number) => {
       s.fontFamily = FontFamily.APP
       s.wrap = false
       s.padding = '5px'
-      s.textColor = theme().text50
-      s.text = level < noteLevels.length ? noteLevels[level] : ''
+      s.textColor = theme().text
+      s.text = vm.reprLevel(level)
       s.textAlign = 'left'
       s.textSelectable = false
     })
     .whenHovered(s => {
-      s.textColor = theme().text
+      s.textColor = theme().accent
     })
     .whenSelected(s => {
       s.textColor = theme().btn + 'cc'
     })
     .onClick(() => vm.$level.value = vm.$level.value === level ? 0 : level)
+}
+
+const TagSelector = () => {
+  const vm = DertutorContext.self.editorVM
+  return Panel('Tag')
+    .observe(vm.$editingNote, 'recreateChildren')
+    .observe(vm.$tagId, 'affectsChildrenProps')
+    .children(() => {
+      p()
+        .react(s => {
+          s.width = '100%'
+          s.fontFamily = FontFamily.APP
+        })
+        .children(() => {
+          const lang = vm.$selectedLang.value
+          if (lang) lang.tags.forEach(t => TagRenderer(t))
+        })
+    })
+}
+
+const TagRenderer = (t: ITag) => {
+  const vm = DertutorContext.self.editorVM
+  return span()
+    .react(s => {
+      const isSelected = vm.$tagId.value === t.id
+      const color = isSelected ? theme().btn + 'bb' : theme().text
+      s.textColor = color
+      s.border = '1px solid ' + color
+      s.textSelectable = false
+      s.fontSize = theme().defMenuFontSize
+      s.fontFamily = FontFamily.APP
+      s.paddingHorizontal = '5px'
+      s.cornerRadius = '2px'
+      s.text = t.name
+      s.marginRight = '5px'
+      s.marginTop = '5px'
+    })
+    .whenHovered(s => {
+      const isSelected = vm.$tagId.value === t.id
+      const color = isSelected ? theme().btn + 'bb' : theme().accent
+      s.textColor = color
+      s.border = '1px solid ' + color
+      s.cursor = 'pointer'
+    })
+    .onClick(() => vm.$tagId.value = vm.$tagId.value === t.id ? undefined : t.id)
 }
 
 const PronunciationPanel = () => {
@@ -198,15 +230,21 @@ const PronunciationPanel = () => {
             .onClick(() => vm.playAudio())
         })
 
+      Btn()
+        .observe(vm.$audioUrl)
+        .react(s => {
+          s.visible = vm.$audioUrl.value === ''
+          s.text = 'Load Audio'
+        })
+        .onClick(() => vm.loadAudioLink())
+
       RedBtn()
         .observe(vm.$audioUrl)
         .react(s => {
-          s.text = vm.$audioUrl.value === '' ? 'Load Audio' : 'Delete'
+          s.visible = vm.$audioUrl.value !== ''
+          s.text = 'Delete'
         })
-        .onClick(() => {
-          if (vm.$audioUrl.value === '') vm.getAudioLink()
-          else vm.$audioUrl.value = ''
-        })
+        .onClick(() => vm.$audioUrl.value = '')
     })
 }
 
@@ -226,7 +264,7 @@ const MediaFileList = () => {
     })
 }
 
-const MediaFileView = (mf: MediaFile) => {
+const MediaFileView = (mf: IMediaFile) => {
   const vm = DertutorContext.self.editorVM
   return Panel('Media')
     .children(() => {
@@ -246,10 +284,10 @@ const MediaFileView = (mf: MediaFile) => {
 
           BlueBtn()
             .react(s => {
-              s.text = mf.url
+              s.text = vm.getMediaFileLink(mf)
               s.popUp = 'Copy link'
             })
-            .onClick(() => globalContext.app.copyTextToClipboard(mf.url))
+            .onClick(() => globalContext.app.copyTextToClipboard(vm.getMediaFileLink(mf)))
         })
 
       RedBtn()
@@ -396,7 +434,7 @@ const Header = () => {
       Btn()
         .observe(vm.$hasChanges)
         .react(s => {
-          s.visible = vm.$editingNote.value?.vocabulary.lang.code === 'en'
+          s.visible = vm.$selectedLang.value?.code === 'en'
           s.text = 'Load default translation'
         })
         .onClick(() => vm.loadTranslation())
@@ -409,35 +447,3 @@ const Header = () => {
         .onClick(() => vm.quit())
     })
 }
-
-const Footer = () => {
-  const vm = DertutorContext.self.editorVM
-  return vstack()
-    .react(s => {
-      s.gap = '0'
-    })
-    .children(() => {
-      StatusBar().children(() => {
-
-        StatusBarModeName()
-          .react(s => {
-            s.text = 'Edit Mode'
-            s.bgColor = theme().red
-          })
-
-        span()
-          .observe(vm.$editingNote)
-          .react(s => {
-            let note = vm.$editingNote.value
-            s.text = note ? note.vocabulary.lang.name + '. ' + note.vocabulary.name + '. ' + note.title + '(ID:' + note.id + ')' : ''
-            s.textColor = theme().red
-            s.width = '100%'
-          })
-
-        spacer()
-
-        MessangerView()
-      })
-    })
-}
-

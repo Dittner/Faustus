@@ -9,9 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "flinker": "^2.0.4",
-    "flinker-dom": "^1.1.4",
-    "flinker-markdown": "^1.1.9"
+    "flinker": "^2.0.5",
+    "flinker-dom": "^1.1.9",
+    "flinker-markdown": "^1.1.11"
   },
   "devDependencies": {
     "typescript": "~5.7.2",

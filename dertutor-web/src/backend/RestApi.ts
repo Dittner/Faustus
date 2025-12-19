@@ -1,4 +1,4 @@
-import { type AnyRXObservable, type RXObservable, RXObservableValue } from 'flinker'
+import { type AnyRXObservable, type RXObservable, RXObservableValue, RXOperation } from 'flinker'
 
 import { PingCmd } from './cmd/PingCmd'
 
@@ -25,6 +25,41 @@ export interface Runnable {
   run: () => AnyRXObservable
 }
 
+export class RestApiCmd implements Runnable {
+  private readonly api: RestApi
+  private readonly method: HttpMethod
+  private readonly path: string
+  private readonly body: any
+  private readonly headers: any
+
+  constructor(api: RestApi, method: HttpMethod, path: string, body: any = undefined, headers:any = undefined) {
+    this.api = api
+    this.method = method
+    this.path = path
+    this.body = body
+    this.headers = headers
+  }
+
+  run(): RXOperation<any, RestApiError> {
+    const op = new RXOperation<any, RestApiError>()
+    this.startLoading(op).catch((e: RestApiError) => {
+      op.fail(e)
+    })
+    return op
+  }
+
+  private async startLoading(op: RXOperation<any, RestApiError>) {
+    console.log('RestApiCmd:startLoading')
+    const [response, body] = await this.api.sendRequest(this.method, this.path, this.body && JSON.stringify(this.body), this.headers)
+    if (response?.ok) {
+      op.success(body)
+    } else {
+      await this.api.handlerError(response)
+    }
+  }
+}
+
+
 export class RestApi {
   readonly baseUrl: string
 
@@ -37,8 +72,42 @@ export class RestApi {
     this.ping()
   }
 
+  //--------------------------------------
+  //  methods
+  //--------------------------------------
+
   ping(): RXObservable<any, RestApiError> {
     const cmd = new PingCmd(this)
+    return cmd.run()
+  }
+
+  head(path: string): RXOperation<any, RestApiError> {
+    const cmd = new RestApiCmd(this, 'HEAD', path)
+    return cmd.run()
+  }
+
+  get(path: string): RXOperation<any, RestApiError> {
+    const cmd = new RestApiCmd(this, 'GET', path)
+    return cmd.run()
+  }
+
+  post(path: string, schema: any, headers:any = undefined): RXOperation<any, RestApiError> {
+    const cmd = new RestApiCmd(this, 'POST', path, schema, headers)
+    return cmd.run()
+  }
+
+  patch(path: string, schema: any): RXOperation<any, RestApiError> {
+    const cmd = new RestApiCmd(this, 'PATCH', path, schema)
+    return cmd.run()
+  }
+
+  put(path: string, schema: any): RXOperation<any, RestApiError> {
+    const cmd = new RestApiCmd(this, 'PUT', path, schema)
+    return cmd.run()
+  }
+
+  delete(path: string, schema: any): RXOperation<any, RestApiError> {
+    const cmd = new RestApiCmd(this, 'DELETE', path, schema)
     return cmd.run()
   }
 

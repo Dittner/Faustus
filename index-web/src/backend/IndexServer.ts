@@ -18,7 +18,7 @@ export class IndexServer extends RestApi {
     const baseUrl = import.meta.env.VITE_INDEX_API_URL ?? 'http://localhost:3456/api'
     super(baseUrl)
     
-    this.assetsUrl = this.baseUrl + 'asset/'
+    this.assetsUrl = this.baseUrl + '/asset'
     console.log('IndexServer, baseUrl: ', this.baseUrl)
     this.ping()
   }

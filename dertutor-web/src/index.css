@@ -1,8 +1,8 @@
 :root {
     --LineHeight: 1.6;
     --font-family: -apple-system, 'system-ui', 'system-ui', sans-serif;
-    --font-family-mono: Menlo, source-code-pro, Monaco, 'Courier New', monospace;
-    --font-family-article: 'verdana', -apple-system, 'system-ui', 'system-ui', sans-serif;
+    --font-family-mono: 'jetbrains', Menlo, source-code-pro, Monaco, 'Courier New', monospace;
+    --font-family-article: 'verdana2', -apple-system, 'system-ui', 'system-ui', sans-serif;
 }
 
 .def {
@@ -19,6 +19,7 @@
 
 * {
     box-sizing: border-box;
+    outline: none;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
 }
@@ -97,7 +98,7 @@ blockquote {
 
 ::selection {
     color: #111111;
-    background: #c7a0df;
+    background: #bc799fcc;
 }
 
 table {
@@ -107,10 +108,12 @@ table {
 ol {
     counter-reset: list;
 }
-ol > li {
+
+ol>li {
     list-style: none;
 }
-ol > li:before {
+
+ol>li:before {
     content: counter(list) ") ";
     counter-increment: list;
 }
@@ -121,65 +124,65 @@ ol > li:before {
 
 
 .listScrollbar {
-  display: block;
-  overflow: auto;
-  scrollbar-gutter: stable;
-  overscroll-behavior: none;
+    display: block;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    overscroll-behavior: none;
 }
 
 .listScrollbar::-webkit-scrollbar {
-  width: 14px;
+    width: 14px;
 }
 
 .listScrollbar::-webkit-scrollbar-track {
-  background: transparent;
+    background: transparent;
 }
 
 .listScrollbar::-webkit-scrollbar-thumb {
-  background: #4e6c8050;
-  border-radius: 5px;
-  border-right: 4px solid transparent;
-  border-left: 4px solid transparent;
-  background-clip: content-box;
+    background: #4e6c8050;
+    border-radius: 5px;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
+    background-clip: content-box;
 }
 
 .listScrollbar::-webkit-scrollbar-thumb:hover {
-  background: #4e6c80;
-  border-radius: 5px;
-  border-right: 4px solid transparent;
-  border-left: 4px solid transparent;
-  background-clip: content-box;
+    background: #4e6c80;
+    border-radius: 5px;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
+    background-clip: content-box;
 }
 
 .light.listScrollbar::-webkit-scrollbar-thumb {
-  background: #4e6c8050;
-  border-radius: 5px;
-  border-right: 4px solid transparent;
-  border-left: 4px solid transparent;
-  background-clip: content-box;
+    background: #4e6c8050;
+    border-radius: 5px;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
+    background-clip: content-box;
 }
 
 .light.listScrollbar::-webkit-scrollbar-thumb:hover {
-  background: #4e6c80;
-  border-radius: 5px;
-  border-right: 4px solid transparent;
-  border-left: 4px solid transparent;
-  background-clip: content-box;
+    background: #4e6c80;
+    border-radius: 5px;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
+    background-clip: content-box;
 }
 
 .invisibleScrollbar {
-  /* For Firefox */
-  scrollbar-width: none;
-  /* For Internet Explorer and Edge */
-  -ms-overflow-style: none;
-  overflow: auto;
-  scrollbar-gutter: stable;
-  overscroll-behavior: none;
+    /* For Firefox */
+    scrollbar-width: none;
+    /* For Internet Explorer and Edge */
+    -ms-overflow-style: none;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    overscroll-behavior: none;
 }
 
 /* For Chrome, Safari, and Opera */
 .invisibleScrollbar::-webkit-scrollbar {
-  display: none;
+    display: none;
 }
 
 /******************************/

@@ -47,6 +47,9 @@ services:
     environment:
       - UVICORN_RELOAD=true
       - POSTGRES_DB_URL=postgresql+asyncpg://postgres:postgres@dertutor-pg:5432/postgres
+      - CONNECT_EN_RU_DB=false
+      - CONNECT_EN_PRON_DB=false
+      - CONNECT_DE_PRON_DB=false
     volumes:
       - ./dertutor-api:/app
       - ./data/dertutor:/app/data

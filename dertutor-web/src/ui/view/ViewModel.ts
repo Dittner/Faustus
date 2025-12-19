@@ -1,5 +1,5 @@
 import { RXObservableValue } from "flinker"
-import { DertutorContext } from "../DertutorContext"
+import { DertutorContext } from "../../DertutorContext"
 import { Action, ActionsList } from "../actions/Action"
 import { themeManager } from "../theme/ThemeManager"
 
@@ -7,6 +7,7 @@ export type ViewModelID = 'connection' | 'langs' | 'vocs' | 'notes' | 'editor'
 export interface IViewModel {
   readonly id: ViewModelID
   readonly $showActions: RXObservableValue<boolean>
+  readonly $cmd: RXObservableValue<string>
   readonly actionsList: ActionsList
   lastExecutedAction: Action | undefined
   activate(): void
@@ -18,6 +19,7 @@ export class ViewModel implements IViewModel {
   readonly id: ViewModelID
   readonly ctx: DertutorContext
   readonly $showActions = new RXObservableValue(false)
+  readonly $cmd = new RXObservableValue('')
   readonly actionsList = new ActionsList()
   lastExecutedAction: Action | undefined = undefined
 
@@ -25,8 +27,14 @@ export class ViewModel implements IViewModel {
     this.id = id
     this.ctx = ctx
     this.actionsList.add('?', 'Show list of actions', () => this.$showActions.value = true)
-    this.actionsList.add('<ESC>', 'Hide list of actions', () => this.$showActions.value = false)
-    this.actionsList.add('T', 'Switch theme', () => themeManager.switchTheme())
+    this.actionsList.add('<ESC>', 'Hide actions/Clear messages', () => {
+      this.$showActions.value = false
+      this.ctx.$msg.value = undefined
+    })
+    this.actionsList.add('T', 'Switch theme', () => {
+      themeManager.switchTheme()
+      ctx.$msg.value = { 'level': 'info', 'text': themeManager.$theme.value.id + ' theme' }
+    })
     this.actionsList.add('.', 'Repeat last action', () => this.lastExecutedAction?.handler())
   }
 
@@ -40,13 +48,11 @@ export class ViewModel implements IViewModel {
   }
 
   deactivate(): void {
-    this.ctx.$msg.value = undefined
-    this.ctx.$msg.value = { text: '', level: 'info' }
+    this.$cmd.value = ''
     this.lastExecutedAction = undefined
   }
 
   private cmdBuffer = ''
-  private defMsg: any = undefined
   async onKeyDown(e: KeyboardEvent): Promise<void> {
     if (!this.isActive || this.actionsList.actions.length === 0 || e.key === 'Shift') return
     //console.log('key:', e.key, ', code:', e.code, ', keycode:', e.keyCode)
@@ -59,16 +65,14 @@ export class ViewModel implements IViewModel {
       if (this.cmdBuffer !== '.')
         this.lastExecutedAction = a
       this.cmdBuffer = ''
-      this.defMsg = { text: this.lastExecutedAction?.cmd ?? '', level: 'info' }
-      this.ctx.$msg.value = this.defMsg
+      this.$cmd.value = this.lastExecutedAction?.cmd ?? ''
       a.handler()
       e.preventDefault()
     } else if (this.actionsList.some(this.cmdBuffer)) {
       e.preventDefault()
-      this.ctx.$msg.value = { text: this.cmdBuffer, level: 'info' }
+      this.$cmd.value = this.cmdBuffer
     } else {
       this.cmdBuffer = ''
-      this.ctx.$msg.value = this.defMsg
     }
   }
 }

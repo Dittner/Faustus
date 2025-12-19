@@ -69,30 +69,11 @@ export class Path {
     return res && res.length > 1 ? res[1] : p
   }
 
-
-  static parseAdressBar(): AdressBarKeys {
-    let path = document.location.pathname
-    if (path.startsWith('/')) path = path.slice(1)
-    const values = path.split('/')
-    return {
-      langCode: values.length > 0 ? values[0] : '',
-      vocCode: values.length > 1 ? values[1] : '',
-      noteId: values.length > 2 ? Number(values[2]) : -1
-    }
-  }
-
-  static format(p: string): string {
-    return p.toLowerCase()
-      .replaceAll('ö', 'oe')
-      .replaceAll('ä', 'ae')
-      .replaceAll('ü', 'ue')
-      .replaceAll(' ', '_')
-      .split('').filter(c => (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c === '_').join('')
+  static querify(obj: any): string {
+    return Object.entries(obj)
+      .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+      .map(([key, value]) => key + '=' + encodeURIComponent(value as string | number | boolean))
+      .join('&')
   }
 }
 
-interface AdressBarKeys {
-  langCode: string
-  vocCode: string
-  noteId: number
-}

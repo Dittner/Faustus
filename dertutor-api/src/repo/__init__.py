@@ -1,3 +1,3 @@
-__all__ = ('Media', 'Base', 'InsertDefaultRowsService', 'Lang', 'Note', 'Vocabulary')
-from .model import Base, Lang, Note, Vocabulary, Media
+__all__ = ('Base', 'InsertDefaultRowsService', 'Lang', 'Media', 'Note', 'Voc')
+from .model import Base, Lang, Media, Note, Voc
 from .service import InsertDefaultRowsService

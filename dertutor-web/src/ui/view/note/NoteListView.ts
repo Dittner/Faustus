@@ -1,14 +1,15 @@
-import { hstack, input, link, p, spacer, span, switcher, vlist, vstack } from "flinker-dom"
+import { hstack, input, p, spacer, span, vlist, vstack } from "flinker-dom"
 import { globalContext } from "../../../App"
 import { LayoutLayer } from "../../../app/Application"
 import { INote, ITag } from "../../../domain/DomainModel"
-import { Btn } from "../../controls/Button"
+import { Btn, LinkBtn } from "../../controls/Button"
 import { FontFamily } from "../../controls/Font"
 import { LineInput } from "../../controls/Input"
 import { Markdown } from "../../controls/Markdown"
 import { DertutorContext } from "../../../DertutorContext"
 import { MaterialIcon } from "../../icons/MaterialIcon"
 import { theme } from "../../theme/ThemeManager"
+import { Title } from "../../controls/Text"
 
 export const NoteListView = () => {
   const ctx = DertutorContext.self
@@ -24,12 +25,12 @@ export const NoteListView = () => {
       NotesMenu()
 
       PlayAudioBtn()
-        .observe(vm.$selectedNote)
+        .observe(vm.$state)
         .react(s => {
-          const hasAudio = vm.$selectedNote.value !== undefined && vm.$selectedNote.value.audio_url !== ''
+          const hasAudio = vm.$state.value.selectedNote !== undefined && vm.$state.value.selectedNote.audio_url !== ''
           s.mouseEnabled = hasAudio
           s.position = 'relative'
-          s.top = '112px'
+          s.top = '120px'
           s.opacity = hasAudio ? '1' : '0'
         })
 
@@ -54,16 +55,16 @@ export const NoteListView = () => {
             })
 
           Markdown()
-            .observe(vm.$selectedNote)
-            .observe(vm.$searchKey)
+            .observe(vm.$state)
             .react(s => {
+              const searchKey = vm.$state.value.searchKey ?? ''
               s.className = theme().id
               s.mode = 'md'
               s.fontFamily = FontFamily.ARTICLE
               s.textColor = theme().text
               s.width = '100%'
-              s.mark = vm.$searchKey.value
-              s.text = vm.$selectedNote.value?.text ?? ''
+              s.mark = searchKey.length > 1 ? searchKey : ''
+              s.text = vm.$state.value.selectedNote?.text ?? ''
               s.fontSize = theme().defFontSize
               s.absolutePathPrefix = globalContext.server.baseUrl
               //s.showRawText = page.file.showRawText
@@ -113,19 +114,19 @@ const NotesMenu = () => {
     .children(() => {
 
       Title('')
-        .observe(vm.$page)
+        .observe(vm.$state)
         .react(s => {
-          const p = vm.$page.value
+          const p = vm.$state.value.page
           s.text = p && p.pages > 0 ? `Page: ${p.page} of ${p.pages}` : 'No pages'
           s.paddingLeft = '20px'
         })
 
       vlist<INote>()
-        .observe(vm.$page, 'recreateChildren')
-        .observe(vm.$selectedNote, 'affectsChildrenProps')
-        .items(() => vm.$page.value?.items ?? [])
+        .observe(vm.$state.pipe().map(s => s.page).removeDuplicates().fork(), 'recreateChildren')
+        .observe(vm.$state.pipe().map(s => s.selectedNote?.id).removeDuplicates().fork(), 'affectsChildrenProps')
+        .items(() => vm.$state.value.page?.items ?? [])
         .itemRenderer(NoteRenderer)
-        .itemHash((item: INote) => item.id + item.name + ':' + (item.id === vm.$selectedNote.value?.id))
+        .itemHash((item: INote) => item.id + item.name + ':' + (item.id === vm.$state.value.selectedNote?.id))
         .react(s => {
           s.fontFamily = FontFamily.MONO
           s.fontSize = theme().defMenuFontSize
@@ -138,11 +139,27 @@ const NotesMenu = () => {
     })
 }
 
+const NoteRenderer = (n: INote) => {
+  const ctx = DertutorContext.self
+  const vm = ctx.noteListVM
+  return LinkBtn()
+    .react(s => {
+      s.wrap = false
+      s.isSelected = vm.$state.value.selectedNote?.id === n.id
+      s.paddingRight = '2px'
+      s.paddingLeft = '20px'
+      s.text = n.name
+    })
+    .onClick(() => {
+      vm.reloadWithNote(n)
+    })
+}
+
 const NotesPaginator = () => {
   const ctx = DertutorContext.self
   const vm = ctx.noteListVM
   return hstack()
-    .observe(vm.$page, 'affectsChildrenProps')
+    .observe(vm.$state, 'affectsChildrenProps')
     .react(s => {
       s.width = '100%'
       s.gap = '10px'
@@ -156,82 +173,66 @@ const NotesPaginator = () => {
 
       Btn()
         .react(s => {
-          const p = vm.$page.value
+          const p = vm.$state.value.page
           s.visible = p && p.page > 1
           s.text = '1'
           s.wrap = false
           s.popUp = 'First page'
         })
-        .onClick(() => vm.$page.value && vm.reloadPage(1))
+        .onClick(() => vm.reloadWith({ page: 1 }))
 
       Btn()
         .react(s => {
-          const p = vm.$page.value
+          const p = vm.$state.value.page
           s.visible = p && p.page > 2
           s.text = p ? `${p.page - 1}` : ''
           s.wrap = false
           s.popUp = 'Prev page'
-          s.href = vm.getPageLink(p ? p.page + 1 : 1)
+          //s.href = vm.getPageLink(p ? p.page + 1 : 1)
         })
-        .onClick(() => vm.$page.value && vm.reloadPage(vm.$page.value.page - 1))
+        .onClick(() => {
+          const p = vm.$state.value.page
+          p && p.page > 0 && vm.reloadWith({ page: p.page - 1 })
+        })
 
       p()
         .react(s => {
-          const p = vm.$page.value
+          const p = vm.$state.value.page
           s.visible = p && p.pages > 0
           s.text = p ? `${p.page}` : ''
           s.fontFamily = FontFamily.APP
           s.fontSize = theme().defMenuFontSize
           s.cornerRadius = '2px'
           s.textSelectable = false
-          s.textColor = theme().btn + 'cc'
+          s.textColor = theme().accent + 'cc'
         })
 
       Btn()
         .react(s => {
-          const p = vm.$page.value
+          const p = vm.$state.value.page
           s.visible = p && p.page < p.pages - 1
           s.text = p ? `${p.page + 1}` : ''
           s.wrap = false
           s.popUp = 'Next page'
-          s.href = vm.getPageLink(p ? p.page + 1 : 1)
+          //s.href = vm.getPageLink(p ? p.page + 1 : 1)
         })
-        .onClick(() => vm.$page.value && vm.reloadPage(vm.$page.value.page + 1))
+        .onClick(() => {
+          const p = vm.$state.value.page
+          p && p.page < p.pages && vm.reloadWith({ page: p.page + 1 })
+        })
 
       Btn()
         .react(s => {
-          const p = vm.$page.value
+          const p = vm.$state.value.page
           s.visible = p && p.page < p.pages
           s.text = p ? `${p.pages}` : ''
           s.wrap = false
           s.popUp = 'Last page'
         })
-        .onClick(() => vm.$page.value && vm.reloadPage(vm.$page.value.pages))
-    })
-}
-
-const NoteRenderer = (n: INote) => {
-  const ctx = DertutorContext.self
-  const vm = ctx.noteListVM
-  return link()
-    .react(s => {
-      const selected = vm.$selectedNote.value?.id === n.id
-      const textColor = theme().menu
-      const bgColor = theme().appBg
-      s.wrap = false
-      s.padding = '2px'
-      s.paddingLeft = '20px'
-      s.textColor = selected ? bgColor : textColor
-      s.bgColor = selected ? textColor : theme().transparent
-      s.text = n.name
-      s.href = vm.getNoteLink(n)
-    })
-    .whenHovered(s => {
-      s.textDecoration = 'underline'
-    })
-    .onClick(e => {
-      e.preventDefault()
-      vm.selectNote(n)
+        .onClick(() => {
+          const p = vm.$state.value.page
+          p && vm.reloadWith({ page: p.pages })
+        })
     })
 }
 
@@ -239,64 +240,43 @@ const NavBar = () => {
   const ctx = DertutorContext.self
   const vm = ctx.noteListVM
   return hstack()
-    .observe(ctx.navigator.$keys, 'affectsChildrenProps')
-    .observe(ctx.$allLangs, 'affectsChildrenProps')
+    .observe(vm.$state, 'affectsChildrenProps')
     .react(s => {
       s.gap = '10px'
       s.whiteSpace = 'nowrap'
       s.fontSize = theme().defMenuFontSize
+      s.fontFamily = FontFamily.MONO
+      s.valign = 'center'
       s.textSelectable = false
     })
     .children(() => {
-      NavBarLink()
+      LinkBtn()
         .react(s => {
-          const langCode = ctx.$allLangs.value.find(l => l.code === ctx.navigator.$keys.value.langCode)?.code
-          s.text = langCode ?? ''
-          s.href = ctx.navigator.buildUrl({ langCode })
-        })
-        .onClick((e) => {
-          e.preventDefault()
-          const langCode = ctx.$allLangs.value.find(l => l.code === ctx.navigator.$keys.value.langCode)?.code
-          if (langCode) {
-            ctx.navigator.navigateTo({ langCode })
-            ctx.langListVM.activate()
-          }
+          s.text = vm.$state.value.lang?.name ?? ''
+        }).onClick(() => {
+          vm.$state.value.lang && vm.navigator.navigateTo({ langCode: vm.$state.value.lang?.code })
         })
 
       span()
         .react(s => {
-          s.visible = ctx.navigator.$keys.value.vocCode !== undefined
+          const lang = vm.$state.value.lang
+          const voc = vm.$state.value.voc ?? lang?.vocs.find(v => v.id === vm.$state.value.selectedNote?.voc_id)
+          s.visible = lang !== undefined && voc !== undefined
           s.text = ' › '
           s.textColor = theme().link + 'bb'
         })
 
-      NavBarLink()
+      LinkBtn()
         .react(s => {
-          const k = ctx.navigator.$keys.value
-          const lang = ctx.$allLangs.value.find(l => l.code === k.langCode)
-          const voc = lang?.vocs.find(v => vm.encodeName(v) === k.vocCode)
+          const lang = vm.$state.value.lang
+          const voc = vm.$state.value.voc ?? lang?.vocs.find(v => v.id === vm.$state.value.selectedNote?.voc_id)
+          s.visible = lang !== undefined && voc !== undefined
           s.text = voc?.name ?? ''
-          s.href = ctx.navigator.buildUrl({ langCode: lang?.code, vocCode: voc && vm.encodeName(voc) })
+        }).onClick(() => {
+          const lang = vm.$state.value.lang
+          const voc = vm.$state.value.voc ?? lang?.vocs.find(v => v.id === vm.$state.value.selectedNote?.voc_id)
+          lang && voc && vm.navigator.navigateTo({ langCode: lang?.code, vocCode: voc && vm.encodeName(voc.name) })
         })
-        .onClick((e) => {
-          e.preventDefault()
-          const langCode = ctx.navigator.$keys.value.langCode
-          const vocCode = ctx.navigator.$keys.value.vocCode
-          if (langCode && vocCode) {
-            ctx.navigator.navigateTo({ langCode, vocCode })
-            ctx.vocListVM.activate()
-          }
-        })
-    })
-}
-
-const NavBarLink = () => {
-  return link()
-    .react(s => {
-      s.textColor = theme().link + 'bb'
-    }).whenHovered(s => {
-      s.textColor = theme().link
-      s.cursor = 'pointer'
     })
 }
 
@@ -316,25 +296,23 @@ const NoteMeta = () => {
   const ctx = DertutorContext.self
   const vm = ctx.noteListVM
   return p()
-    .observe(vm.$selectedNote)
+    .observe(vm.$state)
     .react(s => {
-      const level = vm.$selectedNote.value ? vm.reprLevel(vm.$selectedNote.value.level) : ''
-      const tag = vm.reprTag(vm.$selectedNote.value?.tag_id)
+      const note = vm.$state.value.selectedNote
+      const level = note ? vm.reprLevel(note.level) : ''
+      const tag = vm.reprTag(note?.tag_id)
       s.text = ''
       if (level && tag) s.text += level + ', ' + tag
       else if (level) s.text += level
       else if (tag) s.text += tag
       s.fontFamily = FontFamily.APP
       s.fontSize = theme().defMenuFontSize
-      s.fontStyle = 'italic'
       s.paddingHorizontal = '10px'
-      s.textColor = theme().pynk
+      s.textColor = theme().text50
     })
 }
 
 const FiltersView = () => {
-  const ctx = DertutorContext.self
-  const vm = ctx.noteListVM
   return vstack()
     .react(s => {
       s.gap = '0'
@@ -346,83 +324,31 @@ const FiltersView = () => {
       Title('Filter by level:')
       LevelsBar()
 
-      spacer().react(s => s.height = '10px')
+      spacer().react(s => s.height = '20px')
 
       Title('Filter by tag:')
       TagSelector()
 
-      spacer().react(s => s.height = '10px')
+      spacer().react(s => s.height = '20px')
 
       Title('Search:')
-      input()
-        .bind(vm.$searchBuffer)
-        .react(s => {
-          s.type = 'text'
-          s.width = '100%'
-          s.fontFamily = FontFamily.APP
-          s.fontSize = theme().defMenuFontSize
-          s.textColor = theme().blue
-          s.cornerRadius = '4px'
-          s.paddingHorizontal = '10px'
-          s.autoCorrect = 'off'
-          s.autoComplete = 'off'
-          s.border = '1px solid ' + theme().text + '40'
-        })
-        .whenFocused(s => {
-          s.border = '1px solid ' + theme().blue
-        }).onKeyDown(e => {
-          if (e.key === 'Enter') vm.$searchKey.value = vm.$searchBuffer.value
-        })
-
-      spacer().react(s => s.height = '10px')
-
-      hstack()
-        .react(s => {
-          s.gap = '10px'
-        })
-        .children(() => {
-          switcher()
-            .observe(vm.$searchGlobally)
-            .react(s => {
-              s.isSelected = vm.$searchGlobally.value
-              s.trackColor = theme().text50
-            })
-            .whenSelected(s => {
-              s.trackColor = theme().yellow
-            })
-            .onClick(() => vm.$searchGlobally.value = !vm.$searchGlobally.value)
-
-          p().react(s => {
-            s.textColor = theme().text50
-            s.fontSize = theme().defMenuFontSize
-            s.text = 'Search globally'
-          })
-        })
+      SearchPanel()
     })
-}
-
-const Title = (value: string) => {
-  return p().react(s => {
-    s.textColor = theme().text
-    s.fontFamily = FontFamily.APP
-    s.fontSize = theme().defMenuFontSize
-    s.text = value
-    s.fontWeight = 'bold'
-  })
 }
 
 const LevelsBar = () => {
   const vm = DertutorContext.self.noteListVM
   return vlist<number>()
-    .observe(vm.$level, 'affectsChildrenProps')
+    .observe(vm.$state, 'affectsChildrenProps')
     .items(() => [1, 2, 3, 4, 5, 6])
     .itemRenderer(LevelRenderer)
-    .itemHash((item: number) => item + ':' + (item === vm.$level.value))
+    .itemHash((item: number) => item + ':' + (item === vm.$state.value.level))
     .react(s => {
-      s.gap = '10px'
+      s.fontSize = theme().defMenuFontSize
+      s.fontFamily = FontFamily.MONO
+      s.gap = '0px'
       s.width = '100%'
       s.halign = 'left'
-      s.paddingLeft = '20px'
     })
 }
 
@@ -430,9 +356,7 @@ const LevelRenderer = (level: number) => {
   const vm = DertutorContext.self.noteListVM
   return Btn()
     .react(s => {
-      s.isSelected = vm.$level.value === level
-      s.fontSize = theme().defMenuFontSize
-      s.fontFamily = FontFamily.APP
+      s.isSelected = vm.$state.value.level === level
       s.wrap = false
       s.textColor = theme().text50
       s.text = vm.reprLevel(level)
@@ -443,47 +367,106 @@ const LevelRenderer = (level: number) => {
       s.textColor = theme().text
     })
     .whenSelected(s => {
-      s.textColor = theme().btn + 'cc'
+      s.textColor = theme().accent
     })
-    .onClick(() => vm.$level.value = vm.$level.value === level ? undefined : level)
+    .onClick(() => vm.reloadWith({ page: 1, level: vm.$state.value.level === level ? undefined : level }))
 }
-
 
 const TagSelector = () => {
   const vm = DertutorContext.self.noteListVM
-  return vstack()
-    .observe(vm.$tagId, 'affectsChildrenProps')
+  return vlist<ITag>()
+    .observe(vm.$state.pipe().map(s => s.lang?.tags).removeDuplicates().fork(), 'recreateChildren')
+    .observe(vm.$state.pipe().map(s => s.tagId).removeDuplicates().fork(), 'affectsChildrenProps')
+    .items(() => vm.$state.value.lang?.tags ?? [])
+    .itemRenderer(TagRenderer)
+    .itemHash((item: ITag) => item.id + ':' + (item.id === vm.$state.value.tagId))
     .react(s => {
+      s.fontSize = theme().defMenuFontSize
+      s.fontFamily = FontFamily.MONO
       s.gap = '10px'
       s.width = '100%'
-      s.paddingLeft = '20px'
-      s.fontFamily = FontFamily.APP
       s.halign = 'left'
-    })
-    .children(() => {
-      const lang = vm.$selectedLang.value
-      if (lang) lang.tags.forEach(t => TagRenderer(t))
     })
 }
 
 const TagRenderer = (t: ITag) => {
   const vm = DertutorContext.self.noteListVM
-  return span()
+  return Btn()
     .react(s => {
-      const isSelected = vm.$tagId.value === t.id
-      const color = isSelected ? theme().btn + 'cc' : theme().text50
-      s.textColor = color
-      s.textSelectable = false
-      s.fontSize = theme().defMenuFontSize
-      s.fontFamily = FontFamily.APP
+      s.isSelected = vm.$state.value.tagId === t.id
       s.text = t.name
+    })
+    .onClick(() => vm.reloadWith({ page: 1, tagId: vm.$state.value.tagId === t.id ? undefined : t.id }))
+}
+
+const SearchPanel = () => {
+  const vm = DertutorContext.self.noteListVM
+  return vstack()
+    .react(s => {
+      s.gap = '0px'
       s.width = '100%'
+      s.fontFamily = FontFamily.APP
+      s.halign = 'left'
     })
-    .whenHovered(s => {
-      const isSelected = vm.$tagId.value === t.id
-      const color = isSelected ? theme().btn + 'cc' : theme().text
-      s.textColor = color
-      s.cursor = 'pointer'
+    .children(() => {
+      input()
+        .observe(vm.$searchFocused)
+        .bind(vm.$searchBuffer)
+        .react(s => {
+          s.type = 'text'
+          s.width = '100%'
+          s.className = 'search'
+          s.fontFamily = FontFamily.APP
+          s.autoFocus = vm.$searchFocused.value
+          s.fontSize = theme().defMenuFontSize
+          s.textColor = theme().accent
+          s.cornerRadius = '4px'
+          s.paddingHorizontal = '10px'
+          s.autoCorrect = 'off'
+          s.autoComplete = 'off'
+          s.border = '1px solid ' + theme().text + '40'
+        })
+        .whenFocused(s => {
+          s.border = '1px solid ' + theme().accent
+        })
+        .onKeyDown(e => {
+          if (e.key === 'Enter') {
+            vm.startSearch(vm.$searchBuffer.value)
+            document.activeElement instanceof HTMLInputElement && document.activeElement.blur()
+          }
+          else if (e.key === 'Escape') {
+            document.activeElement instanceof HTMLInputElement && document.activeElement.blur()
+          }
+        })
+        .onBlur(() => { vm.$searchFocused.value = false })
+        .onFocus(() => {
+          vm.$searchFocused.value = true
+          document.activeElement instanceof HTMLInputElement && document.activeElement.select()
+        })
+
+      // spacer().react(s => s.height = '10px')
+
+      // hstack()
+      //   .react(s => {
+      //     s.gap = '10px'
+      //   })
+      //   .children(() => {
+      //     switcher()
+      //       .observe(vm.$searchGlobally)
+      //       .react(s => {
+      //         s.isSelected = vm.$searchGlobally.value
+      //         s.trackColor = theme().text + '40'
+      //       })
+      //       .whenSelected(s => {
+      //         s.trackColor = theme().accent
+      //       })
+      //       .onClick(() => vm.$searchGlobally.value = !vm.$searchGlobally.value)
+
+      //     p().react(s => {
+      //       s.textColor = theme().text50
+      //       s.fontSize = theme().defMenuFontSize
+      //       s.text = 'Search globally'
+      //     })
+      //   })
     })
-    .onClick(() => vm.$tagId.value = vm.$tagId.value === t.id ? undefined : t.id)
 }

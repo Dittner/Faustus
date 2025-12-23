@@ -1,7 +1,8 @@
-import { type RXObservable } from 'flinker'
+import { RXOperation } from 'flinker'
 import { RestApi, RestApiError } from './RestApi'
-import { CreateNoteSchema, CreateVocSchema, DeleteMedialFileSchema, DeleteNoteSchema, DeleteVocSchema, GetPageOfNotesSchema, RenameNoteSchema, RenameVocSchema, UpdateNoteSchema } from './Schema'
+import { CreateNoteSchema, CreateVocSchema, DeleteMedialFileSchema, DeleteNoteSchema, DeleteVocSchema, GetPageSchema, RenameNoteSchema, RenameVocSchema, UpdateNoteSchema } from './Schema'
 import { Path } from '../app/Utils'
+import { ILang, INote, IPage } from '../domain/DomainModel'
 
 export class DertutorServer extends RestApi {
   constructor() {
@@ -16,7 +17,7 @@ export class DertutorServer extends RestApi {
   //  langs
   //--------------------------------------
 
-  loadAllLangs(): RXObservable<any[], RestApiError> {
+  loadAllLangs(): RXOperation<ILang[], RestApiError> {
     return this.get('/langs/full')
   }
 
@@ -24,15 +25,15 @@ export class DertutorServer extends RestApi {
   //  vocs
   //--------------------------------------
 
-  createVoc(schema: CreateVocSchema): RXObservable<any, RestApiError> {
+  createVoc(schema: CreateVocSchema): RXOperation<any, RestApiError> {
     return this.post('/vocs', schema)
   }
 
-  renameVoc(schema: RenameVocSchema): RXObservable<any, RestApiError> {
+  renameVoc(schema: RenameVocSchema): RXOperation<any, RestApiError> {
     return this.patch('/vocs/rename', schema)
   }
 
-  deleteVoc(schema: DeleteVocSchema): RXObservable<any, RestApiError> {
+  deleteVoc(schema: DeleteVocSchema): RXOperation<any, RestApiError> {
     return this.delete('/vocs', schema)
   }
 
@@ -40,45 +41,45 @@ export class DertutorServer extends RestApi {
   //  notes
   //--------------------------------------
 
-  loadNotes(scheme: GetPageOfNotesSchema): RXObservable<any, RestApiError> {
+  loadNotes(scheme: GetPageSchema): RXOperation<IPage, RestApiError> {
     const queryParams = Path.querify(scheme)
     return this.get('/notes/search?' + queryParams)
   }
 
-  loadNote(noteId: number): RXObservable<any, RestApiError> {
+  loadNote(noteId: number): RXOperation<INote | undefined, RestApiError> {
     return this.get('/notes?note_id=' + noteId)
   }
 
-  createNote(scheme: CreateNoteSchema): RXObservable<any, RestApiError> {
+  createNote(scheme: CreateNoteSchema): RXOperation<INote | undefined, RestApiError> {
     return this.post('/notes', scheme)
   }
 
-  updateNote(scheme: UpdateNoteSchema): RXObservable<any, RestApiError> {
+  updateNote(scheme: UpdateNoteSchema): RXOperation<INote | undefined, RestApiError> {
     return this.put('/notes', scheme)
   }
 
-  renameNote(scheme: RenameNoteSchema): RXObservable<any, RestApiError> {
+  renameNote(scheme: RenameNoteSchema): RXOperation<INote | undefined, RestApiError> {
     return this.patch('/notes/rename', scheme)
   }
 
-  deleteNote(scheme: DeleteNoteSchema): RXObservable<any, RestApiError> {
+  deleteNote(scheme: DeleteNoteSchema): RXOperation<INote | undefined, RestApiError> {
     return this.delete('/notes', scheme)
   }
 
   //--------------------------------------
   //  media
   //--------------------------------------
-  validateMp3Link(link: string): RXObservable<any, RestApiError> {
+  validateMp3Link(link: string): RXOperation<any, RestApiError> {
     return this.head(link)
   }
 
-  loadEnRuTranslation(key: string): RXObservable<any, RestApiError> {
+  loadEnRuTranslation(key: string): RXOperation<any, RestApiError> {
     const encodedKey = encodeURIComponent(key)
     const path = '/corpus/en_ru/search?key=' + encodedKey
     return this.get(path)
   }
 
-  uploadFile(noteId: number, file: File, fileName: string): RXObservable<any, RestApiError> {
+  uploadFile(noteId: number, file: File, fileName: string): RXOperation<any, RestApiError> {
     console.log('UploadFileCmd:startLoading, f=', file)
     const formData = new FormData();
     formData.append('file', file, fileName)
@@ -89,7 +90,7 @@ export class DertutorServer extends RestApi {
     return this.post('/media/uploadfile/' + noteId, formData, headers)
   }
 
-  deleteFile(schema: DeleteMedialFileSchema): RXObservable<any, RestApiError> {
+  deleteFile(schema: DeleteMedialFileSchema): RXOperation<any, RestApiError> {
     return this.delete('/media', schema)
   }
 }

@@ -14,6 +14,7 @@ corpus-api/data
 corpus-api/resources
 
 data
+/utils
 
 */dist
 */node_modules

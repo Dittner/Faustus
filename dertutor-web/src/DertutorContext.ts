@@ -6,7 +6,6 @@ import { IViewModel } from './ui/view/ViewModel'
 import { VocListVM } from './ui/view/vocs/VocListVM'
 import { EditorVM } from './ui/view/editor/EditorVM'
 import { ILang } from './domain/DomainModel'
-import { URLNavigator } from './app/URLNavigator'
 
 export interface Message {
   readonly level: 'warning' | 'error' | 'info'
@@ -25,13 +24,11 @@ export class DertutorContext {
   readonly $allLangs = new RXObservableValue<ILang[]>([])
   readonly $msg = new RXObservableValue<Message | undefined>(undefined)
 
-  readonly navigator: URLNavigator
   static self: DertutorContext
 
   static init() {
-    if (DertutorContext.self === undefined) {
+    if (DertutorContext.self === undefined)
       DertutorContext.self = new DertutorContext()
-    }
     return DertutorContext.self
   }
 
@@ -46,7 +43,6 @@ export class DertutorContext {
     this.$activeVM = new RXObservableValue(this.connectionVM)
     this.connectionVM.activate()
 
-    this.navigator = new URLNavigator()
     document.addEventListener('keydown', this.onKeyDown.bind(this))
   }
 

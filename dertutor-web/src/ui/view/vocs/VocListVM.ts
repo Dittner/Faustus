@@ -17,6 +17,7 @@ export class VocListVM extends ViewModel {
   constructor(ctx: DertutorContext) {
     super('vocs', ctx)
     this.addKeybindings()
+    this.$selectedVoc.pipe().onReceive(_ => this.showSelectedVocIndex())
   }
 
   private addKeybindings() {
@@ -59,14 +60,14 @@ export class VocListVM extends ViewModel {
     this.$selectedVoc.value = children.length > 0 ? children[0] : undefined
   }
 
-  private applySelection() {
+  applySelection() {
     if (this.$selectedLang.value && this.$selectedVoc.value) {
-      this.ctx.navigator.navigateTo({ langCode: this.$selectedLang.value.code, vocCode: this.encodeName(this.$selectedVoc.value) })
+      globalContext.navigator.navigateTo({ langCode: this.$selectedLang.value.code, vocCode: this.encodeName(this.$selectedVoc.value) })
       this.ctx.noteListVM.activate()
     }
   }
 
-  private encodeName(voc:IVoc) {
+  private encodeName(voc: IVoc) {
     return DomainService.encodeName(voc.name)
   }
 
@@ -92,7 +93,7 @@ export class VocListVM extends ViewModel {
   }
 
   private quit() {
-    this.ctx.navigator.navigateTo({})
+    globalContext.navigator.navigateTo({})
     this.ctx.langListVM.activate()
   }
 
@@ -130,7 +131,7 @@ export class VocListVM extends ViewModel {
       const schema = {} as CreateVocSchema
       schema.lang_id = lang.id
       schema.name = name
-      
+
       globalContext.server.createVoc(schema).pipe()
         .onReceive((data: IVoc) => {
           console.log('VocListVM:applyInput, creating voc, result: ', data)
@@ -220,24 +221,34 @@ export class VocListVM extends ViewModel {
 
   override activate(): void {
     super.activate()
-    const k = this.ctx.navigator.$keys.value
+    const k = globalContext.navigator.$keys.value
     const lang = k.langCode ? this.ctx.$allLangs.value.find(l => l.code === k.langCode) : undefined
     this.$selectedLang.value = lang
     if (lang) {
       this.$vocs.value = lang.vocs
       this.selectFromUrl()
+      this.showSelectedVocIndex()
     } else {
       this.ctx.langListVM.activate()
     }
   }
 
   private selectFromUrl() {
-    const k = this.ctx.navigator.$keys.value
+    const k = globalContext.navigator.$keys.value
     if (k.vocCode) {
       this.$selectedVoc.value = this.$vocs.value.find(v => this.encodeName(v) === k.vocCode)
       this.ctx.noteListVM.activate()
     } else {
       this.$selectedVoc.value = this.$vocs.value.length > 0 ? this.$vocs.value[0] : undefined
+    }
+  }
+
+  private showSelectedVocIndex() {
+    const lang = this.$selectedLang.value
+    const voc = this.$selectedVoc.value
+    if (lang && voc) {
+      const index = lang.vocs.findIndex(child => child.id === voc.id)
+      this.ctx.$msg.value = { 'text': index != -1 ? `${index + 1}:${lang.vocs.length}` : '', 'level': 'info' }
     }
   }
 }

@@ -18,15 +18,22 @@ export enum AppSize {
   L = 'L'
 }
 
+export interface BrowserLocation {
+  path: string
+  queries: string
+}
+
 export class Application {
   readonly $size = new RXObservableValue<AppSize>(AppSize.L)
-  readonly $location = new RXObservableValue('')
+  readonly $location: RXObservableValue<BrowserLocation>
+  readonly $pathName = new RXObservableValue('')
   readonly $scrollY = new RXObservableValue(0)
 
   readonly isMobileDevice: boolean
 
   constructor() {
     this.isMobileDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0)
+    this.$location = new RXObservableValue({ path: document.location.pathname, queries: document.location.search })
 
     console.log('isMobileDevice: ' + this.isMobileDevice)
     console.log('localStorage, theme: ' + window.localStorage.getItem('theme'))
@@ -75,7 +82,8 @@ export class Application {
   }
 
   private updateLocation() {
-    this.$location.value = document.location.hash ? document.location.pathname + '#' + document.location.hash : document.location.pathname
+    this.$pathName.value = document.location.hash ? document.location.pathname + '#' + document.location.hash : document.location.pathname
+    this.$location.value = { path: document.location.pathname, queries: document.location.search }
   }
 
   async copyTextToClipboard(value: string) {

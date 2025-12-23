@@ -1,31 +1,32 @@
-import { h2, p, vlist, vstack } from "flinker-dom"
+import { div, p, vlist, vstack } from "flinker-dom"
 import { LayoutLayer } from "../../../app/Application"
 import { IVoc } from "../../../domain/DomainModel"
 import { FontFamily } from "../../controls/Font"
 import { DertutorContext } from "../../../DertutorContext"
 import { theme } from "../../theme/ThemeManager"
 import { LineInput } from "../../controls/Input"
+import { LinkBtn } from "../../controls/Button"
+import { Title } from "../../controls/Text"
+import { ACTION_TIPS } from "../../../App"
 
 export const VocListView = () => {
   const ctx = DertutorContext.self
   const vm = ctx.vocListVM
   return vstack()
     .react(s => {
-      s.width = '100%'
-      s.height = '100vh'
-      s.gap = '10px'
-      s.width = '100%'
-      s.halign = 'center'
-      s.valign = 'center'
-      s.paddingBottom = '100px'
+      s.className = 'listScrollbar'
+      s.position = 'fixed'
+      s.left = '0'
+      s.top = '0'
+      s.gap = '0'
+      s.paddingTop = theme().navBarHeight + 'px'
+      s.width = theme().menuWidth + 'px'
+      s.height = window.innerHeight - theme().statusBarHeight + 'px'
+      s.enableOwnScroller = true
+      s.borderRight = '1px solid ' + theme().border
     }).children(() => {
 
-      h2()
-        .react(s => {
-          s.textColor = theme().text
-          s.paddingVertical = '50px'
-          s.text = 'Select a vocabulary'
-        })
+      Title('Select a vocabulary').react(s => s.paddingLeft = '20px')
 
       vlist<IVoc>()
         .observe(vm.$vocs, 'recreateChildren')
@@ -34,12 +35,26 @@ export const VocListView = () => {
         .itemRenderer(VocRenderer)
         .itemHash((item: IVoc) => item.id + item.name + ':' + (item === vm.$selectedVoc.value))
         .react(s => {
-          s.className = 'listScrollbar'
-          s.enableOwnScroller = true
+          s.fontFamily = FontFamily.MONO
+          s.fontSize = theme().defMenuFontSize
           s.width = '100%'
-          s.maxWidth = theme().menuWidth + 'px'
-          s.paddingBottom = theme().statusBarHeight - 40 + 'px'
           s.gap = '0'
+        })
+
+      div()
+        .react(s => {
+          s.position = 'fixed'
+          s.width = '100%'
+          s.textAlign = 'center'
+          s.fontFamily = FontFamily.APP
+          s.bottom = window.innerHeight / 2 + 'px'
+          s.fontSize = theme().defMenuFontSize
+          s.textColor = theme().text50
+        })
+        .children(() => {
+          ACTION_TIPS.split('\n').forEach(tip => {
+            p().react(s => s.text = tip)
+          })
         })
 
       LineInput(vm.bufferController.$buffer, vm.bufferController.$cursorPos)
@@ -56,27 +71,20 @@ export const VocListView = () => {
         })
     })
 }
+
 const VocRenderer = (voc: IVoc) => {
   const ctx = DertutorContext.self
   const vm = ctx.vocListVM
-  return p().react(s => {
-    const selected = vm.$selectedVoc.value === voc
-    // if (underCurser) {
-    //   host.dom.scrollIntoView({
-    //     behavior: 'instant',
-    //     block: 'center'
-    //   })
-    // }
-
-    const textColor = theme().menu
-    const bgColor = theme().appBg
-    s.fontSize = theme().defFontSize
-    s.fontFamily = FontFamily.APP
-    s.wrap = false
-    s.width = '100%'
-    s.textColor = selected ? bgColor : textColor
-    s.textAlign = 'center'
-    s.bgColor = selected ? textColor : theme().transparent
-    s.text = voc.name
-  })
+  return LinkBtn()
+    .react(s => {
+      s.wrap = false
+      s.isSelected = vm.$selectedVoc.value === voc
+      s.paddingRight = '2px'
+      s.paddingLeft = '20px'
+      s.text = voc.name
+    })
+    .onClick(() => {
+      vm.$selectedVoc.value = voc
+      vm.applySelection()
+    })
 }

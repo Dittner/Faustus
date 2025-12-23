@@ -8,9 +8,9 @@ export interface GlobalTheme {
   defFontSize: string
   defFontWeight: FontWeight
   appBg: string
+  actionsBg: string
   text: string
   text50: string
-  yellow: string
   red: string
   green: string
   em: string
@@ -18,7 +18,7 @@ export interface GlobalTheme {
   strong: string
   link: string
   blue: string
-  pynk: string
+  warn: string
   editor: string
   mark: string
   btn: string
@@ -26,9 +26,6 @@ export interface GlobalTheme {
   transparent: string
   h1: string
   header: string
-  menu: string
-  menuDe: string
-  menuEn: string
   maxNoteViewWidth: number
   menuWidth: number
   statusBarHeight: number
@@ -91,10 +88,11 @@ export class ThemeManager {
   * */
 
   createLightTheme(): GlobalTheme {
-    const black = '#222222'
-    const white = '#ffFFff'//efeee8
+    const black = '#111111'
+    const white = '#f8f8f8'//efeee8
     const red = '#ac2f2f'
     const header = '#755b54'
+    const blue = '#3d627d'
     return {
       id: 'light',
       isLight: true,
@@ -102,27 +100,24 @@ export class ThemeManager {
       defFontSize: '1rem',
       defFontWeight: '400',
       appBg: white,
-      yellow: '#a56a26',
-      mark: '#ac2f2f',
-      btn: '#d14141',
-      border: '#d14141',
+      mark: '#efa6ff',
+      btn: '#4a0078',
+      border: black + '20',
+      strong: black,
       text: black,
       text50: black + '88',
       red,
       green: '#7198a9',
-      h1: header,
+      actionsBg: '#f0f0f0',
+      h1: black,
       header,
       em: black,
-      accent: '#d14141',
-      strong: black,
-      blue: '#0a4277',
-      link: '#b16441',
+      accent: '#b741d1',
+      blue,
+      link: '#29177c',
       editor: black,
       transparent: '#00000000',
-      pynk: '#462962',
-      menu: '#462962',
-      menuDe: '#b16441',
-      menuEn: '#ac2f2f',
+      warn: '#a56a26',
       maxNoteViewWidth: 850,
       menuWidth: 400,
       statusBarHeight: 30,
@@ -139,10 +134,10 @@ export class ThemeManager {
 
   createDarkTheme(t: GlobalTheme): GlobalTheme {
     const text = '#707786' //707f8b 
-    const accent = '#8e94a5' //8da2a9
     const red = '#eb6c6c'
-    const blue = '#6fafe7'
+    const blue = '#57a9d5'
     const black = '#111111'
+    const accent = '#a2b6a4'
     return Object.assign({}, t, {
       id: 'dark',
       isLight: false,
@@ -153,20 +148,17 @@ export class ThemeManager {
       green: '#307c7d',
       h1: '#969dad',
       header: '#307c7d',
-      em: '#ac7570ff',
+      em: accent,
       accent,
-      strong: accent,
+      strong: '#8e94a5',
+      actionsBg: '#18191c',
       blue,
-      mark: '#eed07c',
-      link: '#c5e2c9',
-      yellow: '#b0c8b3',
-      pynk: '#685473',
-      btn: '#eed07c',
+      mark: '#c971dd',
+      link: blue,
+      btn: '#d0b66f',
+      warn: '#d0b66f',
       border: text + '20',
-      editor: text,
-      menu: '#489fbd',
-      menuDe: '#aa8657',
-      menuEn: '#cb6582',
+      editor: text
     })
   }
 
@@ -252,7 +244,7 @@ export class ThemeManager {
       //fontFamily: '--font-family-article-bi',
       fontSize: 'inherit',
       textColor: t.strong,
-      fontWeight: 'inherit',
+      fontWeight: t.isLight ? 'bold' : 'inherit',
       fontStyle: 'inherit'
     }
     buildRule(strongProps, parentSelector, 'strong')
@@ -325,14 +317,29 @@ export class ThemeManager {
     /******************************/
 
     const emphasizeProps: UIComponentProps = {
-      bgColor: t.isLight ? '#edf4ee' : 'undefined',
+      //bgColor: t.isLight ? '#bbd5bfff' : 'undefined',
       textColor: t.em,
       fontStyle: 'normal',
-      paddingVertical: '5px'
+      bgImage: t.isLight ? 'linear-gradient(#4ed0ad00, #4ed0ad50)' : 'inherit',
+      //paddingVertical: '5px'
     }
     buildRule(emphasizeProps, parentSelector, 'em')
 
     /******************************/
+    // mark
+    /******************************/
+
+    const markProps: UIComponentProps = {
+      fontSize: 'inherit',
+      fontWeight: 'inherit',
+      textColor: t.isLight ? 'inherit' : t.appBg,
+      bgColor: t.mark,
+      //bgImage: t.isLight ? `linear-gradient(${t.mark + '00'}, ${t.mark + '50'})` : 'inherit',
+    }
+
+    buildRule(markProps, parentSelector, 'mark')
+
+     /******************************/
     // code ``
     /******************************/
 
@@ -346,19 +353,6 @@ export class ThemeManager {
       //padding: '5px'
     }
     buildRule(monoFontProps, parentSelector, 'code')
-
-    /******************************/
-    // mark
-    /******************************/
-
-    const markProps: UIComponentProps = {
-      fontSize: 'inherit',
-      fontWeight: 'inherit',
-      textColor: t.appBg,
-      bgColor: t.mark,
-    }
-
-    buildRule(markProps, parentSelector, 'mark')
 
     /******************************/
     // link

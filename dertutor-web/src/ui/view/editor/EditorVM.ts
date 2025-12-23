@@ -1,10 +1,12 @@
 import { RX, RXObservableValue } from "flinker"
 
 import { globalContext } from "../../../App"
-import { IMediaFile, INote, ILang, AVAILABLE_LEVELS } from "../../../domain/DomainModel"
+import { IMediaFile, INote, AVAILABLE_LEVELS } from "../../../domain/DomainModel"
 import { DertutorContext } from "../../../DertutorContext"
 import { ViewModel } from "../ViewModel"
 import { UpdateNoteSchema } from "../../../backend/Schema"
+import { EditorInteractor, EditorState } from "./EditorInteractor"
+import { UrlKeys } from "../../../app/URLNavigator"
 
 export class FileWrapper {
   readonly file: File
@@ -16,18 +18,20 @@ export class FileWrapper {
 }
 
 export class EditorVM extends ViewModel {
-  readonly $selectedLang = new RXObservableValue<ILang | undefined>(undefined)
-  readonly $editingNote = new RXObservableValue<INote | undefined>(undefined)
-  readonly $level = new RXObservableValue(0)
+  readonly $state = new RXObservableValue<Readonly<EditorState>>({})
+  readonly $level = new RXObservableValue<number | undefined>(undefined)
   readonly $tagId = new RXObservableValue<number | undefined>(undefined)
   readonly $audioUrl = new RXObservableValue('')
   readonly $buffer = new RXObservableValue('')
   readonly $hasChanges = new RXObservableValue(false)
   readonly $filesPendingUpload = new RXObservableValue<Array<FileWrapper>>([])
   readonly $mediaFiles = new RXObservableValue<Array<IMediaFile>>([])
+  private readonly interactor: EditorInteractor
 
   constructor(ctx: DertutorContext) {
     super('editor', ctx)
+    this.interactor = new EditorInteractor(ctx)
+
     RX.combine(this.$buffer, this.$level, this.$tagId, this.$audioUrl).pipe()
       .skipFirst()
       .onReceive(values => {
@@ -35,7 +39,7 @@ export class EditorVM extends ViewModel {
         const level = values[1] as number
         const tagId = values[2] as number | undefined
         const audioUrl = values[3]
-        const note = this.$editingNote.value
+        const note = this.$state.value.note
         if (note) {
           this.$hasChanges.value = buffer !== note.text ||
             level !== note.level ||
@@ -65,14 +69,14 @@ export class EditorVM extends ViewModel {
 
   quit() {
     if (this.$hasChanges.value) {
-      this.ctx.$msg.value = { text: this.noteToString(this.$editingNote.value) + ', discard/save changes before quitting', level: 'warning' }
+      this.ctx.$msg.value = { text: this.noteToString(this.$state.value.note) + ', discard/save changes before quitting', level: 'warning' }
     } else {
       this.ctx.noteListVM.activate()
     }
   }
 
   save() {
-    const note = this.$editingNote.value
+    const note = this.$state.value.note
     if (!note) {
       this.ctx.$msg.value = { text: 'Note not found', level: 'warning' }
       return
@@ -88,10 +92,10 @@ export class EditorVM extends ViewModel {
       schema.tag_id = this.$tagId.value
       schema.audio_url = this.$audioUrl.value
 
-      this.$hasChanges.value = false
-
       globalContext.server.updateNote(schema).pipe()
         .onReceive((data: any) => {
+          this.$hasChanges.value = false
+          this.$state.value = { ...this.$state.value, note: data }
           this.ctx.$msg.value = { text: this.noteToString(note) + ', written', level: 'info' }
         })
         .onError(e => {
@@ -105,7 +109,7 @@ export class EditorVM extends ViewModel {
   }
 
   discardChanges() {
-    const note = this.$editingNote.value
+    const note = this.$state.value.note
     if (note) {
       this.$buffer.value = note.text
       this.$level.value = note.level
@@ -115,8 +119,8 @@ export class EditorVM extends ViewModel {
   }
 
   loadAudioLink() {
-    const lang = this.$selectedLang.value
-    const note = this.$editingNote.value
+    const lang = this.$state.value.lang
+    const note = this.$state.value.note
     if (lang && note) {
       const key = encodeURIComponent(note.name)
       const link = lang.code === 'en' ? '/corpus/en_pron/search?key=' + key : '/corpus/de_pron/search?key=' + key
@@ -139,7 +143,7 @@ export class EditorVM extends ViewModel {
   }
 
   loadTranslation() {
-    const note = this.$editingNote.value
+    const note = this.$state.value.note
     if (note) {
       globalContext.server.loadEnRuTranslation(note.name).pipe()
         .onReceive(data => {
@@ -168,8 +172,9 @@ export class EditorVM extends ViewModel {
   }
 
   uploadAll() {
-    if (!this.$editingNote.value) return
-    const note = this.$editingNote.value
+    const note = this.$state.value.note
+    if (!note) return
+
     let uploadingFiles = this.$filesPendingUpload.value.length
     this.$filesPendingUpload.value.forEach(w => {
       globalContext.server.uploadFile(note.id, w.file, w.$name.value).pipe()
@@ -178,7 +183,7 @@ export class EditorVM extends ViewModel {
           console.log('EditorVM:uploadFile, complete, data: ', data)
           if (data) {
             this.ctx.$msg.value = { text: this.noteToString(note) + ', uploaded', level: 'info' }
-            this.$editingNote.value = { ...note, media: note.media ? [...note.media, data] : [data] }
+            this.$state.value = { ...this.$state.value, note: { ...note, media: note.media ? [...note.media, data] : [data] } }
             this.$mediaFiles.value = [...this.$mediaFiles.value]
           } else {
             this.ctx.$msg.value = { text: this.noteToString(note) + ', mediaresource is uploaded, but received damaged result', level: 'error' }
@@ -204,7 +209,7 @@ export class EditorVM extends ViewModel {
   }
 
   deleteMediaFile(mf: IMediaFile) {
-    const note = this.$editingNote.value
+    const note = this.$state.value.note
     if (!note) return
     globalContext.server.deleteFile({ uid: mf.uid }).pipe()
       .onReceive((data: any[]) => {
@@ -227,7 +232,7 @@ export class EditorVM extends ViewModel {
   }
 
   getMediaFileLink(mf: IMediaFile) {
-    const note = this.$editingNote.value
+    const note = this.$state.value.note
     return note ? `/media/${note.id}/${mf.uid}` : ''
   }
 
@@ -237,41 +242,71 @@ export class EditorVM extends ViewModel {
   *
   */
 
+
+  private unsubscribe: (() => void) | undefined
   override activate(): void {
     super.activate()
-    const k = this.ctx.navigator.$keys.value
-    this.$selectedLang.value = k.langCode ? this.ctx.$allLangs.value.find(l => l.code === k.langCode) : undefined
-    if (k.noteId && this.$selectedLang.value) {
-      this.loadNote(k.noteId)
-    } else {
-      this.ctx.noteListVM.activate()
+    this.ctx.$msg.value = undefined
+    this.unsubscribe = globalContext.navigator.$keys.pipe()
+      .onReceive(value => {
+        this.runInteracting(value)
+      })
+      .subscribe()
+  }
+
+  override deactivate(): void {
+    super.deactivate()
+    this.unsubscribe?.()
+  }
+
+  private isLoading = false
+  private reloadWithKeys: UrlKeys | undefined
+  private reloadCycleDepth = 0
+  private async runInteracting(keys: UrlKeys) {
+    if (this.isLoading) {
+      this.reloadWithKeys = keys
+      return
+    }
+
+    try {
+      this.reloadWithKeys = undefined
+      this.isLoading = true
+
+      const state = await this.interactor.run(keys)
+
+      this.isLoading = false
+      if (this.reloadWithKeys) {
+        this.reloadCycleDepth++
+        if (this.reloadCycleDepth > 10) {
+          this.ctx.$msg.value = { text: 'Infinite loop of reloading pages is detected', level: 'warning' }
+          return
+        }
+        this.runInteracting(this.reloadWithKeys)
+        return
+      }
+
+      this.$state.value = state
+      const note = state.note
+
+      if (note) {
+        this.$mediaFiles.value = note?.media ?? []
+        this.ctx.$msg.value = { text: this.noteToString(note), level: 'info' }
+        this.$buffer.value = note.text
+        this.$level.value = note.level
+        this.$tagId.value = note.tag_id
+        this.$audioUrl.value = note.audio_url
+      } else {
+        this.ctx.noteListVM.activate()
+      }
+
+    } catch (e: any) {
+      this.ctx.$msg.value = { level: 'error', text: e.message }
     }
   }
 
-  private loadNote(id: number) {
-    globalContext.server.loadNote(id).pipe()
-      .onReceive((note: INote | undefined) => {
-        this.$editingNote.value = note
-        this.$mediaFiles.value = note?.media ?? []
-        this.ctx.$msg.value = { text: this.noteToString(note), level: 'info' }
-        if (note) {
-          this.$editingNote.value = note
-          this.$buffer.value = note.text
-          this.$level.value = note.level
-          this.$tagId.value = note.tag_id
-          this.$audioUrl.value = note.audio_url
-        } else {
-          this.ctx.noteListVM.activate()
-        }
-      }).onError(e => {
-        this.$mediaFiles.value = []
-        this.ctx.$msg.value = { text: e.message, level: 'error' }
-      })
-  }
-
   private noteToString(n: INote | undefined) {
-    const lang = this.$selectedLang.value
-    const voc = this.$selectedLang.value?.vocs.find(v => v.id === n?.voc_id)
+    const lang = this.$state.value.lang
+    const voc = lang && lang.vocs.find(v => v.id === n?.voc_id)
     return n && voc && lang ? `${lang.name} › ${voc.name} › ${n.name}(ID:${n.id})` : 'Note not found'
   }
 }

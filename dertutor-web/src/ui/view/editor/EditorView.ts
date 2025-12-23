@@ -1,7 +1,7 @@
-import { div, hlist, hstack, input, p, spacer, span, vstack } from "flinker-dom"
+import { btn, div, hlist, hstack, input, p, spacer, vstack } from "flinker-dom"
 import { globalContext } from "../../../App"
 import { IMediaFile, INote, ITag } from "../../../domain/DomainModel"
-import { BlueBtn, Btn, RedBtn } from "../../controls/Button"
+import { Btn, LinkBtn, RedBtn } from "../../controls/Button"
 import { FontFamily } from "../../controls/Font"
 import { Markdown } from "../../controls/Markdown"
 import { DertutorContext } from "../../../DertutorContext"
@@ -20,8 +20,8 @@ export const EditorView = () => {
   const formatter = new TextFormatter()
 
   const onFocus = (e: FocusEvent) => {
-    if (noteInFocus !== vm.$editingNote.value) {
-      noteInFocus = vm.$editingNote.value
+    if (noteInFocus !== vm.$state.value.note) {
+      noteInFocus = vm.$state.value.note
       const ta = e.currentTarget as HTMLTextAreaElement
       //scroll to first line
       ta.setSelectionRange(0, 0)
@@ -39,8 +39,10 @@ export const EditorView = () => {
       })
 
     TextEditor(formatter)
+      .observe(vm.$state)
       .bind(vm.$buffer)
       .react(s => {
+        s.visible = vm.$state.value.note !== undefined
         s.position = 'fixed'
         s.width = window.innerWidth / 2 + 'px'
         s.height = window.innerHeight - theme().statusBarHeight + 'px'
@@ -139,20 +141,9 @@ const LevelRenderer = (level: number) => {
   return Btn()
     .react(s => {
       s.isSelected = vm.$level.value === level
-      s.fontSize = theme().defFontSize
-      s.fontFamily = FontFamily.APP
-      s.wrap = false
       s.padding = '5px'
-      s.textColor = theme().text
       s.text = vm.reprLevel(level)
       s.textAlign = 'left'
-      s.textSelectable = false
-    })
-    .whenHovered(s => {
-      s.textColor = theme().accent
-    })
-    .whenSelected(s => {
-      s.textColor = theme().btn + 'cc'
     })
     .onClick(() => vm.$level.value = vm.$level.value === level ? 0 : level)
 }
@@ -160,7 +151,7 @@ const LevelRenderer = (level: number) => {
 const TagSelector = () => {
   const vm = DertutorContext.self.editorVM
   return Panel('Tag')
-    .observe(vm.$editingNote, 'recreateChildren')
+    .observe(vm.$state, 'recreateChildren')
     .observe(vm.$tagId, 'affectsChildrenProps')
     .children(() => {
       p()
@@ -169,7 +160,7 @@ const TagSelector = () => {
           s.fontFamily = FontFamily.APP
         })
         .children(() => {
-          const lang = vm.$selectedLang.value
+          const lang = vm.$state.value.lang
           if (lang) lang.tags.forEach(t => TagRenderer(t))
         })
     })
@@ -177,15 +168,10 @@ const TagSelector = () => {
 
 const TagRenderer = (t: ITag) => {
   const vm = DertutorContext.self.editorVM
-  return span()
+  return Btn()
     .react(s => {
-      const isSelected = vm.$tagId.value === t.id
-      const color = isSelected ? theme().btn + 'bb' : theme().text
-      s.textColor = color
-      s.border = '1px solid ' + color
-      s.textSelectable = false
-      s.fontSize = theme().defMenuFontSize
-      s.fontFamily = FontFamily.APP
+      s.isSelected = vm.$tagId.value === t.id
+      s.border = '1px solid ' + theme().text50
       s.paddingHorizontal = '5px'
       s.cornerRadius = '2px'
       s.text = t.name
@@ -193,11 +179,12 @@ const TagRenderer = (t: ITag) => {
       s.marginTop = '5px'
     })
     .whenHovered(s => {
-      const isSelected = vm.$tagId.value === t.id
-      const color = isSelected ? theme().btn + 'bb' : theme().accent
-      s.textColor = color
-      s.border = '1px solid ' + color
-      s.cursor = 'pointer'
+      s.textColor = theme().text
+      s.border = '1px solid ' + theme().text
+    })
+    .whenSelected(s => {
+      s.textColor = theme().accent
+      s.border = '1px solid ' + theme().accent
     })
     .onClick(() => vm.$tagId.value = vm.$tagId.value === t.id ? undefined : t.id)
 }
@@ -222,7 +209,7 @@ const PronunciationPanel = () => {
             s.text = 'audio.mp3'
           })
 
-          BlueBtn()
+          LinkBtn()
             .observe(vm.$audioUrl)
             .react(s => {
               s.text = vm.$audioUrl.value
@@ -230,7 +217,7 @@ const PronunciationPanel = () => {
             .onClick(() => vm.playAudio())
         })
 
-      Btn()
+      BlueBtn()
         .observe(vm.$audioUrl)
         .react(s => {
           s.visible = vm.$audioUrl.value === ''
@@ -282,7 +269,7 @@ const MediaFileView = (mf: IMediaFile) => {
             s.text = mf.name + ' '
           })
 
-          BlueBtn()
+          LinkBtn()
             .react(s => {
               s.text = vm.getMediaFileLink(mf)
               s.popUp = 'Copy link'
@@ -325,7 +312,7 @@ const PendingUploadResources = () => {
           s.valign = 'center'
         })
         .children(() => {
-          Btn()
+          BlueBtn()
             .react(s => {
               s.text = 'Choose a media-file'
             })
@@ -339,7 +326,7 @@ const PendingUploadResources = () => {
               s.text = '|'
             })
 
-          Btn()
+          BlueBtn()
             .observe(vm.$filesPendingUpload)
             .react(s => {
               s.visible = vm.$filesPendingUpload.value.length > 0
@@ -414,7 +401,7 @@ const Header = () => {
     })
     .children(() => {
 
-      Btn()
+      BlueBtn()
         .observe(vm.$hasChanges)
         .react(s => {
           s.isDisabled = !vm.$hasChanges.value
@@ -423,7 +410,7 @@ const Header = () => {
         })
         .onClick(() => vm.save())
 
-      Btn()
+      BlueBtn()
         .observe(vm.$hasChanges)
         .react(s => {
           s.isDisabled = !vm.$hasChanges.value
@@ -431,19 +418,38 @@ const Header = () => {
         })
         .onClick(() => vm.discardChanges())
 
-      Btn()
+      BlueBtn()
         .observe(vm.$hasChanges)
         .react(s => {
-          s.visible = vm.$selectedLang.value?.code === 'en'
+          s.visible = vm.$state.value.lang?.code === 'en'
           s.text = 'Load default translation'
         })
         .onClick(() => vm.loadTranslation())
 
-      Btn()
+      BlueBtn()
         .react(s => {
           s.text = 'Quit'
           s.popUp = 'ESC'
         })
         .onClick(() => vm.quit())
+    })
+}
+
+const BlueBtn = () => {
+  return btn()
+    .react(s => {
+      s.fontFamily = FontFamily.APP
+      s.fontSize = theme().defMenuFontSize
+      s.minHeight = '25px'
+      s.gap = '2px'
+      s.textColor = theme().btn + 'cc'
+      s.cornerRadius = '4px'
+    })
+    .whenHovered(s => {
+      s.textColor = theme().btn
+    })
+    .whenSelected(s => {
+      s.textColor = theme().accent
+      s.bgColor = theme().header
     })
 }

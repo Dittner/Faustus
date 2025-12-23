@@ -12,6 +12,15 @@ export class LangListVM extends ViewModel {
   constructor(ctx: DertutorContext) {
     super('langs', ctx)
     this.addKeybindings()
+    this.$selectedLang.pipe().onReceive(_ => this.showSelectedLangIndex())
+  }
+
+  private showSelectedLangIndex() {
+    const lang = this.$selectedLang.value
+    if (lang) {
+      const index = this.$langs.value.findIndex(child => child.id === lang.id)
+      this.ctx.$msg.value = { 'text': index != -1 ? `${index + 1}:${this.$langs.value.length}` : '', 'level': 'info' }
+    }
   }
 
   private addKeybindings() {
@@ -47,9 +56,9 @@ export class LangListVM extends ViewModel {
     this.$selectedLang.value = this.$langs.value.length > 0 ? this.$langs.value[0] : undefined
   }
 
-  private applySelection() {
+  applySelection() {
     if (this.$selectedLang.value) {
-      this.ctx.navigator.navigateTo({ langCode: this.$selectedLang.value.code })
+      globalContext.navigator.navigateTo({ langCode: this.$selectedLang.value.code })
       this.ctx.vocListVM.activate()
     }
   }
@@ -62,15 +71,12 @@ export class LangListVM extends ViewModel {
 
   override activate(): void {
     super.activate()
-    this.showHelp()
-    if (this.ctx.$allLangs.value.length === 0)
+    if (this.$langs.value.length === 0)
       this.loadAllLangs()
     else
       this.selectFromUrl()
-  }
-
-  private showHelp() {
-    this.ctx.$msg.value = { 'level': 'info', 'text': 'Press ? to see actions' }
+    
+    this.showSelectedLangIndex()
   }
 
   private async loadAllLangs() {
@@ -82,7 +88,6 @@ export class LangListVM extends ViewModel {
         this.ctx.$allLangs.value = data ?? []
         this.$langs.value = data ?? []
         this.selectFromUrl()
-        this.showHelp()
       })
       .onError(err => {
         this.ctx.$msg.value = { text: err.message, level: 'error' }
@@ -91,7 +96,7 @@ export class LangListVM extends ViewModel {
   }
 
   private selectFromUrl() {
-    const langCode = this.ctx.navigator.$keys.value.langCode
+    const langCode = globalContext.navigator.$keys.value.langCode
     const lang = this.$langs.value.find(l => l.code === langCode)
     if (lang) {
       this.$selectedLang.value = lang

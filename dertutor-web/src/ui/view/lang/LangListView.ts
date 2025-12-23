@@ -1,27 +1,30 @@
-import { h2, p, vlist, vstack } from "flinker-dom"
+import { div, p, vlist, vstack } from "flinker-dom"
 import { ILang } from "../../../domain/DomainModel"
 import { FontFamily } from "../../controls/Font"
 import { DertutorContext } from "../../../DertutorContext"
 import { theme } from "../../theme/ThemeManager"
+import { ACTION_TIPS } from "../../../App"
+import { Title } from "../../controls/Text"
+import { LinkBtn } from "../../controls/Button"
 
 export const LangListView = () => {
   const ctx = DertutorContext.self
   const vm = ctx.langListVM
   return vstack()
     .react(s => {
-      s.width = '100%'
-      s.height = '100vh'
-      s.halign = 'center'
-      s.valign = 'center'
-      s.paddingBottom = '100px'
-      s.gap = '10px'
+      s.className = 'listScrollbar'
+      s.position = 'fixed'
+      s.left = '0'
+      s.top = '0'
+      s.gap = '0'
+      s.paddingTop = theme().navBarHeight + 'px'
+      s.width = theme().menuWidth + 'px'
+      s.height = window.innerHeight - theme().statusBarHeight + 'px'
+      s.enableOwnScroller = true
+      s.borderRight = '1px solid ' + theme().border
     }).children(() => {
-      h2()
-        .react(s => {
-          s.textColor = theme().text
-          s.paddingVertical = '50px'
-          s.text = 'Select a language'
-        })
+
+      Title('Select a language').react(s => s.paddingLeft = '20px')
 
       vlist<ILang>()
         .observe(vm.$langs, 'recreateChildren')
@@ -35,29 +38,46 @@ export const LangListView = () => {
           s.paddingBottom = theme().statusBarHeight - 40 + 'px'
           s.gap = '0'
         })
+
+      div()
+        .react(s => {
+          s.position = 'fixed'
+          s.width = '100%'
+          s.textAlign = 'center'
+          s.fontFamily = FontFamily.APP
+          s.bottom = window.innerHeight / 2 + 'px'
+          s.fontSize = theme().defMenuFontSize
+          s.textColor = theme().text50
+        })
+        .children(() => {
+          ACTION_TIPS.split('\n').forEach(tip => {
+            p().react(s => s.text = tip)
+          })
+        })
     })
 }
 
 const LangRenderer = (lang: ILang) => {
   const ctx = DertutorContext.self
   const vm = ctx.langListVM
-  return p()
+  return LinkBtn()
     .react(s => {
-      const selected = vm.$selectedLang.value === lang
-
-      let textColor = theme().red
-
-      s.fontSize = theme().defFontSize
-      s.fontFamily = FontFamily.APP
       s.wrap = false
-      s.width = '100%'
-      s.textColor = selected ? theme().appBg : textColor
-      s.bgColor = selected ? textColor : theme().transparent
+      s.isSelected = vm.$selectedLang.value === lang
+      s.paddingRight = '2px'
+      s.paddingLeft = '20px'
       s.text = lang.name
-      s.textAlign = 'center'
-      s.textSelectable = false
+      s.textColor = theme().red + 'cc'
     })
     .whenHovered(s => {
-      s.textDecoration = 'underline'
+      s.textColor = theme().red
+    })
+    .whenSelected(s => {
+      s.textColor = theme().appBg
+      s.bgColor = theme().red + 'cc'
+    })
+    .onClick(() => {
+      vm.$selectedLang.value = lang
+      vm.applySelection()
     })
 }

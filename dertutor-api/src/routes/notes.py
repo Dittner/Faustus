@@ -252,7 +252,7 @@ def search_query(params: SearchParams, count: bool) -> sa.TextClause:
         if params.key
         else ''
     }
-            level
+            id DESC
         LIMIT :limit
         OFFSET :offset;
         """

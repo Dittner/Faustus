@@ -1,5 +1,5 @@
 import { RXObservableValue } from "flinker"
-import { btn, ButtonProps, span, TextProps } from "flinker-dom"
+import { btn, ButtonProps, link, span, TextProps } from "flinker-dom"
 import { MaterialIcon } from "../icons/MaterialIcon"
 import { theme } from "../theme/ThemeManager"
 import { FontFamily } from "./Font"
@@ -101,54 +101,13 @@ export const RedBtn = () => {
     })
 }
 
-export const BlueBtn = () => {
-  return IconBtn()
-    .react(s => {
-      s.fontFamily = FontFamily.MONO
-      s.fontSize = theme().defMenuFontSize
-      s.iconSize = theme().defFontSize
-      s.minHeight = '25px'
-      s.gap = '2px'
-      s.textColor = theme().blue + 'cc'
-      s.cornerRadius = '4px'
-    })
-    .whenHovered(s => {
-      s.textColor = theme().blue
-    })
-    .whenSelected(s => {
-      s.textColor = theme().accent
-      s.bgColor = theme().header
-    })
-}
-
-export const GreenBtn = () => {
-  return IconBtn()
-    .react(s => {
-      s.fontFamily = FontFamily.MONO
-      s.fontSize = theme().defMenuFontSize
-      s.iconSize = theme().defFontSize
-      s.minHeight = '25px'
-      s.gap = '2px'
-      s.textColor = theme().green + 'cc'
-      s.cornerRadius = '4px'
-    })
-    .whenHovered(s => {
-      s.textColor = theme().green
-    })
-    .whenSelected(s => {
-      s.textColor = theme().accent
-      s.bgColor = theme().header
-    })
-}
-
-
 export const Btn = () => {
   return IconBtn()
     .react(s => {
-      s.fontFamily = FontFamily.MONO
+      s.fontFamily = FontFamily.APP
       s.fontSize = theme().defMenuFontSize
       s.iconSize = theme().defFontSize
-      s.minHeight = '25px'
+      s.minHeight = '35px'
       s.gap = '2px'
       s.textColor = theme().text50
       s.cornerRadius = '4px'
@@ -157,6 +116,49 @@ export const Btn = () => {
       s.textColor = theme().text
     })
     .whenSelected(s => {
-      s.textColor = theme().btn
+      s.textColor = theme().accent
+    })
+}
+
+/*
+*
+* Link
+*
+**/
+
+export const LinkBtn = () => {
+  return btn()
+    .react(s => {
+      s.wrap = false
+      s.fontFamily = FontFamily.MONO
+      s.fontSize = theme().defMenuFontSize
+      s.textColor = theme().link + 'cc'
+      s.minHeight = '35px'
+      s.bgColor = theme().transparent
+    })
+    .whenHovered(s => {
+      s.textColor = theme().link
+    })
+    .whenSelected(s => {
+      s.textColor = theme().appBg
+      s.bgColor = theme().link + 'cc'
+    })
+}
+
+export const Link = () => {
+  return link()
+    .react(s => {
+      s.wrap = false
+      s.fontFamily = FontFamily.MONO
+      s.fontSize = theme().defMenuFontSize
+      s.textColor = theme().link
+      s.bgColor = theme().transparent
+    })
+    .whenHovered(s => {
+      s.textDecoration = 'underline'
+    })
+    .whenSelected(s => {
+      s.textColor = theme().appBg
+      s.bgColor = theme().link
     })
 }

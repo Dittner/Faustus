@@ -7,7 +7,6 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, ORJSONResponse
-from fastapi_pagination import add_pagination
 from src.context import dertutor_context
 from src.repo import InsertDefaultRowsService
 from src.routes.corpus import router as corpus_router
@@ -48,7 +47,6 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title='DERTUTOR API', lifespan=lifespan, default_response_class=ORJSONResponse)
-add_pagination(app)
 
 app.include_router(langs_router, prefix='/api')
 app.include_router(voc_router, prefix='/api')

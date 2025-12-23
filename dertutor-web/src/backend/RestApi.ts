@@ -1,6 +1,5 @@
 import { type AnyRXObservable, type RXObservable, RXObservableValue, RXOperation } from 'flinker'
 
-import { PingCmd } from './cmd/PingCmd'
 
 export type HttpMethod = 'HEAD' | 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 export type RestApiErrorCategory = 'noConnection' | 'notAuthorized' | 'serverError' | 'clientError' | 'unknownError' | 'aborted'
@@ -32,7 +31,7 @@ export class RestApiCmd implements Runnable {
   private readonly body: any
   private readonly headers: any
 
-  constructor(api: RestApi, method: HttpMethod, path: string, body: any = undefined, headers:any = undefined) {
+  constructor(api: RestApi, method: HttpMethod, path: string, body: any = undefined, headers: any = undefined) {
     this.api = api
     this.method = method
     this.path = path
@@ -77,8 +76,17 @@ export class RestApi {
   //--------------------------------------
 
   ping(): RXObservable<any, RestApiError> {
-    const cmd = new PingCmd(this)
-    return cmd.run()
+    console.log('CheckServerCmd, running...')
+    const cmd = new RestApiCmd(this, 'GET', '')
+    const op = cmd.run()
+    op.pipe()
+      .onReceive(v => {
+        this.$isServerAvailable.value = true
+      })
+      .onError(e => {
+        this.$isServerAvailable.value = false
+      })
+    return op
   }
 
   head(path: string): RXOperation<any, RestApiError> {
@@ -91,7 +99,7 @@ export class RestApi {
     return cmd.run()
   }
 
-  post(path: string, schema: any, headers:any = undefined): RXOperation<any, RestApiError> {
+  post(path: string, schema: any, headers: any = undefined): RXOperation<any, RestApiError> {
     const cmd = new RestApiCmd(this, 'POST', path, schema, headers)
     return cmd.run()
   }

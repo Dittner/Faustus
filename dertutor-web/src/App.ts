@@ -38,6 +38,13 @@ export function App() {
     })
 }
 
+
+export const ACTION_TIPS = `
+You can navigate through menu items using arrows:\n
+→, ↓, →, ↑\n
+To see more shortkeys, press ?
+`
+
 export const ActionsHelpView = () => {
   const ctx = DertutorContext.self
 
@@ -48,10 +55,13 @@ export const ActionsHelpView = () => {
       const vm = ctx.$activeVM.value
       s.visible = vm.$showActions.value
       s.position = 'fixed'
-      s.bottom = theme().statusBarHeight + 'px'
+      s.paddingTop = theme().navBarHeight + 'px'
       s.right = '0'
+      s.top = '0'
+      s.height = window.innerHeight - theme().statusBarHeight + 'px'
       s.paddingHorizontal = '20px'
       s.gap = '0'
+      s.bgColor = theme().actionsBg
     }).children(() => {
       const vm = ctx.$activeVM.value
       vlist<Action>()
@@ -69,13 +79,14 @@ const ActionInfoView = (a: Action) => {
   return p()
     .react(s => {
       s.width = '100%'
+      s.height = '100%'
       s.fontFamily = FontFamily.MONO
       s.fontSize = theme().defMenuFontSize
     }).children(() => {
       span().react(s => {
         s.display = 'inline-block'
         s.text = a.cmd
-        s.textColor = theme().em
+        s.textColor = theme().isLight ? theme().red : theme().em
         s.paddingHorizontal = '20px'
         s.paddingVertical = '5px'
         s.width = '120px'
@@ -86,7 +97,7 @@ const ActionInfoView = (a: Action) => {
       span()
         .react(s => {
           s.text = a.desc
-          s.textColor = theme().accent
+          s.textColor = theme().strong
           s.width = '100%'
           s.whiteSpace = 'nowrap'
           s.paddingVertical = '5px'
@@ -106,8 +117,8 @@ const Footer = () => {
       s.width = '100%'
       s.minHeight = theme().statusBarHeight + 'px'
       s.valign = 'center'
-      s.bgColor = theme().accent + '10'
-      s.blur = '5px'
+      s.bgColor = theme().text + '10'
+      //s.blur = '5px'
     })
     .children(() => {
 
@@ -135,7 +146,7 @@ export const MessangerView = () => {
       if (msg?.level === 'error')
         s.textColor = theme().red
       else if (msg?.level === 'warning')
-        s.textColor = theme().yellow
+        s.textColor = theme().warn
       else
         s.textColor = theme().text50
     })

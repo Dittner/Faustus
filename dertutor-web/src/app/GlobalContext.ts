@@ -1,11 +1,13 @@
 import { DertutorServer } from "../backend/DertutorServer"
 import { Application } from "./Application"
+import { URLNavigator } from "./URLNavigator"
 import { generateUID } from "./Utils"
 
 export class GlobalContext {
   readonly uid = generateUID()
   readonly app: Application
   readonly server: DertutorServer
+  readonly navigator: URLNavigator
 
   static self: GlobalContext
 
@@ -18,6 +20,7 @@ export class GlobalContext {
 
   private constructor() {
     this.app = new Application()
+    this.navigator = new URLNavigator(this.app)
     this.server = new DertutorServer()
   }
 }

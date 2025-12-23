@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "flinker": "^2.0.5",
-    "flinker-dom": "^1.1.9",
-    "flinker-markdown": "^1.1.11"
+    "flinker-dom": "^1.1.10",
+    "flinker-markdown": "^1.1.15"
   },
   "devDependencies": {
     "typescript": "~5.7.2",

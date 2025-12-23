@@ -17,7 +17,7 @@ export interface CreateNoteSchema {
   voc_id: number
   name: string
   text: string
-  level: number
+  level: number | undefined
   tag_id: number | undefined
   audio_url: string
 }
@@ -32,7 +32,7 @@ export interface UpdateNoteSchema {
   voc_id: number
   name: string
   text: string
-  level: number
+  level: number | undefined
   tag_id: number | undefined
   audio_url: string
 }
@@ -41,7 +41,7 @@ export interface DeleteNoteSchema {
   id: number
 }
 
-export interface GetPageOfNotesSchema {
+export interface GetPageSchema {
   lang_id: number
   page: number
   size: number

@@ -30,7 +30,8 @@ export interface INote {
   readonly id: number
   readonly name: string
   readonly text: string
-  readonly level: number
+  readonly level: number | undefined
+  readonly lang_id: number
   readonly voc_id: number
   readonly audio_url: string
   readonly tag_id: number | undefined

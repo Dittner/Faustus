@@ -23,6 +23,8 @@ export interface BrowserLocation {
   queries: string
 }
 
+export type UpdateUrlMode = 'push' | 'replace'
+
 export class Application {
   readonly $size = new RXObservableValue<AppSize>(AppSize.L)
   readonly $location: RXObservableValue<BrowserLocation>
@@ -43,8 +45,8 @@ export class Application {
     this.updateLocation()
   }
 
-  navigate(to: string) {
-    window.history.pushState('', '', to);
+  navigate(to: string, mode: UpdateUrlMode) {
+    mode === 'push' ? window.history.pushState('', '', to) : window.history.replaceState('', '', to)
   }
 
   private updateSize(): void {

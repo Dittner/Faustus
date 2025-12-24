@@ -1,5 +1,6 @@
 import { RXObservableValue } from 'flinker'
 import { buildRule, FontWeight, UIComponentProps } from 'flinker-dom'
+import { FontFamily } from '../controls/Font'
 
 export interface GlobalTheme {
   id: 'dark' | 'light'
@@ -121,7 +122,7 @@ export class ThemeManager {
       maxNoteViewWidth: 850,
       menuWidth: 400,
       statusBarHeight: 30,
-      navBarHeight: 30,
+      navBarHeight: 40,
     }
   }
 
@@ -133,11 +134,11 @@ export class ThemeManager {
 
 
   createDarkTheme(t: GlobalTheme): GlobalTheme {
-    const text = '#707786' //707f8b 
+    const text = '#80858a' //707f8b 
     const red = '#eb6c6c'
     const blue = '#57a9d5'
     const black = '#111111'
-    const accent = '#a2b6a4'
+    const accent = '#bdbf84'  //a2b6a4
     return Object.assign({}, t, {
       id: 'dark',
       isLight: false,
@@ -146,11 +147,11 @@ export class ThemeManager {
       text50: text + 'aa',
       red,
       green: '#307c7d',
-      h1: '#969dad',
+      h1: '#c0c5ca',
       header: '#307c7d',
       em: accent,
       accent,
-      strong: '#8e94a5',
+      strong: '#a0a5aa',
       actionsBg: '#18191c',
       blue,
       mark: '#c971dd',
@@ -158,7 +159,7 @@ export class ThemeManager {
       btn: '#d0b66f',
       warn: '#d0b66f',
       border: text + '20',
-      editor: text
+      editor: '#729e9c'
     })
   }
 
@@ -416,6 +417,25 @@ export class ThemeManager {
       textAlign: 'center'
     }
     buildRule(delimProps, parentSelector, '.md-delim')
+
+    const materialIconProps: UIComponentProps = {
+      className: '.md-icon',
+      fontFamily: FontFamily.MATERIAL_ICON,
+      fontSize: 'inherit',
+    }
+    buildRule(materialIconProps, parentSelector, '.md-icon')
+
+    /******************************/
+    // hr
+    /******************************/
+
+    const hrProps: UIComponentProps = {
+      width: '100%',
+      //height: '1px',
+      border: ['1px', 'solid', t.green],
+      marginBottom: '20px',
+    }
+    buildRule(hrProps, parentSelector, 'hr')
 
     /******************************/
     // alignment

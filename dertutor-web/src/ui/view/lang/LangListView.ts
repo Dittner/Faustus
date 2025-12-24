@@ -1,14 +1,14 @@
-import { div, p, vlist, vstack } from "flinker-dom"
+import { vlist, vstack } from "flinker-dom"
 import { ILang } from "../../../domain/DomainModel"
-import { FontFamily } from "../../controls/Font"
-import { DertutorContext } from "../../../DertutorContext"
+import { DerTutorContext } from "../../../DerTutorContext"
 import { theme } from "../../theme/ThemeManager"
 import { ACTION_TIPS } from "../../../App"
 import { Title } from "../../controls/Text"
 import { LinkBtn } from "../../controls/Button"
+import { Markdown } from "../../controls/Markdown"
 
 export const LangListView = () => {
-  const ctx = DertutorContext.self
+  const ctx = DerTutorContext.self
   const vm = ctx.langListVM
   return vstack()
     .react(s => {
@@ -39,32 +39,28 @@ export const LangListView = () => {
           s.gap = '0'
         })
 
-      div()
+      Markdown()
         .react(s => {
+          s.className = theme().id
           s.position = 'fixed'
-          s.width = '100%'
-          s.textAlign = 'center'
-          s.fontFamily = FontFamily.APP
-          s.bottom = window.innerHeight / 2 + 'px'
+          s.paddingHorizontal = '20px'
+          s.left = theme().menuWidth + 10 + 'px'
+          s.mode = 'md'
           s.fontSize = theme().defMenuFontSize
-          s.textColor = theme().text50
-        })
-        .children(() => {
-          ACTION_TIPS.split('\n').forEach(tip => {
-            p().react(s => s.text = tip)
-          })
+          s.textColor = theme().green
+          s.text = ACTION_TIPS.trim()
         })
     })
 }
 
 const LangRenderer = (lang: ILang) => {
-  const ctx = DertutorContext.self
+  const ctx = DerTutorContext.self
   const vm = ctx.langListVM
   return LinkBtn()
     .react(s => {
       s.wrap = false
       s.isSelected = vm.$selectedLang.value === lang
-      s.paddingRight = '2px'
+      s.paddingRight = '5px'
       s.paddingLeft = '20px'
       s.text = lang.name
       s.textColor = theme().red + 'cc'

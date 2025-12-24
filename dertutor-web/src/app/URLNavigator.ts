@@ -1,6 +1,6 @@
 import { RXObservableValue } from "flinker"
 import { globalContext } from "../App"
-import { Application, BrowserLocation } from "./Application"
+import { Application, BrowserLocation, UpdateUrlMode } from "./Application"
 
 export interface UrlKeys {
   readonly langCode?: string
@@ -10,6 +10,7 @@ export interface UrlKeys {
   readonly tagId?: number
   readonly searchKey?: string
   readonly page?: number
+  readonly edit?: boolean
 }
 
 export class URLNavigator {
@@ -26,8 +27,8 @@ export class URLNavigator {
       .subscribe()
   }
 
-  //url=/en/lexicon?page=1&note=20&level=0&tag=0
-  //url=/en/search?key=some_text&page=1&note=20
+  //url=/en/lexicon?page=1&note=20&level=0&tag=0&edit
+  //url=/en/search?key=some_text&page=1&note=20&edit
   private parseUrl(location: BrowserLocation): UrlKeys {
     console.log('new url:', location.path + location.queries)
     const path = location.path .startsWith('/') ? location.path.slice(1) :location.path
@@ -41,6 +42,7 @@ export class URLNavigator {
       level: params.has('level') ? Number(params.get('level')) : undefined,
       tagId: params.has('tag') ? Number(params.get('tag')) : undefined,
       page: params.has('page') ? Number(params.get('page')) : undefined,
+      edit: params.has('edit') ? true : undefined,
       searchKey: params.get('key') ?? undefined,
     }
   }
@@ -58,10 +60,27 @@ export class URLNavigator {
     if (keys.level !== undefined) res += `&level=${keys.level}`
     if (keys.tagId !== undefined) res += `&tag=${keys.tagId}`
     if (keys.searchKey) res += `&key=${keys.searchKey}`
+    if (keys.edit) res += `&edit`
     return res
   }
 
-  navigateTo(keys: UrlKeys) {
-    globalContext.app.navigate(this.buildLink(keys))
+  private requestsNum = 0
+
+  navigateTo(keys: UrlKeys, mode: UpdateUrlMode = 'push') {
+    this.requestsNum++
+    if(this.requestsNum > 100) {
+      console.log('MAX CONNECTIONS1')
+      return
+    }
+    globalContext.app.navigate(this.buildLink(keys), mode)
+  }
+
+  updateWith(keys: UrlKeys, mode: UpdateUrlMode = 'push') {
+    this.requestsNum++
+    if(this.requestsNum > 100) {
+      console.log('MAX CONNECTIONS2')
+      return
+    }
+    this.navigateTo({ ...this.$keys.value, ...keys }, mode)
   }
 }

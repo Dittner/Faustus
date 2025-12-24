@@ -9,8 +9,6 @@ export class DertutorServer extends RestApi {
     //env is defined in dockerfile
     const baseUrl = import.meta.env.VITE_DERTUTOR_API_URL ?? 'http://localhost:3456/api'
     super(baseUrl)
-
-    this.ping()
   }
 
   //--------------------------------------

@@ -6,15 +6,17 @@ import { IViewModel } from './ui/view/ViewModel'
 import { VocListVM } from './ui/view/vocs/VocListVM'
 import { EditorVM } from './ui/view/editor/EditorVM'
 import { ILang } from './domain/DomainModel'
+import { globalContext } from './App'
 
 export interface Message {
   readonly level: 'warning' | 'error' | 'info'
   readonly text: string
 }
 
-export class DertutorContext {
+export class DerTutorContext {
   static readonly PAGE_SIZE = 20
-  readonly $activeVM: RXObservableValue<IViewModel>
+  readonly $activeVM = new RXObservableValue<IViewModel | undefined>( undefined)
+
   readonly connectionVM: ServerConnectionVM
   readonly langListVM: LangListVM
   readonly vocListVM: VocListVM
@@ -23,13 +25,14 @@ export class DertutorContext {
 
   readonly $allLangs = new RXObservableValue<ILang[]>([])
   readonly $msg = new RXObservableValue<Message | undefined>(undefined)
+  readonly router: DerTutorRouter
 
-  static self: DertutorContext
+  static self: DerTutorContext
 
   static init() {
-    if (DertutorContext.self === undefined)
-      DertutorContext.self = new DertutorContext()
-    return DertutorContext.self
+    if (DerTutorContext.self === undefined)
+      DerTutorContext.self = new DerTutorContext()
+    return DerTutorContext.self
   }
 
   private constructor() {
@@ -40,15 +43,28 @@ export class DertutorContext {
     this.noteListVM = new NoteListVM(this)
     this.editorVM = new EditorVM(this)
 
-    this.$activeVM = new RXObservableValue(this.connectionVM)
-    this.connectionVM.activate()
+    this.router = new DerTutorRouter(this)
 
     document.addEventListener('keydown', this.onKeyDown.bind(this))
   }
 
   onKeyDown(e: KeyboardEvent): void {
     if (document.activeElement?.tagName !== 'INPUT')
-      this.$activeVM.value.onKeyDown(e)
+      this.$activeVM.value?.onKeyDown(e)
   }
 }
 
+export class DerTutorRouter {
+  constructor(ctx: DerTutorContext) {
+    globalContext.navigator.$keys.pipe()
+      .onReceive(keys => {
+        if(!globalContext.server.$isServerAvailable.value) ctx.$activeVM.value = ctx.connectionVM
+        else if (!keys.langCode) ctx.$activeVM.value = ctx.langListVM
+        else if (!keys.vocCode && !(keys.searchKey && keys.searchKey.length > 1)) ctx.$activeVM.value = ctx.vocListVM
+        else if (keys.noteId && keys.edit) ctx.$activeVM.value = ctx.editorVM
+        else ctx.$activeVM.value = ctx.noteListVM
+        ctx.$activeVM.value.urlDidChange(keys)
+      })
+      .subscribe()
+  }
+}

@@ -1,20 +1,26 @@
 import { RXObservableValue } from "flinker"
 
-import { globalContext } from "../../../App"
-import { AVAILABLE_LEVELS, DomainService, INote } from "../../../domain/DomainModel"
+import { AVAILABLE_LEVELS, DomainService, ILang, INote, IPage, IVoc } from "../../../domain/DomainModel"
 import { InputBufferController } from "../../controls/Input"
-import { DertutorContext } from "../../../DertutorContext"
+import { DerTutorContext } from "../../../DerTutorContext"
 import { ViewModel } from "../ViewModel"
-import { CreateNoteSchema, DeleteNoteSchema, RenameNoteSchema } from "../../../backend/Schema"
-import { LocalStorage } from "../../../app/LocalStorage"
-import { UrlKeys, URLNavigator } from "../../../app/URLNavigator"
-import { NoteListInteractor, NoteListState } from "./NoteListInteractor"
+import { CreateNoteSchema, DeleteNoteSchema, GetPageSchema, RenameNoteSchema } from "../../../backend/Schema"
+import { UrlKeys } from "../../../app/URLNavigator"
+import { globalContext } from "../../../App"
+import { Interactor } from "../Interactor"
 
-interface FilterCache {
-  searchGlobally: boolean
+export interface NoteListState {
+  allLangs?: ILang[]
+  lang?: ILang
+  voc?: IVoc
+  page?: IPage
+  selectedNote?: INote
+  searchKey?: string
+  level?: number
+  tagId?: number
 }
 
-export class NoteListVM extends ViewModel {
+export class NoteListVM extends ViewModel<NoteListState> {
   readonly $state = new RXObservableValue<Readonly<NoteListState>>({})
 
   readonly $searchBuffer = new RXObservableValue('')
@@ -22,17 +28,33 @@ export class NoteListVM extends ViewModel {
 
   readonly $mode = new RXObservableValue<'explore' | 'create' | 'rename'>('explore')
   readonly bufferController = new InputBufferController()
-  readonly filterCache: LocalStorage<FilterCache>
 
-  readonly navigator: URLNavigator
-  private readonly interactor: NoteListInteractor
-
-  constructor(ctx: DertutorContext) {
-    super('notes', ctx)
-    this.filterCache = new LocalStorage('filterCache')
+  constructor(ctx: DerTutorContext) {
+    const interactor = new NoteListInteractor(ctx)
+    super('notes', ctx, interactor)
     this.addKeybindings()
-    this.interactor = new NoteListInteractor(this.ctx)
-    this.navigator = globalContext.navigator
+  }
+
+  protected override stateDidChange(state: NoteListState) {
+    if (!this.activate) return
+
+    this.$state.value = state
+    this.$searchBuffer.value = state.searchKey ?? ''
+
+    const page = state.page
+    const note = state.selectedNote
+
+    if (state.lang && page && note) {
+      const index = page.items.findIndex(child => child.id === note.id)
+      this.ctx.$msg.value = { 'text': index != -1 ? `${index + 1 + (page.page - 1) * page.size}:${page.total}` : '', 'level': 'info' }
+    } else if (!state.lang) {
+      this.navigator.navigateTo({})
+    }
+    else if (!state.page) {
+      this.navigator.navigateTo({ langCode: state.lang.code })
+    }
+
+    window.scrollTo(0, 0)
   }
 
   private addKeybindings() {
@@ -63,7 +85,7 @@ export class NoteListVM extends ViewModel {
       if (index < p.items.length - 1)
         this.reloadWithNote(p.items[index + 1])
       else if (p.page < p.pages)
-        this.reloadWith({ page: p.page + 1 })
+        this.navigator.updateWith({ page: p.page + 1 })
     }
   }
 
@@ -77,7 +99,7 @@ export class NoteListVM extends ViewModel {
       if (index > 0)
         this.reloadWithNote(p.items[index - 1])
       else if (p.page > 1)
-        this.reloadWith({ page: p.page - 1 })
+        this.navigator.updateWith({ page: p.page - 1 })
     }
   }
 
@@ -99,7 +121,7 @@ export class NoteListVM extends ViewModel {
 
   private edit() {
     if (this.$mode.value === 'explore') {
-      this.ctx.editorVM.activate()
+      this.navigator.updateWith({ edit: true })
     } else {
       this.ctx.$msg.value = { level: 'error', text: 'Editor should be closed before starting editting another note' }
     }
@@ -125,7 +147,7 @@ export class NoteListVM extends ViewModel {
     const note = this.$state.value.selectedNote
     if (!page || !note) return
     const schema = { id: note.id } as DeleteNoteSchema
-    globalContext.server.deleteNote(schema).pipe()
+    this.server.deleteNote(schema).pipe()
       .onReceive(_ => {
         console.log('NoteListVM:deleteNote complete')
         this.ctx.$msg.value = { level: 'info', text: 'deleted' }
@@ -138,7 +160,8 @@ export class NoteListVM extends ViewModel {
           nextNote = page.items[1]
         }
 
-        this.reloadWith({ noteId: nextNote?.id }, true)
+        this.interactor.clearCache()
+        this.navigator.updateWith({ noteId: nextNote?.id })
       })
       .onError(e => {
         this.ctx.$msg.value = { level: 'error', text: e.message }
@@ -148,7 +171,7 @@ export class NoteListVM extends ViewModel {
 
   playAudio() {
     if (this.$state.value.selectedNote?.audio_url)
-      new Audio(globalContext.server.baseUrl + this.$state.value.selectedNote.audio_url).play()
+      new Audio(this.server.baseUrl + this.$state.value.selectedNote.audio_url).play()
   }
 
 
@@ -164,12 +187,7 @@ export class NoteListVM extends ViewModel {
   }
 
   startSearch(key: string) {
-    this.reloadWith({ page: 1, searchKey: key })
-  }
-
-  reloadWith(keys: UrlKeys, force: boolean = false) {
-    if (force) this.interactor.clearCache()
-    this.navigator.navigateTo({ ...this.navigator.$keys.value, ...keys })
+    this.navigator.updateWith({ page: 1, searchKey: key })
   }
 
   encodeName(value: string) {
@@ -239,11 +257,13 @@ export class NoteListVM extends ViewModel {
       console.log('Creating note, schema:', scheme)
       console.log('Creating note, json:', JSON.stringify(scheme))
 
-      globalContext.server.createNote(scheme).pipe()
+      this.server.createNote(scheme).pipe()
         .onReceive((n: INote | undefined) => {
           console.log('NoteListVM:applyInput, creating note, result: ', n)
-          if (n)
-            this.reloadWith({ page: 1, noteId: n.id }, true)
+          if (n) {
+            this.interactor.clearCache()
+            this.navigator.updateWith({ page: 1, noteId: n.id })
+          }
         })
         .onError(e => {
           const msg = e.message.indexOf('duplicate key') !== -1 ? 'Note already exists' : e.message
@@ -271,7 +291,7 @@ export class NoteListVM extends ViewModel {
       scheme.id = note.id
       scheme.name = newName
 
-      globalContext.server.renameNote(scheme).pipe()
+      this.server.renameNote(scheme).pipe()
         .onReceive((note: INote | undefined) => {
           console.log('NoteListVM:completeRenaming, res: ', note)
           if (note) {
@@ -279,7 +299,8 @@ export class NoteListVM extends ViewModel {
 
             const ind = page.items.findIndex(n => n.id === note.id)
             if (ind !== -1 && page) {
-              this.reloadWith({}, true)
+              this.interactor.clearCache()
+              this.navigator.updateWith({})
             }
           } else {
             this.ctx.$msg.value = { level: 'warning', text: 'Renamed note is failed' }
@@ -300,93 +321,88 @@ export class NoteListVM extends ViewModel {
     else
       this.ctx.$msg.value = { 'level': 'info', 'text': 'Not selected' }
   }
+}
 
-  /*
-  *
-  * ACTIVATE
-  *
-  */
-
-  private unsubscribe: (() => void) | undefined
-  private isLoading = false
-  private reloadWithKeys: UrlKeys | undefined
-  override activate(): void {
-    super.activate()
-    this.ctx.$msg.value = undefined
-    this.interactor.clearCache()
-
-    this.unsubscribe = globalContext.navigator.$keys.pipe()
-      .onReceive(keys => {
-        if (!keys.langCode) {
-          this.ctx.langListVM.activate()
-        } else if (!keys.vocCode && (!keys.searchKey || keys.searchKey.length <= 1)) {
-          this.ctx.vocListVM.activate()
-        } else {
-          this.runInteracting(keys)
-        }
-      })
-      .subscribe()
+class NoteListInteractor extends Interactor<NoteListState> {
+  constructor(ctx: DerTutorContext) {
+    super(ctx)
+    console.log('new NoteListInteractor')
   }
 
-  override deactivate(): void {
-    super.deactivate()
-    this.unsubscribe?.()
+  override async load(state: NoteListState, keys: UrlKeys) {
+    await this.loadLangs(state, keys)
+    await this.chooseLang(state, keys)
+    await this.chooseVoc(state, keys)
+    await this.chooseFilters(state, keys)
+    await this.loadPage(state, keys)
+    await this.chooseNote(state, keys)
   }
 
-  private reloadCycleDepth = 0
-  private async runInteracting(keys: UrlKeys) {
-    if (this.isLoading) {
-      this.reloadWithKeys = keys
-      return
+  private async loadLangs(state: NoteListState, keys: UrlKeys) {
+    if (this.ctx.$allLangs.value.length === 0)
+      this.ctx.$allLangs.value = await globalContext.server.loadAllLangs().asAwaitable
+    state.allLangs = this.ctx.$allLangs.value
+  }
+
+  private async chooseLang(state: NoteListState, keys: UrlKeys) {
+    if (keys.langCode && state.allLangs)
+      state.lang = state.allLangs.find(l => l.code === keys.langCode)
+  }
+
+  private async chooseVoc(state: NoteListState, keys: UrlKeys) {
+    if (state.lang && keys.vocCode)
+      state.voc = state.lang.vocs.find(v => DomainService.encodeName(v.name) === keys.vocCode)
+  }
+
+  private async chooseFilters(state: NoteListState, keys: UrlKeys) {
+    state.searchKey = keys.searchKey
+    state.level = keys.level
+    state.tagId = keys.tagId
+  }
+
+  private async loadPage(state: NoteListState, keys: UrlKeys) {
+    if (!state.lang) return
+    if (!state.voc && (!keys.searchKey || keys.searchKey.length <= 1)) return
+
+    if (!this.prevState.page ||
+      this.prevState.page.page !== (keys.page ?? 1) ||
+      this.prevState.lang?.id !== state.lang.id ||
+      this.prevState.voc?.id !== state.voc?.id ||
+      this.prevState.level !== state.level ||
+      this.prevState.tagId !== state.tagId ||
+      this.prevState.searchKey !== state.searchKey) {
+
+      const isGlobalSearhcing = keys.searchKey && keys.searchKey.length > 1
+
+      const scheme = {} as GetPageSchema
+      scheme.lang_id = state.lang.id
+      scheme.page = keys.page && keys.page > 0 ? keys.page : 1
+      scheme.size = DerTutorContext.PAGE_SIZE
+      scheme.voc_id = isGlobalSearhcing ? undefined : state.voc?.id
+      scheme.key = isGlobalSearhcing ? keys.searchKey : undefined
+      scheme.level = keys.level
+      scheme.tag_id = keys.tagId
+
+      console.log('Interactor.reloadPage, page:', keys.page)
+      state.page = await globalContext.server.loadNotes(scheme).asAwaitable
+    } else {
+      state.page = this.prevState.page
     }
-
-    try {
-      this.reloadWithKeys = undefined
-      this.isLoading = true
-
-      const state = await this.interactor.run(keys)
-
-      this.isLoading = false
-      if (this.reloadWithKeys) {
-        this.reloadCycleDepth++
-        if (this.reloadCycleDepth > 10) {
-          this.ctx.$msg.value = { text: 'Infinite loop of reloadind pages', level: 'warning' }
-          return
-        }
-        this.runInteracting(this.reloadWithKeys)
-        return
-      }
-
-      this.$state.value = state
-      this.$searchBuffer.value = state.searchKey ?? ''
-
-      this.selecteDefaultNote(state)
-      window.scrollTo(0, 0)
-
-    } catch (e: any) {
-      this.ctx.$msg.value = { level: 'error', text: e.message }
-    }
   }
 
-  private prevState: NoteListState = {}
-  private selecteDefaultNote(state: NoteListState) {
-    const note = state.selectedNote
-    const page = state.page
-
-    if (page && note) {
-      const index = page.items.findIndex(child => child.id === note.id)
-      this.ctx.$msg.value = { 'text': index != -1 ? `${index + 1 + (page.page - 1) * page.size}:${page.total}` : '', 'level': 'info' }
-    } else if (page && page.items.length > 0) {
-      let note: INote | undefined
-      if (this.prevState.page && this.prevState.page.page < page.page)
-        note = page.items[0]
-      else if (this.prevState.page && this.prevState.page.page > page.page)
-        note = page.items[page.items.length - 1]
+  private async chooseNote(state: NoteListState, keys: UrlKeys) {
+    if (!state.page) return
+    let note = state.page.items.find(n => n.id === keys.noteId)
+    if (!note && state.page.items.length > 0) {
+      if (this.prevState.page && this.prevState.page.page < state.page.page)
+        note = state.page.items[0]
+      else if (this.prevState.page && this.prevState.page.page > state.page.page)
+        note = state.page.items[state.page.items.length - 1]
       else
-        note = page.items[0]
+        note = state.page.items[0]
 
-      this.prevState = state
-      this.reloadWithNote(note)
+      globalContext.navigator.updateWith({ noteId: note.id }, 'replace')
     }
+    state.selectedNote = note
   }
 }

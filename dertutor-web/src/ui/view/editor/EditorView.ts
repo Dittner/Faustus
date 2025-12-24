@@ -4,7 +4,7 @@ import { IMediaFile, INote, ITag } from "../../../domain/DomainModel"
 import { Btn, LinkBtn, RedBtn } from "../../controls/Button"
 import { FontFamily } from "../../controls/Font"
 import { Markdown } from "../../controls/Markdown"
-import { DertutorContext } from "../../../DertutorContext"
+import { DerTutorContext } from "../../../DerTutorContext"
 import { theme } from "../../theme/ThemeManager"
 import { FileWrapper } from "./EditorVM"
 import { TextEditor } from "./TextEditor"
@@ -13,7 +13,7 @@ import { TextFormatter } from "./TextFormatter"
 export const EditorView = () => {
   console.log('new EditorView')
 
-  const ctx = DertutorContext.self
+  const ctx = DerTutorContext.self
   const vm = ctx.editorVM
 
   let noteInFocus: INote | undefined = undefined
@@ -44,13 +44,20 @@ export const EditorView = () => {
       .react(s => {
         s.visible = vm.$state.value.note !== undefined
         s.position = 'fixed'
-        s.width = window.innerWidth / 2 + 'px'
-        s.height = window.innerHeight - theme().statusBarHeight + 'px'
-        s.cornerRadius = '5px'
-        s.borderRight = '1px solid ' + theme().text50
+        s.left = '20px'
+        s.top = theme().navBarHeight + 'px'
+        s.width = window.innerWidth / 2 - 20 + 'px'
+        //s.fontSize = theme().defMenuFontSize
+        s.bgColor = theme().appBg
+        s.caretColor = theme().isLight ? '#000000' : theme().red
+        s.textColor = theme().editor
+        s.fontFamily = FontFamily.MONO
+        s.fontSize = '18px'
+        s.height = window.innerHeight - theme().statusBarHeight - theme().navBarHeight + 'px'
+        s.border = '1px solid ' + theme().border
       })
       .whenFocused(s => {
-        s.borderRight = '1px solid ' + theme().red + '88'
+        s.border = '1px solid ' + theme().editor
       })
       .onFocus(onFocus)
 
@@ -59,7 +66,7 @@ export const EditorView = () => {
         s.paddingLeft = window.innerWidth / 2 + 20 + 'px'
         s.width = '100%'
         s.paddingRight = '10px'
-        s.paddingTop = '50px'
+        s.paddingTop = theme().navBarHeight + 'px'
         s.gap = '20px'
       })
       .children(() => {
@@ -72,7 +79,7 @@ export const EditorView = () => {
         spacer().react(s => {
           s.width = '100%'
           s.height = '2px'
-          s.marginVertical = '50px'
+          s.marginVertical = theme().navBarHeight + 'px'
           s.bgColor = theme().text50
         })
 
@@ -122,7 +129,7 @@ const Panel = (title: string) => {
 }
 
 const LevelsPanel = () => {
-  const vm = DertutorContext.self.editorVM
+  const vm = DerTutorContext.self.editorVM
   return Panel('Level')
     .children(() => {
       hlist<number>()
@@ -137,7 +144,7 @@ const LevelsPanel = () => {
     })
 }
 const LevelRenderer = (level: number) => {
-  const vm = DertutorContext.self.editorVM
+  const vm = DerTutorContext.self.editorVM
   return Btn()
     .react(s => {
       s.isSelected = vm.$level.value === level
@@ -149,7 +156,7 @@ const LevelRenderer = (level: number) => {
 }
 
 const TagSelector = () => {
-  const vm = DertutorContext.self.editorVM
+  const vm = DerTutorContext.self.editorVM
   return Panel('Tag')
     .observe(vm.$state, 'recreateChildren')
     .observe(vm.$tagId, 'affectsChildrenProps')
@@ -167,7 +174,7 @@ const TagSelector = () => {
 }
 
 const TagRenderer = (t: ITag) => {
-  const vm = DertutorContext.self.editorVM
+  const vm = DerTutorContext.self.editorVM
   return Btn()
     .react(s => {
       s.isSelected = vm.$tagId.value === t.id
@@ -190,7 +197,7 @@ const TagRenderer = (t: ITag) => {
 }
 
 const PronunciationPanel = () => {
-  const vm = DertutorContext.self.editorVM
+  const vm = DerTutorContext.self.editorVM
   return Panel('Pronunciation')
     .children(() => {
       vstack()
@@ -236,7 +243,7 @@ const PronunciationPanel = () => {
 }
 
 const MediaFileList = () => {
-  const vm = DertutorContext.self.editorVM
+  const vm = DerTutorContext.self.editorVM
   return vstack()
     .observe(vm.$mediaFiles, 'affectsProps', 'recreateChildren')
     .react(s => {
@@ -252,7 +259,7 @@ const MediaFileList = () => {
 }
 
 const MediaFileView = (mf: IMediaFile) => {
-  const vm = DertutorContext.self.editorVM
+  const vm = DerTutorContext.self.editorVM
   return Panel('Media')
     .children(() => {
       vstack()
@@ -287,7 +294,7 @@ const MediaFileView = (mf: IMediaFile) => {
 
 
 const PendingUploadResources = () => {
-  const vm = DertutorContext.self.editorVM
+  const vm = DerTutorContext.self.editorVM
   return vstack()
     .react(s => {
       s.gap = '5px'
@@ -338,7 +345,7 @@ const PendingUploadResources = () => {
 }
 
 const PendingUploadFileList = () => {
-  const vm = DertutorContext.self.editorVM
+  const vm = DerTutorContext.self.editorVM
   return vstack()
     .observe(vm.$filesPendingUpload, 'affectsProps', 'recreateChildren')
     .react(s => {
@@ -354,7 +361,7 @@ const PendingUploadFileList = () => {
 }
 
 const FileView = (w: FileWrapper) => {
-  const vm = DertutorContext.self.editorVM
+  const vm = DerTutorContext.self.editorVM
   return Panel('File')
     .react(s => {
       s.bgColor = theme().red + '10'
@@ -389,12 +396,12 @@ const FileView = (w: FileWrapper) => {
 
 
 const Header = () => {
-  const vm = DertutorContext.self.editorVM
+  const vm = DerTutorContext.self.editorVM
   return hstack()
     .react(s => {
       s.gap = '20px'
       s.paddingHorizontal = '30px'
-      s.height = '50px'
+      s.height = theme().navBarHeight + 'px'
       s.halign = 'right'
       s.valign = 'center'
       s.bgColor = theme().appBg

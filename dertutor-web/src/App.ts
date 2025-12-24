@@ -1,6 +1,5 @@
 import { div, hstack, observer, p, span, vlist } from "flinker-dom"
 import { GlobalContext } from "./app/GlobalContext"
-import { DertutorContext } from "./DertutorContext"
 import { Action } from "./ui/actions/Action"
 import { FontFamily } from "./ui/controls/Font"
 import { theme, themeManager } from "./ui/theme/ThemeManager"
@@ -9,12 +8,13 @@ import { EditorView } from "./ui/view/editor/EditorView"
 import { LangListView } from "./ui/view/lang/LangListView"
 import { NoteListView } from "./ui/view/note/NoteListView"
 import { VocListView } from "./ui/view/vocs/VocListView"
+import { DerTutorContext } from "./DerTutorContext"
 
 export const globalContext = GlobalContext.init()
 
 export function App() {
   console.log('new App')
-  const ctx = DertutorContext.init()
+  const ctx = DerTutorContext.init()
 
   return div()
     .observe(themeManager.$theme, 'affectsProps', 'affectsChildrenProps')
@@ -40,20 +40,24 @@ export function App() {
 
 
 export const ACTION_TIPS = `
-You can navigate through menu items using arrows:\n
-→, ↓, →, ↑\n
-To see more shortkeys, press ?
+## [icon:lightbulb_outline] Tips
+---
+\`\`\`ul
++ You can navigate through menu items using arrows: →, ↓, →, ↑
++ To see more shortkeys, press ?
++ To create/edit/delete notes, you must have superuser rights.
+\`\`\`
 `
 
 export const ActionsHelpView = () => {
-  const ctx = DertutorContext.self
+  const ctx = DerTutorContext.self
 
   return div()
-    .observe(ctx.$activeVM.pipe().flatMap(vm => vm.$showActions).fork())
+    .observe(ctx.$activeVM.pipe().skipNullable().flatMap(vm => vm.$showActions).fork())
     .observe(ctx.$activeVM, 'recreateChildren')
     .react(s => {
       const vm = ctx.$activeVM.value
-      s.visible = vm.$showActions.value
+      s.visible = vm && vm.$showActions.value
       s.position = 'fixed'
       s.paddingTop = theme().navBarHeight + 'px'
       s.right = '0'
@@ -65,7 +69,7 @@ export const ActionsHelpView = () => {
     }).children(() => {
       const vm = ctx.$activeVM.value
       vlist<Action>()
-        .items(() => vm.actionsList.actions)
+        .items(() => vm?.actionsList.actions ?? [])
         .itemHash(a => a.cmd)
         .itemRenderer(ActionInfoView)
         .react(s => {
@@ -86,7 +90,7 @@ const ActionInfoView = (a: Action) => {
       span().react(s => {
         s.display = 'inline-block'
         s.text = a.cmd
-        s.textColor = theme().isLight ? theme().red : theme().em
+        s.textColor = theme().isLight ? theme().red : theme().red
         s.paddingHorizontal = '20px'
         s.paddingVertical = '5px'
         s.width = '120px'
@@ -131,7 +135,7 @@ const Footer = () => {
 }
 
 export const MessangerView = () => {
-  const ctx = DertutorContext.self
+  const ctx = DerTutorContext.self
   return p()
     .observe(ctx.$msg)
     .react(s => {
@@ -153,13 +157,13 @@ export const MessangerView = () => {
 }
 
 export const CmdView = () => {
-  const ctx = DertutorContext.self
+  const ctx = DerTutorContext.self
   return p()
-    .observe(ctx.$activeVM.pipe().flatMap(vm => vm.$cmd).fork())
+    .observe(ctx.$activeVM.pipe().skipNullable().flatMap(vm => vm.$cmd).fork())
     .react(s => {
       s.fontFamily = FontFamily.MONO
       s.fontSize = theme().defMenuFontSize
-      s.text = ctx.$activeVM.value.$cmd.value
+      s.text = ctx.$activeVM.value?.$cmd.value ?? ''
       s.whiteSpace = 'nowrap'
       s.paddingHorizontal = '10px'
       s.textColor = theme().text

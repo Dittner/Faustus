@@ -1,7 +1,7 @@
 :root {
     --LineHeight: 1.6;
     --font-family: -apple-system, 'system-ui', 'system-ui', sans-serif;
-    --font-family-mono: 'jetbrains', Menlo, source-code-pro, Monaco, 'Courier New', monospace;
+    --font-family-mono: monospace, 'jetbrains', Menlo, source-code-pro, Monaco, 'Courier New', monospace;
     --font-family-article: 'verdana2', -apple-system, 'system-ui', 'system-ui', sans-serif;
 }
 
@@ -89,6 +89,7 @@ table,
 tbody,
 th,
 tr,
+hr,
 figure,
 blockquote {
     margin: 0;
@@ -102,7 +103,7 @@ blockquote {
 
 ::selection {
     color: #111111;
-    background: #f783ffaa;
+    background: #bc799f;
 }
 
 table {
@@ -251,14 +252,15 @@ button {
     src: url('resources/fonts/MaterialIcons.ttf') format('truetype');
 }
 
-.material_icon {
+.md-icon {
     font-family: 'MaterialIcons';
     font-weight: normal;
     font-style: normal;
-    font-size: 1rem;
+    font-size: inherit;
     /* Preferred icon size */
+    vertical-align: -2px;
     display: inline-block;
-    line-height: 1;
+    line-height: normal;
     text-transform: none;
     letter-spacing: normal;
     word-wrap: normal;

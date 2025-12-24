@@ -1,7 +1,11 @@
 import { RXObservableValue } from "flinker"
-import { DertutorContext } from "../../DertutorContext"
+import { DerTutorContext } from "../../DerTutorContext"
 import { Action, ActionsList } from "../actions/Action"
 import { themeManager } from "../theme/ThemeManager"
+import { UrlKeys, URLNavigator } from "../../app/URLNavigator"
+import { globalContext } from "../../App"
+import { DertutorServer } from "../../backend/DertutorServer"
+import { Interactor } from "./Interactor"
 
 export type ViewModelID = 'connection' | 'langs' | 'vocs' | 'notes' | 'editor'
 export interface IViewModel {
@@ -10,22 +14,62 @@ export interface IViewModel {
   readonly $cmd: RXObservableValue<string>
   readonly actionsList: ActionsList
   lastExecutedAction: Action | undefined
-  activate(): void
-  deactivate(): void
   onKeyDown(e: KeyboardEvent): void
+  urlDidChange(keys: UrlKeys): void
 }
 
-export class ViewModel implements IViewModel {
+export class ViewModel<ViewModelState> implements IViewModel {
   readonly id: ViewModelID
-  readonly ctx: DertutorContext
+  readonly ctx: DerTutorContext
+  readonly navigator: URLNavigator
+  readonly interactor: Interactor<ViewModelState>
+  readonly server: DertutorServer
+
   readonly $showActions = new RXObservableValue(false)
   readonly $cmd = new RXObservableValue('')
   readonly actionsList = new ActionsList()
   lastExecutedAction: Action | undefined = undefined
 
-  constructor(id: ViewModelID, ctx: DertutorContext) {
+  constructor(id: ViewModelID, ctx: DerTutorContext, interactor: Interactor<ViewModelState>) {
     this.id = id
     this.ctx = ctx
+    this.navigator = globalContext.navigator
+    this.server = globalContext.server
+
+    this.interactor = interactor
+    interactor.$state.pipe()
+      .skipFirst()
+      .onReceive(s => this.stateDidChange(s))
+
+    this.ctx.$activeVM.pipe().onReceive(vm => {
+      if (vm?.id === id) this.activate()
+      else if (this.isActive) this.deactivate()
+    })
+
+    this.addDefaultKeybindings()
+  }
+
+  get isActive(): boolean {
+    return this.ctx.$activeVM.value?.id == this.id
+  }
+
+  protected activate(): void {
+    console.log(`VM <${this.id}> is activated`)
+    this.interactor.clearCache()
+  }
+
+  protected deactivate(): void {
+    this.$cmd.value = ''
+    this.lastExecutedAction = undefined
+  }
+
+  urlDidChange(keys: UrlKeys): void {
+    this.interactor.run(keys)
+  }
+
+  protected stateDidChange(state: ViewModelState) { }
+
+  addDefaultKeybindings(): void {
     this.actionsList.add('?', 'Show list of actions', () => this.$showActions.value = true)
     this.actionsList.add('<ESC>', 'Hide actions/Clear messages', () => {
       this.$showActions.value = false
@@ -33,23 +77,9 @@ export class ViewModel implements IViewModel {
     })
     this.actionsList.add('T', 'Switch theme', () => {
       themeManager.switchTheme()
-      ctx.$msg.value = { 'level': 'info', 'text': themeManager.$theme.value.id + ' theme' }
+      this.ctx.$msg.value = { 'level': 'info', 'text': themeManager.$theme.value.id + ' theme' }
     })
     this.actionsList.add('.', 'Repeat last action', () => this.lastExecutedAction?.handler())
-  }
-
-  get isActive(): boolean {
-    return this.ctx.$activeVM.value.id == this.id
-  }
-
-  activate(): void {
-    this.ctx.$activeVM.value.deactivate()
-    this.ctx.$activeVM.value = this
-  }
-
-  deactivate(): void {
-    this.$cmd.value = ''
-    this.lastExecutedAction = undefined
   }
 
   private cmdBuffer = ''

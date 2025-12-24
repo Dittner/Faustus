@@ -6,13 +6,13 @@ import { Btn, LinkBtn } from "../../controls/Button"
 import { FontFamily } from "../../controls/Font"
 import { LineInput } from "../../controls/Input"
 import { Markdown } from "../../controls/Markdown"
-import { DertutorContext } from "../../../DertutorContext"
+import { DerTutorContext } from "../../../DerTutorContext"
 import { MaterialIcon } from "../../icons/MaterialIcon"
 import { theme } from "../../theme/ThemeManager"
 import { Title } from "../../controls/Text"
 
 export const NoteListView = () => {
-  const ctx = DertutorContext.self
+  const ctx = DerTutorContext.self
   const vm = ctx.noteListVM
   return hstack()
     .react(s => {
@@ -96,7 +96,7 @@ export const NoteListView = () => {
 }
 
 const NotesMenu = () => {
-  const ctx = DertutorContext.self
+  const ctx = DerTutorContext.self
   const vm = ctx.noteListVM
   return vstack()
     .react(s => {
@@ -140,13 +140,13 @@ const NotesMenu = () => {
 }
 
 const NoteRenderer = (n: INote) => {
-  const ctx = DertutorContext.self
+  const ctx = DerTutorContext.self
   const vm = ctx.noteListVM
   return LinkBtn()
     .react(s => {
       s.wrap = false
       s.isSelected = vm.$state.value.selectedNote?.id === n.id
-      s.paddingRight = '2px'
+      s.paddingRight = '5px'
       s.paddingLeft = '20px'
       s.text = n.name
     })
@@ -156,7 +156,7 @@ const NoteRenderer = (n: INote) => {
 }
 
 const NotesPaginator = () => {
-  const ctx = DertutorContext.self
+  const ctx = DerTutorContext.self
   const vm = ctx.noteListVM
   return hstack()
     .observe(vm.$state, 'affectsChildrenProps')
@@ -237,7 +237,7 @@ const NotesPaginator = () => {
 }
 
 const NavBar = () => {
-  const ctx = DertutorContext.self
+  const ctx = DerTutorContext.self
   const vm = ctx.noteListVM
   return hstack()
     .observe(vm.$state, 'affectsChildrenProps')
@@ -281,7 +281,7 @@ const NavBar = () => {
 }
 
 const PlayAudioBtn = () => {
-  const ctx = DertutorContext.self
+  const ctx = DerTutorContext.self
   const vm = ctx.noteListVM
   return Btn()
     .react(s => {
@@ -293,7 +293,7 @@ const PlayAudioBtn = () => {
 }
 
 const NoteMeta = () => {
-  const ctx = DertutorContext.self
+  const ctx = DerTutorContext.self
   const vm = ctx.noteListVM
   return p()
     .observe(vm.$state)
@@ -337,7 +337,7 @@ const FiltersView = () => {
 }
 
 const LevelsBar = () => {
-  const vm = DertutorContext.self.noteListVM
+  const vm = DerTutorContext.self.noteListVM
   return vlist<number>()
     .observe(vm.$state, 'affectsChildrenProps')
     .items(() => [1, 2, 3, 4, 5, 6])
@@ -353,7 +353,7 @@ const LevelsBar = () => {
 }
 
 const LevelRenderer = (level: number) => {
-  const vm = DertutorContext.self.noteListVM
+  const vm = DerTutorContext.self.noteListVM
   return Btn()
     .react(s => {
       s.isSelected = vm.$state.value.level === level
@@ -373,7 +373,7 @@ const LevelRenderer = (level: number) => {
 }
 
 const TagSelector = () => {
-  const vm = DertutorContext.self.noteListVM
+  const vm = DerTutorContext.self.noteListVM
   return vlist<ITag>()
     .observe(vm.$state.pipe().map(s => s.lang?.tags).removeDuplicates().fork(), 'recreateChildren')
     .observe(vm.$state.pipe().map(s => s.tagId).removeDuplicates().fork(), 'affectsChildrenProps')
@@ -390,7 +390,7 @@ const TagSelector = () => {
 }
 
 const TagRenderer = (t: ITag) => {
-  const vm = DertutorContext.self.noteListVM
+  const vm = DerTutorContext.self.noteListVM
   return Btn()
     .react(s => {
       s.isSelected = vm.$state.value.tagId === t.id
@@ -400,7 +400,7 @@ const TagRenderer = (t: ITag) => {
 }
 
 const SearchPanel = () => {
-  const vm = DertutorContext.self.noteListVM
+  const vm = DerTutorContext.self.noteListVM
   return vstack()
     .react(s => {
       s.gap = '0px'

@@ -1,16 +1,17 @@
-import { div, p, vlist, vstack } from "flinker-dom"
+import { vlist, vstack } from "flinker-dom"
 import { LayoutLayer } from "../../../app/Application"
 import { IVoc } from "../../../domain/DomainModel"
 import { FontFamily } from "../../controls/Font"
-import { DertutorContext } from "../../../DertutorContext"
+import { DerTutorContext } from "../../../DerTutorContext"
 import { theme } from "../../theme/ThemeManager"
 import { LineInput } from "../../controls/Input"
 import { LinkBtn } from "../../controls/Button"
 import { Title } from "../../controls/Text"
 import { ACTION_TIPS } from "../../../App"
+import { Markdown } from "../../controls/Markdown"
 
 export const VocListView = () => {
-  const ctx = DertutorContext.self
+  const ctx = DerTutorContext.self
   const vm = ctx.vocListVM
   return vstack()
     .react(s => {
@@ -41,20 +42,16 @@ export const VocListView = () => {
           s.gap = '0'
         })
 
-      div()
+      Markdown()
         .react(s => {
+          s.className = theme().id
           s.position = 'fixed'
-          s.width = '100%'
-          s.textAlign = 'center'
-          s.fontFamily = FontFamily.APP
-          s.bottom = window.innerHeight / 2 + 'px'
+          s.paddingHorizontal = '20px'
+          s.left = theme().menuWidth + 10 + 'px'
+          s.mode = 'md'
           s.fontSize = theme().defMenuFontSize
-          s.textColor = theme().text50
-        })
-        .children(() => {
-          ACTION_TIPS.split('\n').forEach(tip => {
-            p().react(s => s.text = tip)
-          })
+          s.textColor = theme().green
+          s.text = ACTION_TIPS.trim()
         })
 
       LineInput(vm.bufferController.$buffer, vm.bufferController.$cursorPos)
@@ -73,13 +70,13 @@ export const VocListView = () => {
 }
 
 const VocRenderer = (voc: IVoc) => {
-  const ctx = DertutorContext.self
+  const ctx = DerTutorContext.self
   const vm = ctx.vocListVM
   return LinkBtn()
     .react(s => {
       s.wrap = false
       s.isSelected = vm.$selectedVoc.value === voc
-      s.paddingRight = '2px'
+      s.paddingRight = '5px'
       s.paddingLeft = '20px'
       s.text = voc.name
     })

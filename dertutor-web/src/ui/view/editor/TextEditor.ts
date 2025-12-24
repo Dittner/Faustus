@@ -1,8 +1,6 @@
 import { textarea } from "flinker-dom"
 import { TextEditorController } from "./TextEditorController"
 import { TextFormatter } from "./TextFormatter"
-import { theme } from "../../theme/ThemeManager"
-import { FontFamily } from "../../controls/Font"
 
 export const TextEditor = (formatter: TextFormatter) => {
   console.log('new TextEditor')
@@ -97,11 +95,6 @@ export const TextEditor = (formatter: TextFormatter) => {
     .react(s => {
       s.className = 'listScrollbar'
       s.width = '100%'
-      s.bgColor = theme().appBg
-      s.caretColor = theme().isLight ? '#000000' : theme().red
-      s.fontFamily = FontFamily.ARTICLE
-      s.fontSize = theme().defFontSize
-      s.textColor = theme().editor
       s.textAlign = 'left'
       s.autoCorrect = 'off'
       s.autoFocus = true

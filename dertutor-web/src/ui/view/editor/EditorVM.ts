@@ -1,12 +1,19 @@
 import { RX, RXObservableValue } from "flinker"
 
-import { globalContext } from "../../../App"
-import { IMediaFile, INote, AVAILABLE_LEVELS } from "../../../domain/DomainModel"
-import { DertutorContext } from "../../../DertutorContext"
+import { IMediaFile, INote, AVAILABLE_LEVELS, ILang, IVoc, DomainService } from "../../../domain/DomainModel"
+import { DerTutorContext } from "../../../DerTutorContext"
 import { ViewModel } from "../ViewModel"
 import { UpdateNoteSchema } from "../../../backend/Schema"
-import { EditorInteractor, EditorState } from "./EditorInteractor"
 import { UrlKeys } from "../../../app/URLNavigator"
+import { Interactor } from "../Interactor"
+import { globalContext } from "../../../App"
+
+export interface EditorState {
+  allLangs?: ILang[]
+  lang?: ILang
+  voc?: IVoc
+  note?: INote
+}
 
 export class FileWrapper {
   readonly file: File
@@ -17,7 +24,7 @@ export class FileWrapper {
   }
 }
 
-export class EditorVM extends ViewModel {
+export class EditorVM extends ViewModel<EditorState> {
   readonly $state = new RXObservableValue<Readonly<EditorState>>({})
   readonly $level = new RXObservableValue<number | undefined>(undefined)
   readonly $tagId = new RXObservableValue<number | undefined>(undefined)
@@ -26,11 +33,10 @@ export class EditorVM extends ViewModel {
   readonly $hasChanges = new RXObservableValue(false)
   readonly $filesPendingUpload = new RXObservableValue<Array<FileWrapper>>([])
   readonly $mediaFiles = new RXObservableValue<Array<IMediaFile>>([])
-  private readonly interactor: EditorInteractor
 
-  constructor(ctx: DertutorContext) {
-    super('editor', ctx)
-    this.interactor = new EditorInteractor(ctx)
+  constructor(ctx: DerTutorContext) {
+    const interactor = new EditorInteractor(ctx)
+    super('editor', ctx, interactor)
 
     RX.combine(this.$buffer, this.$level, this.$tagId, this.$audioUrl).pipe()
       .skipFirst()
@@ -52,6 +58,25 @@ export class EditorVM extends ViewModel {
       .subscribe()
   }
 
+  protected override stateDidChange(state: EditorState) {
+    if (!this.activate) return
+
+    this.$state.value = state
+    const note = state.note
+
+    if (note) {
+      this.$mediaFiles.value = note?.media ?? []
+      this.ctx.$msg.value = { text: this.noteToString(note), level: 'info' }
+      this.$buffer.value = note.text
+      this.$level.value = note.level
+      this.$tagId.value = note.tag_id
+      this.$audioUrl.value = note.audio_url
+    } else {
+      this.ctx.$msg.value = { text: 'Note to edit not loaded', level: 'warning' }
+      this.navigator.updateWith({ edit: undefined })
+    }
+  }
+
   override async onKeyDown(e: KeyboardEvent): Promise<void> {
     if (this.isActive) {
       if (e.key === 'Escape') {
@@ -71,7 +96,7 @@ export class EditorVM extends ViewModel {
     if (this.$hasChanges.value) {
       this.ctx.$msg.value = { text: this.noteToString(this.$state.value.note) + ', discard/save changes before quitting', level: 'warning' }
     } else {
-      this.ctx.noteListVM.activate()
+      this.navigator.updateWith({ edit: undefined })
     }
   }
 
@@ -92,7 +117,7 @@ export class EditorVM extends ViewModel {
       schema.tag_id = this.$tagId.value
       schema.audio_url = this.$audioUrl.value
 
-      globalContext.server.updateNote(schema).pipe()
+      this.server.updateNote(schema).pipe()
         .onReceive((data: any) => {
           this.$hasChanges.value = false
           this.$state.value = { ...this.$state.value, note: data }
@@ -124,7 +149,7 @@ export class EditorVM extends ViewModel {
     if (lang && note) {
       const key = encodeURIComponent(note.name)
       const link = lang.code === 'en' ? '/corpus/en_pron/search?key=' + key : '/corpus/de_pron/search?key=' + key
-      globalContext.server.validateMp3Link(link).pipe()
+      this.server.validateMp3Link(link).pipe()
         .onReceive(_ => {
           this.$audioUrl.value = link
           this.ctx.$msg.value = { text: this.noteToString(note) + ', audio_url:' + link, level: 'info' }
@@ -139,13 +164,13 @@ export class EditorVM extends ViewModel {
 
   playAudio() {
     if (this.$audioUrl.value)
-      new Audio(globalContext.server.baseUrl + this.$audioUrl.value).play()
+      new Audio(this.server.baseUrl + this.$audioUrl.value).play()
   }
 
   loadTranslation() {
     const note = this.$state.value.note
     if (note) {
-      globalContext.server.loadEnRuTranslation(note.name).pipe()
+      this.server.loadEnRuTranslation(note.name).pipe()
         .onReceive(data => {
           let res = '## ' + data.key + '\n'
           res += data.description
@@ -177,7 +202,7 @@ export class EditorVM extends ViewModel {
 
     let uploadingFiles = this.$filesPendingUpload.value.length
     this.$filesPendingUpload.value.forEach(w => {
-      globalContext.server.uploadFile(note.id, w.file, w.$name.value).pipe()
+      this.server.uploadFile(note.id, w.file, w.$name.value).pipe()
         .onReceive((data: IMediaFile | undefined) => {
           this.ctx.$msg.value = { text: this.noteToString(note), level: 'info' }
           console.log('EditorVM:uploadFile, complete, data: ', data)
@@ -211,7 +236,7 @@ export class EditorVM extends ViewModel {
   deleteMediaFile(mf: IMediaFile) {
     const note = this.$state.value.note
     if (!note) return
-    globalContext.server.deleteFile({ uid: mf.uid }).pipe()
+    this.server.deleteFile({ uid: mf.uid }).pipe()
       .onReceive((data: any[]) => {
         this.ctx.$msg.value = { text: this.noteToString(note) + ', deleted', level: 'info' }
         console.log('EditorVM:deleteMediaFile, complete, data: ', data)
@@ -236,77 +261,43 @@ export class EditorVM extends ViewModel {
     return note ? `/media/${note.id}/${mf.uid}` : ''
   }
 
-  /*
-  *
-  * ACTIVATE
-  *
-  */
-
-
-  private unsubscribe: (() => void) | undefined
-  override activate(): void {
-    super.activate()
-    this.ctx.$msg.value = undefined
-    this.unsubscribe = globalContext.navigator.$keys.pipe()
-      .onReceive(value => {
-        this.runInteracting(value)
-      })
-      .subscribe()
-  }
-
-  override deactivate(): void {
-    super.deactivate()
-    this.unsubscribe?.()
-  }
-
-  private isLoading = false
-  private reloadWithKeys: UrlKeys | undefined
-  private reloadCycleDepth = 0
-  private async runInteracting(keys: UrlKeys) {
-    if (this.isLoading) {
-      this.reloadWithKeys = keys
-      return
-    }
-
-    try {
-      this.reloadWithKeys = undefined
-      this.isLoading = true
-
-      const state = await this.interactor.run(keys)
-
-      this.isLoading = false
-      if (this.reloadWithKeys) {
-        this.reloadCycleDepth++
-        if (this.reloadCycleDepth > 10) {
-          this.ctx.$msg.value = { text: 'Infinite loop of reloading pages is detected', level: 'warning' }
-          return
-        }
-        this.runInteracting(this.reloadWithKeys)
-        return
-      }
-
-      this.$state.value = state
-      const note = state.note
-
-      if (note) {
-        this.$mediaFiles.value = note?.media ?? []
-        this.ctx.$msg.value = { text: this.noteToString(note), level: 'info' }
-        this.$buffer.value = note.text
-        this.$level.value = note.level
-        this.$tagId.value = note.tag_id
-        this.$audioUrl.value = note.audio_url
-      } else {
-        this.ctx.noteListVM.activate()
-      }
-
-    } catch (e: any) {
-      this.ctx.$msg.value = { level: 'error', text: e.message }
-    }
-  }
-
   private noteToString(n: INote | undefined) {
     const lang = this.$state.value.lang
     const voc = lang && lang.vocs.find(v => v.id === n?.voc_id)
     return n && voc && lang ? `${lang.name} › ${voc.name} › ${n.name}(ID:${n.id})` : 'Note not found'
+  }
+}
+
+class EditorInteractor extends Interactor<EditorState> {
+  constructor(ctx: DerTutorContext) {
+    super(ctx)
+    console.log('new NoteListInteractor')
+  }
+
+  override async load(state: EditorState, keys: UrlKeys) {
+    await this.loadLangs(state, keys)
+    await this.chooseLang(state, keys)
+    await this.chooseVoc(state, keys)
+    await this.loadNote(state, keys)
+  }
+
+  async loadLangs(state: EditorState, keys: UrlKeys) {
+    if (this.ctx.$allLangs.value.length === 0)
+      this.ctx.$allLangs.value = await globalContext.server.loadAllLangs().asAwaitable
+    state.allLangs = this.ctx.$allLangs.value
+  }
+
+  async chooseLang(state: EditorState, keys: UrlKeys) {
+    state.lang = state.allLangs && state.allLangs.find(l => l.code === keys.langCode)
+  }
+
+  async chooseVoc(state: EditorState, keys: UrlKeys) {
+    if (state.lang && keys.vocCode)
+      state.voc = state.lang.vocs.find(v => DomainService.encodeName(v.name) === keys.vocCode)
+  }
+
+  async loadNote(state: EditorState, keys: UrlKeys) {
+    if (keys.noteId)
+      state.note = await globalContext.server.loadNote(keys.noteId).asAwaitable
   }
 }

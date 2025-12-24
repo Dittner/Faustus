@@ -1,18 +1,33 @@
 import { RXObservableValue } from "flinker"
 
-import { globalContext } from "../../../App"
-import { DertutorContext } from "../../../DertutorContext"
+import { DerTutorContext } from "../../../DerTutorContext"
 import { ViewModel } from "../ViewModel"
 import { ILang } from "../../../domain/DomainModel"
+import { Interactor } from "../Interactor"
+import { UrlKeys } from "../../../app/URLNavigator"
+import { globalContext } from "../../../App"
 
-export class LangListVM extends ViewModel {
+export interface LangListState {
+  allLangs?: ILang[]
+  lang?: ILang
+}
+
+export class LangListVM extends ViewModel<LangListState> {
   readonly $langs = new RXObservableValue<ILang[]>([])
   readonly $selectedLang = new RXObservableValue<ILang | undefined>(undefined)
 
-  constructor(ctx: DertutorContext) {
-    super('langs', ctx)
+  constructor(ctx: DerTutorContext) {
+    const interactor = new LangListInteractor(ctx)
+    super('langs', ctx, interactor)
     this.addKeybindings()
     this.$selectedLang.pipe().onReceive(_ => this.showSelectedLangIndex())
+  }
+
+  protected override stateDidChange(state: LangListState) {
+    if (!this.activate) return
+
+    this.$langs.value = state.allLangs ?? []
+    this.$selectedLang.value = state.lang
   }
 
   private showSelectedLangIndex() {
@@ -58,51 +73,32 @@ export class LangListVM extends ViewModel {
 
   applySelection() {
     if (this.$selectedLang.value) {
-      globalContext.navigator.navigateTo({ langCode: this.$selectedLang.value.code })
-      this.ctx.vocListVM.activate()
+      this.navigator.navigateTo({ langCode: this.$selectedLang.value.code })
     }
   }
+}
 
-  /*
-  *
-  * ACTIVATE
-  *
-  */
-
-  override activate(): void {
-    super.activate()
-    if (this.$langs.value.length === 0)
-      this.loadAllLangs()
-    else
-      this.selectFromUrl()
-    
-    this.showSelectedLangIndex()
+class LangListInteractor extends Interactor<LangListState> {
+  constructor(ctx: DerTutorContext) {
+    super(ctx)
+    console.log('new LangListInteractor')
   }
 
-  private async loadAllLangs() {
-    console.log('LangListVM:loadAllLangs')
-    this.ctx.$msg.value = { text: 'Loading...', level: 'info' }
-    globalContext.server.loadAllLangs().pipe()
-      .onReceive(data => {
-        console.log('LangListVM:loadAllLangs, complete, data: ', data)
-        this.ctx.$allLangs.value = data ?? []
-        this.$langs.value = data ?? []
-        this.selectFromUrl()
-      })
-      .onError(err => {
-        this.ctx.$msg.value = { text: err.message, level: 'error' }
-        this.ctx.$allLangs.value = []
-      })
+  override async load(state: LangListState, keys: UrlKeys) {
+    await this.loadLangs(state, keys)
+    await this.chooseLang(state, keys)
   }
 
-  private selectFromUrl() {
-    const langCode = globalContext.navigator.$keys.value.langCode
-    const lang = this.$langs.value.find(l => l.code === langCode)
-    if (lang) {
-      this.$selectedLang.value = lang
-      this.ctx.vocListVM.activate()
-    } else {
-      this.$selectedLang.value = this.$langs.value.length > 0 ? this.$langs.value[0] : undefined
-    }
+  private async loadLangs(state: LangListState, keys: UrlKeys) {
+    if (this.ctx.$allLangs.value.length === 0)
+      this.ctx.$allLangs.value = await globalContext.server.loadAllLangs().asAwaitable
+    state.allLangs = this.ctx.$allLangs.value
+  }
+
+  private async chooseLang(state: LangListState, keys: UrlKeys) {
+    if (!state.allLangs || state.allLangs.length === 0) return
+
+    if (keys.langCode) state.lang = state.allLangs.find(l => l.code === keys.langCode)
+    else state.lang = state.allLangs[0]
   }
 }

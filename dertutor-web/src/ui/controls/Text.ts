@@ -9,6 +9,5 @@ export const Title = (value: string) => {
     s.fontSize = theme().defMenuFontSize
     s.text = value
     s.fontWeight = 'bold'
-    s.paddingLeft = '20px'
   })
 }

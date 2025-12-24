@@ -1,4 +1,4 @@
-import { type AnyRXObservable, type RXObservable, RXObservableValue, RXOperation } from 'flinker'
+import { type AnyRXObservable, RXObservableValue, RXOperation } from 'flinker'
 
 
 export type HttpMethod = 'HEAD' | 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
@@ -48,7 +48,6 @@ export class RestApiCmd implements Runnable {
   }
 
   private async startLoading(op: RXOperation<any, RestApiError>) {
-    console.log('RestApiCmd:startLoading')
     const [response, body] = await this.api.sendRequest(this.method, this.path, this.body && JSON.stringify(this.body), this.headers)
     if (response?.ok) {
       op.success(body)
@@ -68,23 +67,24 @@ export class RestApi {
   constructor(baseUrl: string,) {
     this.baseUrl = baseUrl
     console.log('RestApi, baseUrl: ', this.baseUrl)
-    this.ping()
   }
 
   //--------------------------------------
   //  methods
   //--------------------------------------
 
-  ping(): RXObservable<any, RestApiError> {
-    console.log('CheckServerCmd, running...')
+  ping(): RXOperation<any, RestApiError> {
+    console.log('ping...')
     const cmd = new RestApiCmd(this, 'GET', '')
     const op = cmd.run()
     op.pipe()
       .onReceive(v => {
         this.$isServerAvailable.value = true
+        console.log('RestApi.ping, success')
       })
       .onError(e => {
         this.$isServerAvailable.value = false
+        console.log('RestApi.ping, err:', e)
       })
     return op
   }

@@ -18,7 +18,7 @@ export const Icon = <P extends IconProps>() => {
   return span<P>()
     .react(s => {
       s.value = MaterialIcon.question_mark
-      s.className = 'material_icon'
+      s.className = 'md-icon'
       s.textSelectable = false
     })
     .map(s => s.text = s.value)

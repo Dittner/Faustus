@@ -1,23 +1,44 @@
 import { RXObservableValue } from "flinker"
 
-import { globalContext } from "../../../App"
 import { InputBufferController } from "../../controls/Input"
-import { DertutorContext } from "../../../DertutorContext"
+import { DerTutorContext } from "../../../DerTutorContext"
 import { ViewModel } from "../ViewModel"
 import { DomainService, ILang, IVoc } from "../../../domain/DomainModel"
 import { CreateVocSchema, DeleteVocSchema, RenameVocSchema } from "../../../backend/Schema"
+import { UrlKeys } from "../../../app/URLNavigator"
+import { globalContext } from "../../../App"
+import { Interactor } from "../Interactor"
 
-export class VocListVM extends ViewModel {
+export interface VocListState {
+  allLangs?: ILang[]
+  lang?: ILang
+  voc?: IVoc
+}
+
+export class VocListVM extends ViewModel<VocListState> {
   readonly $selectedLang = new RXObservableValue<ILang | undefined>(undefined)
   readonly $vocs = new RXObservableValue<IVoc[]>([])
   readonly $selectedVoc = new RXObservableValue<IVoc | undefined>(undefined)
   readonly $mode = new RXObservableValue<'explore' | 'create' | 'rename'>('explore')
   readonly bufferController = new InputBufferController()
 
-  constructor(ctx: DertutorContext) {
-    super('vocs', ctx)
+  constructor(ctx: DerTutorContext) {
+    const interactor = new VocListInteractor(ctx)
+    super('vocs', ctx, interactor)
     this.addKeybindings()
     this.$selectedVoc.pipe().onReceive(_ => this.showSelectedVocIndex())
+  }
+
+  protected override stateDidChange(state: VocListState) {
+    if (!this.activate) return
+
+    this.$selectedLang.value = state.lang
+    this.$selectedVoc.value = state.voc
+    this.$vocs.value = state.lang?.vocs ?? []
+
+    if (!state.lang) {
+      this.navigator.navigateTo({})
+    }
   }
 
   private addKeybindings() {
@@ -62,8 +83,7 @@ export class VocListVM extends ViewModel {
 
   applySelection() {
     if (this.$selectedLang.value && this.$selectedVoc.value) {
-      globalContext.navigator.navigateTo({ langCode: this.$selectedLang.value.code, vocCode: this.encodeName(this.$selectedVoc.value) })
-      this.ctx.noteListVM.activate()
+      this.navigator.navigateTo({ langCode: this.$selectedLang.value.code, vocCode: this.encodeName(this.$selectedVoc.value) })
     }
   }
 
@@ -93,8 +113,7 @@ export class VocListVM extends ViewModel {
   }
 
   private quit() {
-    globalContext.navigator.navigateTo({})
-    this.ctx.langListVM.activate()
+    this.navigator.navigateTo({})
   }
 
   override async onKeyDown(e: KeyboardEvent): Promise<void> {
@@ -132,7 +151,7 @@ export class VocListVM extends ViewModel {
       schema.lang_id = lang.id
       schema.name = name
 
-      globalContext.server.createVoc(schema).pipe()
+      this.server.createVoc(schema).pipe()
         .onReceive((data: IVoc) => {
           console.log('VocListVM:applyInput, creating voc, result: ', data)
           if (data) {
@@ -166,7 +185,7 @@ export class VocListVM extends ViewModel {
       }
 
       const schema = { id: voc.id, name: newName } as RenameVocSchema
-      globalContext.server.renameVoc(schema).pipe()
+      this.server.renameVoc(schema).pipe()
         .onReceive((data: IVoc) => {
           console.log('VocListVM:applyInput, renaming voc, result: ', data)
           if (data) {
@@ -193,7 +212,7 @@ export class VocListVM extends ViewModel {
     const voc = this.$selectedVoc.value
     if (lang && voc) {
       const schema = { id: voc.id } as DeleteVocSchema
-      globalContext.server.deleteVoc(schema).pipe()
+      this.server.deleteVoc(schema).pipe()
         .onReceive(_ => {
           console.log('VocListVM:deleteNote complete')
           this.ctx.$msg.value = { level: 'info', text: 'deleted' }
@@ -213,36 +232,6 @@ export class VocListVM extends ViewModel {
     }
   }
 
-  /*
-  *
-  * ACTIVATE
-  *
-  */
-
-  override activate(): void {
-    super.activate()
-    const k = globalContext.navigator.$keys.value
-    const lang = k.langCode ? this.ctx.$allLangs.value.find(l => l.code === k.langCode) : undefined
-    this.$selectedLang.value = lang
-    if (lang) {
-      this.$vocs.value = lang.vocs
-      this.selectFromUrl()
-      this.showSelectedVocIndex()
-    } else {
-      this.ctx.langListVM.activate()
-    }
-  }
-
-  private selectFromUrl() {
-    const k = globalContext.navigator.$keys.value
-    if (k.vocCode) {
-      this.$selectedVoc.value = this.$vocs.value.find(v => this.encodeName(v) === k.vocCode)
-      this.ctx.noteListVM.activate()
-    } else {
-      this.$selectedVoc.value = this.$vocs.value.length > 0 ? this.$vocs.value[0] : undefined
-    }
-  }
-
   private showSelectedVocIndex() {
     const lang = this.$selectedLang.value
     const voc = this.$selectedVoc.value
@@ -250,5 +239,37 @@ export class VocListVM extends ViewModel {
       const index = lang.vocs.findIndex(child => child.id === voc.id)
       this.ctx.$msg.value = { 'text': index != -1 ? `${index + 1}:${lang.vocs.length}` : '', 'level': 'info' }
     }
+  }
+}
+
+
+class VocListInteractor extends Interactor<VocListState> {
+  constructor(ctx: DerTutorContext) {
+    super(ctx)
+    console.log('new VocListInteractor')
+  }
+
+  override async load(state: VocListState, keys: UrlKeys) {
+    await this.loadLangs(state, keys)
+    await this.chooseLang(state, keys)
+    await this.chooseVoc(state, keys)
+  }
+
+  private async loadLangs(state: VocListState, keys: UrlKeys) {
+    if (this.ctx.$allLangs.value.length === 0)
+      this.ctx.$allLangs.value = await globalContext.server.loadAllLangs().asAwaitable
+    state.allLangs = this.ctx.$allLangs.value
+  }
+
+  private async chooseLang(state: VocListState, keys: UrlKeys) {
+    if (keys.langCode && state.allLangs)
+      state.lang = state.allLangs.find(l => l.code === keys.langCode)
+  }
+
+  private async chooseVoc(state: VocListState, keys: UrlKeys) {
+    if (!state.lang) return
+
+    state.voc = state.lang.vocs.find(v => DomainService.encodeName(v.name) === keys.vocCode)
+    if (!state.voc && state.lang.vocs.length > 0) state.voc = state.lang.vocs[0]
   }
 }

@@ -30,6 +30,7 @@ export class Application {
   readonly $location: RXObservableValue<BrowserLocation>
   readonly $pathName = new RXObservableValue('')
   readonly $scrollY = new RXObservableValue(0)
+  readonly $err = new RXObservableValue('')
 
   readonly isMobileDevice: boolean
 

@@ -7,7 +7,7 @@ import { globalContext } from "../../App"
 import { DertutorServer } from "../../backend/DertutorServer"
 import { Interactor } from "./Interactor"
 
-export type ViewModelID = 'connection' | 'langs' | 'vocs' | 'notes' | 'editor'
+export type ViewModelID = 'connection' | 'vocs' | 'notes' | 'editor'
 export interface IViewModel {
   readonly id: ViewModelID
   readonly $showActions: RXObservableValue<boolean>

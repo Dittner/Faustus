@@ -1,6 +1,7 @@
 import { RXObservableValue } from "flinker"
 import { globalContext } from "../App"
 import { Application, BrowserLocation, UpdateUrlMode } from "./Application"
+import { delay } from "./Utils"
 
 export interface UrlKeys {
   readonly langCode?: string
@@ -16,9 +17,7 @@ export interface UrlKeys {
 export class URLNavigator {
   readonly $keys = new RXObservableValue<UrlKeys>({})
 
-  //get url(): string { return this.app.$location.value }
-
-  constructor(app:Application) {
+  constructor(app: Application) {
     app.$location.pipe()
       .onReceive(location => {
         console.log('URLNavigator: received new location')
@@ -31,7 +30,7 @@ export class URLNavigator {
   //url=/en/search?key=some_text&page=1&note=20&edit
   private parseUrl(location: BrowserLocation): UrlKeys {
     console.log('new url:', location.path + location.queries)
-    const path = location.path .startsWith('/') ? location.path.slice(1) :location.path
+    const path = location.path.startsWith('/') ? location.path.slice(1) : location.path
     const values = path.split('/')
     const params = new URLSearchParams(location.queries)
 
@@ -49,7 +48,7 @@ export class URLNavigator {
 
   buildLink(keys: UrlKeys) {
     if (!keys.langCode) return '/'
-    
+
     const isSearching = keys.searchKey && keys.searchKey.length > 1
     if (keys.vocCode === undefined && !isSearching) return `/${keys.langCode}`
 
@@ -65,10 +64,28 @@ export class URLNavigator {
   }
 
   navigateTo(keys: UrlKeys, mode: UpdateUrlMode = 'push') {
+    if (this.infiniteLoopDetected) return
+    this.countNavRequests()
     globalContext.app.navigate(this.buildLink(keys), mode)
   }
 
   updateWith(keys: UrlKeys, mode: UpdateUrlMode = 'push') {
     this.navigateTo({ ...this.$keys.value, ...keys }, mode)
+  }
+
+  private counter = 0
+  private infiniteLoopDetected = false
+  private async countNavRequests() {
+    if (this.counter < 50) {
+      this.counter++
+      if (this.counter === 1) {
+        await delay(1000)
+        this.counter = 0
+      }
+    } else {
+      this.infiniteLoopDetected = true
+      globalContext.app.$err.value = 'Infinite loop is detected'
+      console.error('URLNavigator: Infinite loop is detected, keys:', this.$keys.value)
+    }
   }
 }

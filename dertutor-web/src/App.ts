@@ -5,7 +5,6 @@ import { FontFamily } from "./ui/controls/Font"
 import { theme, themeManager } from "./ui/theme/ThemeManager"
 import { ServerConnectionView } from "./ui/view/connect/ServerConnctionView"
 import { EditorView } from "./ui/view/editor/EditorView"
-import { LangListView } from "./ui/view/lang/LangListView"
 import { NoteListView } from "./ui/view/note/NoteListView"
 import { VocListView } from "./ui/view/vocs/VocListView"
 import { DerTutorContext } from "./DerTutorContext"
@@ -26,7 +25,6 @@ export function App() {
       observer(ctx.$activeVM)
         .onReceive(vm => {
           if (vm === ctx.connectionVM) return ServerConnectionView()
-          else if (vm === ctx.langListVM) return LangListView()
           else if (vm === ctx.vocListVM) return VocListView()
           else if (vm === ctx.noteListVM) return NoteListView()
           else if (vm === ctx.editorVM) return EditorView()
@@ -35,19 +33,9 @@ export function App() {
 
       ActionsHelpView()
       Footer()
+      AppErrorInfo()
     })
 }
-
-
-export const ACTION_TIPS = `
-## [icon:lightbulb_outline] Tips
----
-\`\`\`ul
-+ You can navigate through menu items using arrows: →, ↓, →, ↑
-+ To see more shortkeys, press ?
-+ To create/edit/delete notes, you must have superuser rights.
-\`\`\`
-`
 
 export const ActionsHelpView = () => {
   const ctx = DerTutorContext.self
@@ -167,5 +155,28 @@ export const CmdView = () => {
       s.whiteSpace = 'nowrap'
       s.paddingHorizontal = '10px'
       s.textColor = theme().text
+    })
+}
+
+const AppErrorInfo = () => {
+  return div()
+    .observe(globalContext.app.$err, 'affectsProps', 'affectsChildrenProps')
+    .react(s => {
+      s.visible = globalContext.app.$err.value.length > 0
+      s.position = 'fixed'
+      s.top = '0'
+      s.width = '100%'
+    }).children(() => {
+      p().react(s => {
+        s.whiteSpace = 'nowrap'
+        s.paddingHorizontal = '10px'
+        s.textColor = theme().red
+        s.borderTop = '2px solid ' + theme().red
+        s.fontFamily = FontFamily.MONO
+        s.fontSize = '10px'
+        s.text = globalContext.app.$err.value
+        s.width = '100%'
+        s.textAlign = 'center'
+      })
     })
 }

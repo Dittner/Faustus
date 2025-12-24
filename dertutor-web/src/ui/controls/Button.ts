@@ -133,7 +133,7 @@ export const LinkBtn = () => {
       s.fontFamily = FontFamily.MONO
       s.fontSize = theme().defMenuFontSize
       s.textColor = theme().link + 'cc'
-      s.minHeight = '35px'
+      s.paddingVertical = '5px'
       s.bgColor = theme().transparent
     })
     .whenHovered(s => {

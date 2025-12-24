@@ -97,7 +97,7 @@ export class ThemeManager {
     return {
       id: 'light',
       isLight: true,
-      defMenuFontSize: '0.8rem',
+      defMenuFontSize: '0.75rem',
       defFontSize: '1rem',
       defFontWeight: '400',
       appBg: white,

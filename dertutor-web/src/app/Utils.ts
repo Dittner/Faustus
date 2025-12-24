@@ -32,6 +32,11 @@ export const sortByKeys = (keys: string[], ascendingMask: boolean[] = []) => {
   }
 }
 
+export const delay = (ms: number) => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
 export const indexOfFirstVisibleElement = (coll: HTMLElement[], scrollY: number, parentHeight: number): number => {
   let res = -1
   // at the end of the parent – we need to select the last element

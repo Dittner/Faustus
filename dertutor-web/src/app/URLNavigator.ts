@@ -64,23 +64,11 @@ export class URLNavigator {
     return res
   }
 
-  private requestsNum = 0
-
   navigateTo(keys: UrlKeys, mode: UpdateUrlMode = 'push') {
-    this.requestsNum++
-    if(this.requestsNum > 100) {
-      console.log('MAX CONNECTIONS1')
-      return
-    }
     globalContext.app.navigate(this.buildLink(keys), mode)
   }
 
   updateWith(keys: UrlKeys, mode: UpdateUrlMode = 'push') {
-    this.requestsNum++
-    if(this.requestsNum > 100) {
-      console.log('MAX CONNECTIONS2')
-      return
-    }
     this.navigateTo({ ...this.$keys.value, ...keys }, mode)
   }
 }

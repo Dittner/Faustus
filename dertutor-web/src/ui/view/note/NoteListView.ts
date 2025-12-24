@@ -179,7 +179,7 @@ const NotesPaginator = () => {
           s.wrap = false
           s.popUp = 'First page'
         })
-        .onClick(() => vm.reloadWith({ page: 1 }))
+        .onClick(() => vm.navigator.updateWith({ page: 1 }))
 
       Btn()
         .react(s => {
@@ -192,7 +192,7 @@ const NotesPaginator = () => {
         })
         .onClick(() => {
           const p = vm.$state.value.page
-          p && p.page > 0 && vm.reloadWith({ page: p.page - 1 })
+          p && p.page > 0 && vm.navigator.updateWith({ page: p.page - 1 })
         })
 
       p()
@@ -218,7 +218,7 @@ const NotesPaginator = () => {
         })
         .onClick(() => {
           const p = vm.$state.value.page
-          p && p.page < p.pages && vm.reloadWith({ page: p.page + 1 })
+          p && p.page < p.pages && vm.navigator.updateWith({ page: p.page + 1 })
         })
 
       Btn()
@@ -231,7 +231,7 @@ const NotesPaginator = () => {
         })
         .onClick(() => {
           const p = vm.$state.value.page
-          p && vm.reloadWith({ page: p.pages })
+          p && vm.navigator.updateWith({ page: p.pages })
         })
     })
 }
@@ -369,7 +369,7 @@ const LevelRenderer = (level: number) => {
     .whenSelected(s => {
       s.textColor = theme().accent
     })
-    .onClick(() => vm.reloadWith({ page: 1, level: vm.$state.value.level === level ? undefined : level }))
+    .onClick(() => vm.navigator.updateWith({ page: 1, level: vm.$state.value.level === level ? undefined : level }))
 }
 
 const TagSelector = () => {
@@ -396,7 +396,7 @@ const TagRenderer = (t: ITag) => {
       s.isSelected = vm.$state.value.tagId === t.id
       s.text = t.name
     })
-    .onClick(() => vm.reloadWith({ page: 1, tagId: vm.$state.value.tagId === t.id ? undefined : t.id }))
+    .onClick(() => vm.navigator.updateWith({ page: 1, tagId: vm.$state.value.tagId === t.id ? undefined : t.id }))
 }
 
 const SearchPanel = () => {

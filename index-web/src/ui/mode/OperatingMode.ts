@@ -24,7 +24,7 @@ export class OperatingModeClass implements OperatingMode {
   constructor(id: OperatingModeID, ctx: IndexContext) {
     this.id = id
     this.ctx = ctx
-    this.actionsList.add(':?<CR>', 'Show list of actions', () => this.$showActions.value = true)
+    this.actionsList.add('?', 'Show list of actions', () => this.$showActions.value = true)
     this.actionsList.add('<ESC>', 'Hide list of actions', () => this.$showActions.value = false)
     this.actionsList.add('T', 'Switch theme', () => themeManager.switchTheme())
     this.actionsList.add('.', 'Repeat last action', () => this.lastExecutedAction?.handler())

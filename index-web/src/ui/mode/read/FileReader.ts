@@ -76,8 +76,8 @@ export class FileReader extends OperatingModeClass {
     this.actionsList.add('E', 'Edit file', () => this.editFile())
     this.actionsList.add(':id<CR>', 'Print file path', () => this.ctx.$msg.value = { level: 'info', text: this.$selectedFile.value?.path ?? 'File not found' })
 
-    this.actionsList.add(':pn<CR>', 'New page', () => this.createPage())
-    this.actionsList.add(':pd<CR>', 'Delete page', () => this.deletePage())
+    this.actionsList.add('n', 'New page', () => this.createPage())
+    this.actionsList.add(':d<CR>', 'Delete page', () => this.deletePage())
     this.actionsList.add(':pj<CR>', 'Move page down', () => this.movePageDown())
     this.actionsList.add(':pk<CR>', 'Move page up', () => this.movePageUp())
   }

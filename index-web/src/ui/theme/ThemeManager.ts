@@ -122,7 +122,7 @@ export class ThemeManager {
     return {
       id: 'light',
       isLight: true,
-      defMenuFontSize: '0.75rem',
+      defMenuFontSize: '0.7rem',
       defFontSize: '1rem',
       defFontWeight: '400',
       appBg: white,
@@ -156,7 +156,7 @@ export class ThemeManager {
       menuPath: '#5c6c72',
       menuPage: '#ac2f2f',
       maxBlogTextWidth: 950,
-      menuWidth: 550,
+      menuWidth: 450,
       statusBarHeight: 30,
     }
   }

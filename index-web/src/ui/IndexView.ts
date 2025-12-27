@@ -34,7 +34,7 @@ export const ActionsHelpView = (mode: OperatingMode) => {
     .react(s => {
       s.visible = mode.$showActions.value
       s.fontFamily = FontFamily.MONO
-      s.fontSize = '18px'
+      s.fontSize = theme().defMenuFontSize
       s.width = '100%'
       s.gap = '0'
       s.paddingVertical = '20px'
@@ -66,7 +66,6 @@ export const ActionInfoView = (a: Action) => {
   return p()
     .react(s => {
       s.width = '100%'
-      s.fontSize = '18px'
     }).children(() => {
       span().react(s => {
         s.display = 'inline-block'
@@ -99,10 +98,10 @@ export const MessangerView = () => {
       const msg = ctx.$msg.value
       s.visible = msg !== undefined
       s.fontFamily = FontFamily.MONO
-      s.fontSize = '18px'
+      s.fontSize = theme().defMenuFontSize
       s.text = msg?.text ?? ''
       //s.bgColor = theme().appBg
-      s.paddingHorizontal = '2px'
+      s.paddingHorizontal = '5px'
       s.whiteSpace = 'nowrap'
 
       if (msg?.level === 'error')

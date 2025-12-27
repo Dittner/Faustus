@@ -1,8 +1,5 @@
 ## Intro
-__Faustus__ – group of apps:
-+ index-web module – notes manager written with [FlinkerDom](https://github.com/Dittner/FlinkerDom) library.
-+ index-api - fastapi backend, stores notes
-+ dertutor-api - fastapi/Postgres/SQLAlchemy backend, stores en/de-vocabularies/lessons/tests
+__Faustus__ – markdown editor and a knowledge base with a local file storage.
 
 ## License
 MIT
@@ -19,30 +16,5 @@ MIT
 or using docker
 
 ```cmd
->>> docker-compose -f docker-compose-index-dev.yml up --build
-```
-
-## Run Dertutor App
-```cmd
->>> docker-compose -f docker-compose-dertutor-dev.yml up --build
-```
-
-## Run pgadmin
-Enter database address: 'dertutor-pg' – container name, not localhost
-
-## Migrations
-Generate migration file:
-```cmd
->>> uv run alembic revision --autogenerate -m 'creating tables'
->>> uv run alembic revision --autogenerate -m 'creating foreign_constraints'
-```
-
-Apply migration
-```cmd
->>> uv run alembic upgrade head
-```
-
-Roolback all migrations
-```cmd
->>> uv run alembic downgrade base  
+>>> docker-compose -f docker-compose-dev.yml up --build
 ```

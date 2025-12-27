@@ -152,7 +152,7 @@ export const PageView = (page: Page, index: number) => {
           s.maxWidth = '10px'
           s.top = '0'
           s.bottom = '0'
-          s.borderColor = isEditing ? theme().red : isSelected ? theme().menuPage + '88' : theme().transparent
+          s.borderColor = isEditing ? theme().red : isSelected ? theme().menuPage + '00' : theme().transparent
           s.borderRight = theme().red
         })
 

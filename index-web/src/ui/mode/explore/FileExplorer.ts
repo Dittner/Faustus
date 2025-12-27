@@ -54,9 +54,9 @@ export class FileExplorer extends OperatingModeClass {
     this.actionsList.add('<Right>', 'Navigate forward', () => this.moveCursorIntoDir())
     this.actionsList.add('<CR>', 'Open file', () => this.openFile())
 
-    this.actionsList.add(':n<CR>', 'New file', () => this.newFile())
+    this.actionsList.add('n', 'New file', () => this.newFile())
     this.actionsList.add(':d<CR>', 'Delete file', () => this.deleteFile())
-    this.actionsList.add(':r<CR>', 'Rename file', () => this.renameFile())
+    this.actionsList.add('r', 'Rename file', () => this.renameFile())
     this.actionsList.add('/', 'Search file', () => this.searchFile())
   }
 

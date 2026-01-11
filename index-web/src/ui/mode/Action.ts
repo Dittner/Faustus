@@ -10,7 +10,6 @@ export class Action {
 }
 
 export class ActionsList {
-  readonly parser = new KeyParser()
   readonly actions: Array<Action> = [] // description, keyCode, handler
   constructor() { }
 
@@ -31,25 +30,22 @@ export class ActionsList {
   }
 }
 
-export class KeyParser {
-  readonly keyMap = new Map<string, string>()
-  constructor() {
-    this.map('Enter', '<CR>')
-    this.map('Backspace', '<BS>')
-    this.map('Delete', '<DEL>')
-    this.map('Escape', '<ESC>')
-    this.map('ArrowUp', '<Up>')
-    this.map('ArrowDown', '<Down>')
-    this.map('ArrowLeft', '<Left>')
-    this.map('ArrowRight', '<Right>')
+const keyMap = (key: string) => {
+  switch (key) {
+    case ('Enter'): return '<CR>'
+    case ('Backspace'): return '<BS>'
+    case ('Delete'): return '<DEL>'
+    case ('Escape'): return '<ESC>'
+    case (' '): return '<Space>'
+    case ('ArrowUp'): return '<Up>'
+    case ('ArrowDown'): return '<Down>'
+    case ('ArrowLeft'): return '<Left>'
+    case ('ArrowRight'): return '<Right>'
+    default: return key
   }
+}
 
-  map(k: string, v: string) {
-    this.keyMap.set(k, v)
-  }
-
-  keyToCode(e: KeyboardEvent) {
-    const key = this.keyMap.get(e.key) ?? e.key
-    return e.ctrlKey ? '<C-' + key + '>' : key
-  }
+export const parseKeyToCode = (e: KeyboardEvent) => {
+  const key = keyMap(e.key)
+  return e.ctrlKey || e.metaKey ? '<C-' + key + '>' : key
 }

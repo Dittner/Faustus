@@ -3,11 +3,10 @@ import { theme } from "../../theme/ThemeManager"
 import { FileExplorer } from "./FileExplorer"
 import { IndexContext } from "../../IndexContext"
 import { FontFamily } from "../../controls/Font"
-import { LayoutLayer } from "../../../app/Application"
-import { ActionsHelpView, MessangerView } from "../../IndexView"
 import { StatusBar, StatusBarModeName } from "../../controls/StatusBar"
 import { LineInput } from "../../controls/Input"
 import { FileNode } from "../FileNode"
+import { globalContext } from "../../../App"
 
 export const FileExplorerView = () => {
   const ctx = IndexContext.self
@@ -19,8 +18,6 @@ export const FileExplorerView = () => {
           s.position = 'fixed'
           s.width = '100%'
           s.height = '100vh'
-          s.paddingBottom = theme().statusBarHeight + 'px'
-          s.layer = LayoutLayer.MODAL
         }).children(() => {
 
           vlist<FileNode>()
@@ -43,7 +40,6 @@ export const FileExplorerView = () => {
               s.position = 'fixed'
               s.width = '100%'
               s.bottom = '0'
-              s.layer = LayoutLayer.MODAL
             })
 
           LineInput(ctx.explorer.bufferController.$buffer, ctx.explorer.bufferController.$cursorPos)
@@ -54,9 +50,8 @@ export const FileExplorerView = () => {
               s.title = mode === 'create' ? 'New:' : mode === 'rename' ? 'Rename:' : 'Input:'
               s.position = 'fixed'
               s.width = '100%'
-              s.height = theme().statusBarHeight + 'px'
+              s.height = globalContext.app.$layout.value.statusBarHeight + 'px'
               s.bottom = '0'
-              s.layer = LayoutLayer.MODAL
             })
         })
     })
@@ -111,7 +106,6 @@ const Footer = (explorer: FileExplorer) => {
     })
     .children(() => {
 
-      ActionsHelpView(explorer)
       StatusBar().children(() => {
 
         StatusBarModeName()
@@ -126,8 +120,6 @@ const Footer = (explorer: FileExplorer) => {
             s.textColor = theme().statusFg
             s.width = '100%'
           })
-
-        MessangerView()
       })
     })
 }

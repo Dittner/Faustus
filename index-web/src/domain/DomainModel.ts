@@ -117,7 +117,7 @@ export class TextFile extends RXObservableEntity<TextFile> {
   }
 
   serialize(): any {
-    if (this.isDirectory) return { is_dir: true, text: '', alias: this.path }
+    if (this.isDirectory) return { alias: this.path, text: '' }
 
     let text = ''
 
@@ -140,7 +140,7 @@ export class TextFile extends RXObservableEntity<TextFile> {
       text += FILE_SECTION_BODY + '\n'
       text += this.pages.map(p => p.serialize()).filter(p => p !== '').join('\n\n\n')
     }
-    return { is_dir: false, text, alias: this.alias }
+    return { text, alias: this.alias }
   }
 
   //--------------------------------------

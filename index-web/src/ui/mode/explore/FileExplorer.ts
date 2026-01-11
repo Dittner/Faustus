@@ -6,6 +6,7 @@ import { generateUID, Path, sortByKeys } from "../../../app/Utils"
 import { TextFile } from "../../../domain/DomainModel"
 import { InputBufferController } from "../../controls/Input"
 import { FileNode } from "../FileNode"
+import { parseKeyToCode } from "../Action"
 
 const FILES_SORT = sortByKeys(['isDir', 'alias'], [false, true])
 const PATH_ALLOWED_SYMBOLS: Set<string> = new Set('_0123456789/abcdefghijklmnopqrstuvwxyz'.split(''))
@@ -187,7 +188,7 @@ export class FileExplorer extends OperatingModeClass {
 
   override onKeyDown(e: KeyboardEvent): void {
     if (this.$mode.value !== 'explore') {
-      const code = this.actionsList.parser.keyToCode(e)
+      const code = parseKeyToCode(e)
       if (code === '<ESC>') {
         this.$mode.value = 'explore'
       } else if (code === '<CR>') {

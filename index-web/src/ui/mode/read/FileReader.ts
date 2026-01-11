@@ -37,7 +37,6 @@ export class FileReader extends OperatingModeClass {
       .onReceive(p => {
         const f = this.$selectedFile.value
         if (f && p) {
-          console.log('Selected page changed:', p)
           window.localStorage.setItem('pageIndexOf:' + f.path, f.pages.findIndex(item => item === p) + '')
         }
       })
@@ -136,7 +135,7 @@ export class FileReader extends OperatingModeClass {
         if (element) {
           const elementPos = Math.round(element.getBoundingClientRect().top + document.documentElement.scrollTop)
           console.log('scrollToSelectedChapter:  window.scrollTo', index)
-          window.scrollTo(0, elementPos)
+          window.scrollTo(0, elementPos - globalContext.app.$layout.value.navBarHeight)
         } else {
           console.log('ScrollToSelectedChapter: Selected page html element not found, perhaps it is not mounted yet')
         }

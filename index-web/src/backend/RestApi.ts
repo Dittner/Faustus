@@ -1,8 +1,6 @@
-import { type AnyRXObservable, type RXObservable, RXObservableValue } from 'flinker'
+import { type AnyRXObservable, RXObservableValue, RXOperation } from 'flinker'
 
-import { PingCmd } from './cmd/PingCmd'
-
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
+export type HttpMethod = 'HEAD' | 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 export type RestApiErrorCategory = 'noConnection' | 'notAuthorized' | 'serverError' | 'clientError' | 'unknownError' | 'aborted'
 export const NO_CONNECTION_STATUS = 0
 
@@ -25,20 +23,99 @@ export interface Runnable {
   run: () => AnyRXObservable
 }
 
+export class RestApiCmd implements Runnable {
+  private readonly api: RestApi
+  private readonly method: HttpMethod
+  private readonly path: string
+  private readonly schema: any
+  private readonly headers: any
+
+  constructor(api: RestApi, method: HttpMethod, path: string, schema: any = undefined, headers: any = undefined) {
+    this.api = api
+    this.method = method
+    this.path = path
+    this.schema = schema
+    this.headers = headers
+  }
+
+  run(): RXOperation<any, RestApiError> {
+    const op = new RXOperation<any, RestApiError>()
+    this.startLoading(op).catch((e: RestApiError) => {
+      op.fail(e)
+    })
+    return op
+  }
+
+  private async startLoading(op: RXOperation<any, RestApiError>) {
+    const [response, body] = await this.api.sendRequest(this.method, this.path, this.schema && JSON.stringify(this.schema), this.headers)
+    if (response?.ok) {
+      op.success(body)
+    } else {
+      await this.api.handlerError(response)
+    }
+  }
+}
+
+
 export class RestApi {
   readonly baseUrl: string
 
   readonly $isServerAvailable = new RXObservableValue(false)
+  readonly $isUserAuthenticated = new RXObservableValue(false)
   headers: any = { 'Content-Type': 'application/json' }
 
   constructor(baseUrl: string,) {
     this.baseUrl = baseUrl
     console.log('RestApi, baseUrl: ', this.baseUrl)
-    this.ping()
   }
 
-  ping(): RXObservable<any, RestApiError> {
-    const cmd = new PingCmd(this)
+  //--------------------------------------
+  //  methods
+  //--------------------------------------
+
+  ping(): RXOperation<any, RestApiError> {
+    console.log('ping...')
+    const cmd = new RestApiCmd(this, 'GET', '')
+    const op = cmd.run()
+    op.pipe()
+      .onReceive(v => {
+        this.$isServerAvailable.value = true
+        console.log('RestApi.ping, success')
+      })
+      .onError(e => {
+        this.$isServerAvailable.value = false
+        console.log('RestApi.ping, err:', e)
+      })
+    return op
+  }
+
+  head(path: string): RXOperation<any, RestApiError> {
+    const cmd = new RestApiCmd(this, 'HEAD', path)
+    return cmd.run()
+  }
+
+  get(path: string): RXOperation<any, RestApiError> {
+    const cmd = new RestApiCmd(this, 'GET', path)
+    return cmd.run()
+  }
+
+  post(path: string, schema: any = undefined, headers: any = undefined): RXOperation<any, RestApiError> {
+    const cmd = new RestApiCmd(this, 'POST', path, schema, headers)
+    return cmd.run()
+  }
+
+  patch(path: string, schema: any): RXOperation<any, RestApiError> {
+    const cmd = new RestApiCmd(this, 'PATCH', path, schema)
+    return cmd.run()
+  }
+
+  put(path: string, schema: any): RXOperation<any, RestApiError> {
+    const cmd = new RestApiCmd(this, 'PUT', path, schema)
+    return cmd.run()
+  }
+
+  delete(path: string, schema: any): RXOperation<any, RestApiError> {
+    const cmd = new RestApiCmd(this, 'DELETE', path, schema)
     return cmd.run()
   }
 
@@ -46,13 +123,14 @@ export class RestApi {
   //  sendRequest
   //--------------------------------------
 
-  async sendRequest(method: HttpMethod, path: string, body: string | null = null): Promise<[Response | null, any | null]> {
+  async sendRequest(method: HttpMethod, path: string, body: string | FormData | null = null, headers: any | null = null): Promise<[Response | null, any | null]> {
     try {
-      console.log('===>', method + ':', path)
-      const response = await fetch(this.baseUrl + path, {
+      const url = path.indexOf('http') === 0 ? path : this.baseUrl + path
+      console.log('===>', method + ':', url)
+      const response = await fetch(url, {
         method,
-        headers: this.headers,
-        credentials: 'same-origin',
+        headers: headers ?? this.headers,
+        //credentials: 'same-origin',
         body
       })
 
@@ -71,7 +149,8 @@ export class RestApi {
       }
       return [response, null]
     } catch (e: any) {
-      const msg = 'Failed to ' + method + ' resource: ' + this.baseUrl + path
+      const url = path.indexOf('http') === 0 ? path : this.baseUrl + path
+      const msg = 'Failed to ' + method + ' resource: ' + url
       console.log(msg, '. Details:', e)
       return [null, null]
     }
@@ -79,19 +158,27 @@ export class RestApi {
 
   async handlerError(response: Response | null): Promise<never> {
     if (response) {
-      const details = (await this.getResponseDetails(response)) ?? ''
+      const details = (await this.getResponseDetails(response))
+      let msg = ''
+      if (details) {
+        'message' in details && (msg = details['message'])
+        'details' in details && (msg = details['details'])
+        'detail' in details && (msg = details['detail'])
+      }
+
       console.log('Response status:', response.status)
       console.log('Problem details:', details)
       if (response.status === 401 || response.status === 403) {
-        throw new RestApiError('notAuthorized', response.status, 'User not authorized')
+        this.$isUserAuthenticated.value = false
+        throw new RestApiError('notAuthorized', response.status, msg || 'User not authorized')
       } else if (response.status === 400) {
-        throw new RestApiError('clientError', response.status, details)
+        throw new RestApiError('clientError', response.status, msg)
       } else if (response.status === 404) {
-        throw new RestApiError('clientError', response.status, details)
+        throw new RestApiError('clientError', response.status, msg || 'Not found')
       } else if (response.status >= 500) {
-        throw new RestApiError('serverError', response.status, 'Server error: ' + details)
+        throw new RestApiError('serverError', response.status, 'Server error: ' + msg)
       } else {
-        throw new RestApiError('unknownError', response.status, 'Unknown error: ' + details)
+        throw new RestApiError('unknownError', response.status, msg || 'Unknown error')
       }
     } else {
       throw new RestApiError('noConnection', NO_CONNECTION_STATUS, 'No response')
@@ -100,9 +187,7 @@ export class RestApi {
 
   async getResponseDetails(response: Response) {
     try {
-      const details = await response.text()
-      console.log('Details:', details)
-      return details
+      return await response.json()
     } catch (_) { }
     return null
   }

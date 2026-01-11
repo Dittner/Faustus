@@ -26,7 +26,7 @@
 html {
     color-scheme: dark;
     scroll-behavior: auto;
-    font-size: 20px;
+    font-size: 21px;
     text-size-adjust: 100%;
     line-height: var(--LineHeight);
     justify-content: space-between;
@@ -97,7 +97,7 @@ blockquote {
 
 ::selection {
     color: #111111;
-    background: #bc799f;
+    background: #de93becc;
 }
 
 table {
@@ -125,7 +125,7 @@ table {
 }
 
 .listScrollbar::-webkit-scrollbar-thumb {
-  background: #4e6c8050;
+  background: #40475650;
   border-radius: 5px;
   border-right: 4px solid transparent;
   border-left: 4px solid transparent;
@@ -133,7 +133,7 @@ table {
 }
 
 .listScrollbar::-webkit-scrollbar-thumb:hover {
-  background: #4e6c80;
+  background: #404756;
   border-radius: 5px;
   border-right: 4px solid transparent;
   border-left: 4px solid transparent;
@@ -141,7 +141,7 @@ table {
 }
 
 .light.listScrollbar::-webkit-scrollbar-thumb {
-  background: #4e6c8050;
+  background: #40475650;
   border-radius: 5px;
   border-right: 4px solid transparent;
   border-left: 4px solid transparent;
@@ -149,7 +149,7 @@ table {
 }
 
 .light.listScrollbar::-webkit-scrollbar-thumb:hover {
-  background: #4e6c80;
+  background: #404756;
   border-radius: 5px;
   border-right: 4px solid transparent;
   border-left: 4px solid transparent;

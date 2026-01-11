@@ -4,6 +4,7 @@ import { IndexContext } from "../../IndexContext"
 import { OperatingModeClass } from "../OperatingMode"
 import { sortByKeys } from "../../../app/Utils"
 import { FileNode } from "../FileNode"
+import { parseKeyToCode } from "../Action"
 
 const FILES_SORT = sortByKeys(['isDir', 'alias'], [false, true])
 
@@ -38,7 +39,7 @@ export class FileSearcher extends OperatingModeClass {
   }
 
   override onKeyDown(e: KeyboardEvent): void {
-    const code = this.actionsList.parser.keyToCode(e)
+    const code = parseKeyToCode(e)
     e.preventDefault()
     if (code === '<ESC>') {
       this.cancel()

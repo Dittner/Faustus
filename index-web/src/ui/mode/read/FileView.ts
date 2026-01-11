@@ -1,12 +1,9 @@
-import { div, hstack, p, spacer, span, vlist, vstack } from "flinker-dom"
+import { div, hstack, p, spacer, span, vlist } from "flinker-dom"
 import { globalContext } from "../../../App"
-import { LayoutLayer } from "../../../app/Application"
 import { indexOfFirstVisibleElement } from "../../../app/Utils"
 import { Page, TextFile } from "../../../domain/DomainModel"
 import { IndexContext } from "../../IndexContext"
-import { ActionsHelpView, MessangerView } from "../../IndexView"
 import { FontFamily } from "../../controls/Font"
-import { StatusBar, StatusBarModeName } from "../../controls/StatusBar"
 import { Markdown } from "../../markdown/Markdown"
 import { theme } from "../../theme/ThemeManager"
 import { FileReader } from "./FileReader"
@@ -30,69 +27,70 @@ export const FileView = () => {
 
       if (file) {
         PageHeaderListView(file)
+          .observe(globalContext.app.$layout)
           .observe(ctx.reader.$showPageHeaderList)
           .react(s => {
             s.visible = ctx.reader.$showPageHeaderList.value
             s.position = 'fixed'
-            s.width = theme().menuWidth + 'px'
+            s.width = globalContext.app.$layout.value.menuWidth + 'px'
             s.height = '100%'
             s.gap = '0'
             s.className = 'invisibleScrollbar'
             s.enableOwnScroller = true
             s.paddingRight = '20px'
-            s.paddingBottom = theme().statusBarHeight + 'px'
-            s.layer = LayoutLayer.MODAL
+            s.paddingTop = globalContext.app.$layout.value.navBarHeight + 'px'
           })
 
         PageList(file)
+          .observe(globalContext.app.$layout)
           .observe(ctx.reader.$showPageHeaderList)
           .observe(ctx.reader.$editMode)
           .react(s => {
             const showPageHeaderList = ctx.reader.$showPageHeaderList.value
             const isEditing = ctx.reader.$editMode.value !== 'none'
             s.position = 'absolute'
-            s.layer = LayoutLayer.ZERO
             s.fontFamily = FontFamily.ARTICLE
             s.textColor = theme().text
             s.gap = '0'
             s.valign = 'top'
             s.halign = 'left'
             s.top = '0'
-            s.paddingBottom = theme().statusBarHeight + 'px'
-            s.width = (window.innerWidth - theme().menuWidth - 20) + 'px'
+            s.paddingTop = globalContext.app.$layout.value.navBarHeight + 'px'
+            s.width = globalContext.app.$layout.value.contentWidth + 'px'
             s.gap = '20px'
 
             if (isEditing)
               s.left = window.innerWidth / 2 - 20 + 'px'
             else if (showPageHeaderList)
-              s.left = theme().menuWidth + 'px'
+              s.left = globalContext.app.$layout.value.menuWidth + 'px'
             else
               s.left = '0px'
           })
 
         EditorView()
+          .observe(globalContext.app.$layout)
           .observe(ctx.reader.$editMode)
           .react(s => {
             s.visible = ctx.reader.$editMode.value !== 'none'
             s.position = 'fixed'
-            s.layer = LayoutLayer.MODAL
-            s.top = '0'
+            s.top = globalContext.app.$layout.value.navBarHeight + 'px'
             s.left = '0'
             s.width = window.innerWidth / 2 - 20 + 'px'
-            s.height = window.innerHeight - theme().statusBarHeight + 'px'
+            s.height = window.innerHeight - globalContext.app.$layout.value.navBarHeight + 'px'
             s.borderRight = ['1px', 'solid', theme().text + '20']
             s.borderColor = theme().transparent
           })
       }
 
-      Footer(ctx.reader)
+      Header(ctx.reader)
+        .observe(globalContext.app.$layout)
         .react(s => {
           s.position = 'fixed'
-          s.bottom = '0'
+          s.top = '0'
           s.left = '0'
           s.gap = '0'
           s.width = '100%'
-          s.layer = LayoutLayer.MODAL
+          s.height = globalContext.app.$layout.value.navBarHeight + 'px'
         })
     })
 }
@@ -106,8 +104,7 @@ const PageList = (file: TextFile) => {
     .react(s => {
       s.className = 'article'
       s.textColor = theme().text
-      s.gap = "0px"
-      s.width = "100%"
+      s.width = '100%'
     })
     .items(() => file.pages)
     .itemRenderer(PageView)
@@ -138,7 +135,8 @@ export const PageView = (page: Page, index: number) => {
       s.valign = 'stretch'
       s.halign = 'left'
       s.width = '100%'
-      s.padding = '20px'
+      s.paddingBottom = '40px'
+      s.paddingHorizontal = '20px'
     })
     .children(() => {
       p()
@@ -160,9 +158,8 @@ export const PageView = (page: Page, index: number) => {
         .observe(page)
         .react(s => {
           s.className = theme().id
-          s.maxWidth = theme().maxBlogTextWidth - 10 + 'px'
-          s.width = "100%"
-          s.minHeight = "30px"
+          s.width = '100%'
+          s.minHeight = '30px'
           s.text = page.text
           s.fontSize = theme().defFontSize
           s.absolutePathPrefix = globalContext.indexServer.assetsUrl
@@ -172,62 +169,49 @@ export const PageView = (page: Page, index: number) => {
     })
 }
 
-const Footer = (reader: FileReader) => {
-  return vstack()
+const Header = (reader: FileReader) => {
+  return hstack()
+    .observe(reader.$isFileChanged, 'affectsChildrenProps')
     .react(s => {
       s.gap = '0'
+      s.fontFamily = FontFamily.APP
+      s.fontSize = theme().defMenuFontSize
+      s.valign = 'center'
+      s.paddingHorizontal = '20px'
+      const isFileChanged = reader.$isFileChanged.value
+      s.bgColor = isFileChanged ? theme().red + '20' : theme().appBg + '88'
+      s.blur = '10px'
     })
     .children(() => {
-      ActionsHelpView(reader)
-      StatusBar()
+
+      span()
+        .observe(reader.$selectedFile)
         .observe(reader.$isFileChanged)
         .react(s => {
-          const isFileChanged = reader.$isFileChanged.value
-          s.bgColor = isFileChanged ? theme().red + '20' : theme().statusBg + '88'
+          const f = reader.$selectedFile.value
+          s.text = ''
+          s.fontWeight = 'bold'
+          if (f) {
+            if (f.author) {
+              s.text += f.author
+              s.text += s.text.endsWith('.') ? ' ' : '. '
+            }
+
+            s.text += f.alias || f.name
+
+            if (f.published)
+              s.text += '. ' + f.published
+            else if (f.birthYear && f.deathYear)
+              s.text += '. ' + f.birthYear + '-' + f.deathYear
+            else if (f.birthYear)
+              s.text += '. ' + f.birthYear
+          }
+
+          s.textColor = reader.$isFileChanged.value ? theme().mark : theme().header
+          s.whiteSpace = 'nowrap'
         })
-        .children(() => {
 
-          StatusBarModeName()
-            .observe(reader.$editMode)
-            .observe(reader.$isFileChanged)
-            .react(s => {
-              const isFileChanged = reader.$isFileChanged.value
-              const isEditing = reader.$editMode.value !== 'none'
-              s.bgColor = isEditing ? theme().red : isFileChanged ? theme().mark : theme().statusFg
-              s.text = isEditing ? 'EDIT (Press <ESC> to quit)' : isFileChanged ? 'MODIFIED' : reader.id.toUpperCase()
-            })
+      spacer().react(s => s.width = '100%')
 
-          span()
-            .observe(reader.$selectedFile)
-            .observe(reader.$isFileChanged)
-            .react(s => {
-              const f = reader.$selectedFile.value
-              s.fontFamily = FontFamily.ARTICLE
-              s.text = ''
-
-              if (f) {
-                if (f.author) {
-                  s.text += f.author
-                  s.text += s.text.endsWith('.') ? ' ' : '. '
-                }
-
-                s.text += f.alias || f.name
-
-                if (f.published)
-                  s.text += '. ' + f.published
-                else if (f.birthYear && f.deathYear)
-                  s.text += '. ' + f.birthYear + '-' + f.deathYear
-                else if (f.birthYear)
-                  s.text += '. ' + f.birthYear
-              }
-
-              s.textColor = reader.$isFileChanged.value ? theme().mark : theme().statusFg
-              s.whiteSpace = 'nowrap'
-            })
-
-          spacer().react(s => s.width = '100%')
-
-          MessangerView()
-        })
     })
 }

@@ -2,7 +2,7 @@ import { RXObservableValue } from 'flinker'
 import { buildRule, FontWeight, UIComponentProps } from 'flinker-dom'
 
 export interface GlobalTheme {
-  id: 'dark' | 'light' | 'night'
+  id: 'light' | 'night'
   isLight: boolean
   defMenuFontSize: string
   defFontSize: string
@@ -20,6 +20,7 @@ export interface GlobalTheme {
   code: string
   codeBg: string
   em: string
+  accent: string
   link: string
   blue: string
   pink: string
@@ -37,14 +38,10 @@ export interface GlobalTheme {
   menuFile: string
   menuPath: string
   menuPage: string
-  maxBlogTextWidth: number
-  menuWidth: number
-  statusBarHeight: number
 }
 
 export class ThemeManager {
   private readonly _lightTheme: GlobalTheme
-  private readonly _darkTheme: GlobalTheme
   private readonly _nightTheme: GlobalTheme
 
   readonly $theme: RXObservableValue<GlobalTheme>
@@ -59,16 +56,6 @@ export class ThemeManager {
     window.localStorage.setItem('theme', 'light')
   }
 
-  setDarkTheme() {
-    this.$theme.value = this._darkTheme
-    const html = document.querySelector('html')
-    if (html) {
-      html.style.colorScheme = 'dark'
-      html.style.backgroundColor = this.$theme.value.appBg
-    }
-    window.localStorage.setItem('theme', 'dark')
-  }
-
   setNightTheme() {
     this.$theme.value = this._nightTheme
     const html = document.querySelector('html')
@@ -81,8 +68,6 @@ export class ThemeManager {
 
   switchTheme() {
     if (this.$theme.value.id === 'light')
-      this.setDarkTheme()
-    else if (this.$theme.value.id === 'dark')
       this.setNightTheme()
     else if (this.$theme.value.id === 'night')
       this.setLightTheme()
@@ -90,21 +75,17 @@ export class ThemeManager {
 
   constructor() {
     this._lightTheme = this.createLightTheme()
-    this._darkTheme = this.createDarkTheme(this._lightTheme)
-    this._nightTheme = this.createNightTheme(this._darkTheme)
+    this._nightTheme = this.createNightTheme(this._lightTheme)
     this.$theme = new RXObservableValue(this._lightTheme)
 
     this.buildThemeSelectors(this._lightTheme)
-    this.buildThemeSelectors(this._darkTheme)
     this.buildThemeSelectors(this._nightTheme)
 
     const theme = window.localStorage.getItem('theme') ?? 'light'
     if (theme === 'light') {
       this.setLightTheme()
-    } else if (theme === 'night') {
-      this.setNightTheme()
     } else {
-      this.setDarkTheme()
+      this.setNightTheme()
     }
   }
 
@@ -140,6 +121,7 @@ export class ThemeManager {
       code: red,
       codeBg: red + 10,
       em: black,
+      accent: red,
       blue: '#0a4277',
       link: '#b16441',
       pink: '#c7accc',
@@ -155,62 +137,10 @@ export class ThemeManager {
       menuFile: '#0f5848',
       menuPath: '#5c6c72',
       menuPage: '#ac2f2f',
-      maxBlogTextWidth: 950,
-      menuWidth: 450,
-      statusBarHeight: 30,
     }
   }
 
-  /*
-  *
-  * DARK THEME
-  *
-  * */
-
-  createDarkTheme(t: GlobalTheme): GlobalTheme {
-    const text = '#7d828e' //aab6c2
-    const white = '#b5bac8'
-    const red = '#cb6582'
-    const blue = '#75bbe7'
-    const black = '#212227' //212227
-    const header = white//aaaaaa
-    return Object.assign({}, t, {
-      id: 'dark',
-      isLight: false,
-      appBg: black, //26272c 
-      black,
-      header,
-      white,
-      text,
-      text50: text + 'aa',
-      editorText: text,
-      red,
-      gray: '#79848d',
-      green: '#6c8f9f',
-      h2: header,
-      em: '#999eac',
-      code: header,
-      codeBg: header + '08',
-      blue,
-      link: '#bd9054',
-      violet: '#aeadde',
-      warn: '#cb6582',
-      mark: '#cb6582',
-      info: blue,
-      statusFg: '#b0c8b3',
-      statusBg: black,
-      purple: '#b2aee5',
-      comment: '#7ea3a5',
-      pink: '#c293cc',
-      orange: '#463d16',
-      menuDir: '#9b88ae',
-      menuFile: '#5bafbc',
-      menuPath: '#516e73',
-      menuPage: '#77a2ae',
-    })
-  }
-
-  /*
+/*
 *
 * NIGHT THEME
 *
@@ -223,6 +153,7 @@ export class ThemeManager {
     const blue = '#6194c1'
     const header = white
     const black = '#111111'
+    const accent = '#b0c8b3'
     return Object.assign({}, t, {
       id: 'night',
       isLight: false,
@@ -236,12 +167,13 @@ export class ThemeManager {
       gray: '#79848d',
       green: '#546f7cff',
       header,
-      em: '#8e94a5',
+      em: '#898e9c',
+      accent: '#b0c8b3',
       code: '#adb4c1',
       codeBg: t.transparent,
       blue,
       violet: '#aeadde',
-      warn: '#b0c8b3',
+      warn: accent,
       mark: '#cb6582',
       info: blue,
       purple: '#b2aee5',
@@ -249,12 +181,12 @@ export class ThemeManager {
       link: '#aa8657',
       pink: '#c293cc',
       orange: '#463d16',
-      statusFg: '#b0c8b3',
+      statusFg: accent,
       statusBg: '#181f23',
       menuDir: '#8d74a6',
-      menuFile: '#5ea0a5',
+      menuFile: '#5ea570',
       menuPath: '#4e6c70',
-      menuPage: '#5ea0a5',
+      menuPage: '#83bcc1',
     })
   }
 
@@ -470,7 +402,7 @@ export class ThemeManager {
     buildRule(linkProps, parentSelector, 'a:visited')
     buildRule(linkProps, parentSelector, 'a:active')
     linkProps.textDecoration = 'underline'
-    buildRule(linkProps, parentSelector, 'a', 'hover')
+    buildRule(linkProps, parentSelector, 'a', ':hover')
 
     /******************************/
     // quote
@@ -593,7 +525,7 @@ export class ThemeManager {
       width: '100%',
       fontSize: '0.9rem',
       fontWeight: t.defFontWeight,
-      textColor: t.text,
+      textColor: 'inherit',
       paddingHorizontal: '20px',
       //bgColor: '#e5f0df',
       borderLeft: '1px solid ' + t.text50

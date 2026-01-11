@@ -3,9 +3,9 @@ import { theme } from "../../theme/ThemeManager"
 import { FileSearcher } from "./FileSearch"
 import { IndexContext } from "../../IndexContext"
 import { FontFamily } from "../../controls/Font"
-import { LayoutLayer } from "../../../app/Application"
 import { LineInput } from "../../controls/Input"
 import { FileNode } from "../FileNode"
+import { globalContext } from "../../../App"
 
 export const FileSearchView = () => {
   const ctx = IndexContext.self
@@ -17,8 +17,7 @@ export const FileSearchView = () => {
           s.position = 'fixed'
           s.width = '100%'
           s.height = '100vh'
-          s.paddingBottom = theme().statusBarHeight + 'px'
-          s.layer = LayoutLayer.MODAL
+          s.paddingBottom = globalContext.app.$layout.value.statusBarHeight + 'px'
         }).children(() => {
 
           SearchResults(ctx.searcher)
@@ -36,9 +35,8 @@ export const FileSearchView = () => {
               s.title = '/'
               s.position = 'fixed'
               s.width = '100%'
-              s.height = theme().statusBarHeight + 'px'
+              s.height = globalContext.app.$layout.value.statusBarHeight + 'px'
               s.bottom = '0'
-              s.layer = LayoutLayer.MODAL
             })
 
           FoundTotalBar(ctx.searcher)
@@ -46,7 +44,6 @@ export const FileSearchView = () => {
               s.position = 'fixed'
               s.bottom = '0'
               s.right = '20px'
-              s.layer = LayoutLayer.MODAL
             })
         })
     })
@@ -123,8 +120,8 @@ const FoundTotalBar = (searcher: FileSearcher) => {
     .observe(searcher.$allFiles)
     .react(s => {
       s.text = searcher.$availableFiles.value.length + '/' + searcher.$allFiles.value.length
-      s.lineHeight = theme().statusBarHeight + 'px'
-      s.height = theme().statusBarHeight + 'px'
+      s.lineHeight = globalContext.app.$layout.value.statusBarHeight + 'px'
+      s.height = globalContext.app.$layout.value.statusBarHeight + 'px'
       s.fontFamily = FontFamily.MONO
       s.fontSize = theme().defMenuFontSize
       s.textColor = theme().black

@@ -1,25 +1,17 @@
 import { RXObservableValue } from 'flinker'
 
-export enum LayoutLayer {
-  MINUS = '-1',
-  ZERO = '0',
-  ONE = '1',
-  HEADER = '10',
-  DOC_LIST = '20',
-  POPUP = '30',
-  MODAL = '40',
-  ERR_MSG = '50',
+export interface Layout {
+  isMobile: boolean
+  navBarHeight: number
+  statusBarHeight: number
+  contentWidth: number
+  menuWidth: number
 }
 
-export enum AppSize {
-  XS = 'XS',
-  S = 'S',
-  M = 'M',
-  L = 'L'
-}
 
 export class Application {
-  readonly $size = new RXObservableValue<AppSize>(AppSize.L)
+  readonly $layout: RXObservableValue<Layout>
+  readonly $windowWidth: RXObservableValue<number>
   readonly $location = new RXObservableValue('')
   readonly $scrollY = new RXObservableValue(0)
 
@@ -27,32 +19,34 @@ export class Application {
 
   constructor() {
     this.isMobileDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0)
+    this.$windowWidth = new RXObservableValue(window.innerWidth)
+    this.$layout = new RXObservableValue(this.getLayout())
 
     console.log('isMobileDevice: ' + this.isMobileDevice)
     console.log('localStorage, theme: ' + window.localStorage.getItem('theme'))
-    window.addEventListener('resize', this.updateSize.bind(this))
+    window.addEventListener('resize', () => { this.$windowWidth.value = window.innerWidth })
     window.addEventListener('scroll', () => this.$scrollY.value = window.scrollY, false);
     this.watchHistoryEvents()
     this.updateLocation()
   }
 
-  navigate(to: string) {
-    //console.log('Application:navigate:', to)
-    window.history.pushState('', '', to);
-  }
+  private getLayout(): Layout {
+    const windowWidth = window.innerWidth - 20
+    const contentWidth = this.isMobileDevice ? windowWidth : Math.min(950, windowWidth)
+    const menuWidth = this.isMobileDevice ? 0 : Math.min(450, windowWidth - contentWidth)
 
-  private updateSize(): void {
-    const evaluatedSize = this.evaluateAppSize()
-    if (this.$size.value !== evaluatedSize) {
-      this.$size.value = evaluatedSize
+    return {
+      isMobile: this.isMobileDevice,
+      navBarHeight: 50,
+      statusBarHeight: 30,
+      contentWidth,
+      menuWidth
     }
   }
 
-  private evaluateAppSize(): AppSize {
-    if (window.innerWidth > 1500) return AppSize.L
-    if (window.innerWidth > 1200) return AppSize.M
-    if (window.innerWidth > 767) return AppSize.S
-    return AppSize.XS
+  navigate(to: string) {
+    //console.log('Application:navigate:', to)
+    window.history.pushState('', '', to);
   }
 
   private watchHistoryEvents() {

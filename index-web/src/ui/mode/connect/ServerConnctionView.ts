@@ -1,9 +1,7 @@
 import { observer, p, vstack } from "flinker-dom"
-import { LayoutLayer } from "../../../app/Application"
 import { IndexContext } from "../../IndexContext"
 import { theme } from "../../theme/ThemeManager"
 import { FontFamily } from "../../controls/Font"
-import { MessangerView } from "../../IndexView"
 
 export const ServerConnectionView = () => {
   const ctx = IndexContext.self
@@ -15,7 +13,6 @@ export const ServerConnectionView = () => {
           s.position = 'fixed'
           s.width = '100vw'
           s.height = '100vh'
-          s.layer = LayoutLayer.MODAL
           s.mouseEnabled = false
         }).children(() => {
           p()
@@ -29,8 +26,6 @@ export const ServerConnectionView = () => {
               s.whiteSpace = 'pre'
               s.height = '100%'
             })
-
-          MessangerView()
         })
     })
 }

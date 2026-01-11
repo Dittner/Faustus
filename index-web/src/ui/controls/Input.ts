@@ -109,11 +109,16 @@ export class InputBufferController {
 
 export interface LineInputProps extends StackProps {
   title: string
+  isSecure: boolean
 }
 
 export const LineInput = ($buffer: RXObservableValue<string>, $cursorPos: RXObservableValue<number>) => {
-  const $sharedState = new RXObservableValue<LineInputProps>({ title: '' })
+  const $sharedState = new RXObservableValue<LineInputProps>({ title: '', isSecure: false })
+  const textColor = '#111111'
   return hstack<LineInputProps>()
+    .observe($sharedState, 'affectsChildrenProps')
+    .observe($buffer, 'affectsChildrenProps')
+    .observe($cursorPos, 'affectsChildrenProps')
     .react(s => {
       s.fontFamily = FontFamily.MONO
       s.gap = '0'
@@ -121,58 +126,55 @@ export const LineInput = ($buffer: RXObservableValue<string>, $cursorPos: RXObse
       s.fontSize = theme().defMenuFontSize
       s.valign = 'top'
       s.height = '100%'
+      s.lineHeight = '1.9'
       s.paddingHorizontal = '20px'
       s.margin = '0'
       s.wrap = false
-      s.whiteSpace = 'nowrap'
-      s.textColor = theme().black
-      s.bgColor = theme().mark
+      s.whiteSpace = 'pre'
+      s.textColor = textColor
+      s.bgColor = theme().accent
     })
     .propsDidChange(props => $sharedState.value = props)
     .children(() => {
 
       span()
-        .observe($sharedState)
         .react(s => {
           s.fontSize = 'inherit'
           s.text = $sharedState.value.title
+          s.paddingRight = '5px'
         })
 
       span()
-        .observe($buffer)
-        .observe($cursorPos)
         .react(s => {
           const t = $buffer.value
           const i = $cursorPos.value
+          const value = i === -1 ? t : t.slice(0, i)
           s.fontSize = 'inherit'
           s.textColor = 'inherit'
           s.height = '100%'
-          s.text = i === -1 ? t : t.slice(0, i)
+          s.text = $sharedState.value.isSecure ? '*'.repeat(value.length) : value
         })
 
       span()
-        .observe($buffer)
-        .observe($cursorPos)
         .react(s => {
           const t = $buffer.value
           const i = $cursorPos.value
           s.fontSize = 'inherit'
-          s.textColor = i === -1 ? theme().black : theme().mark
-          s.bgColor = theme().black
+          s.textColor = i === -1 ? textColor : theme().accent
+          s.bgColor = textColor
           s.height = '100%'
-          s.text = i === -1 ? '█' : t.at(i)
+          s.text = i === -1 ? ' ' : t.at(i)
         })
 
       span()
-        .observe($buffer)
-        .observe($cursorPos)
         .react(s => {
           const t = $buffer.value
           const i = $cursorPos.value
+          const value = i === -1 ? '' : t.slice(i + 1)
           s.fontSize = 'inherit'
           s.textColor = 'inherit'
           s.height = '100%'
-          s.text = i === -1 ? '' : t.slice(i + 1)
+          s.text = $sharedState.value.isSecure ? '*'.repeat(value.length) : value
         })
     })
 }

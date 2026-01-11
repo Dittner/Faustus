@@ -1,13 +1,6 @@
 import { type RXObservable } from 'flinker'
 
 import { TextFile } from '../domain/DomainModel'
-import { LoadFileCmd } from './cmd/LoadFileCmd'
-import { RemoveFileCmd } from './cmd/RemoveFileCmd'
-import { RewriteFileCmd } from './cmd/RewriteFileCmd'
-import { LoadFilesAliasCmd } from './cmd/LoadFilesAliasCmd'
-import { LoadFilesTreeCmd } from './cmd/LoadFilesTreeCmd'
-import { CreateFileCmd } from './cmd/CreateFileCmd'
-import { RenameFileCmd } from './cmd/RenameFileCmd'
 import { RestApi, RestApiError } from './RestApi'
 
 
@@ -28,33 +21,28 @@ export class IndexServer extends RestApi {
   //--------------------------------------
 
   loadFilesTree(): RXObservable<any, RestApiError> {
-    const cmd = new LoadFilesTreeCmd(this)
-    return cmd.run()
+    return this.get('/file/tree')
   }
 
   loadFile(path: string): RXObservable<any, RestApiError> {
-    const cmd = new LoadFileCmd(this, path)
-    return cmd.run()
+    return this.get('/file' + path)
   }
 
   rewriteFile(f: TextFile): RXObservable<any, RestApiError> {
-    const cmd = new RewriteFileCmd(this, f)
-    return cmd.run()
+    return this.post('/file/rw' + f.path, f.serialize())
   }
 
   createFile(f: TextFile): RXObservable<any, RestApiError> {
-    const cmd = new CreateFileCmd(this, f)
-    return cmd.run()
+    return this.post('/file/mk' + f.path, f.serialize())
   }
 
   removeFile(path: string): RXObservable<any, RestApiError> {
-    const cmd = new RemoveFileCmd(this, path)
-    return cmd.run()
+    return this.post('/file/rm' + path)
   }
 
   renameFile(fromPath: string, toPath:string): RXObservable<any, RestApiError> {
-    const cmd = new RenameFileCmd(this, fromPath, toPath)
-    return cmd.run()
+    const requestBody = { from_src: fromPath, to_src: toPath }
+    return this.post('/file/rn', requestBody)
   }
 
   //--------------------------------------
@@ -62,7 +50,6 @@ export class IndexServer extends RestApi {
   //--------------------------------------
 
   loadAliasVoc(): RXObservable<any, RestApiError> {
-    const cmd = new LoadFilesAliasCmd(this)
-    return cmd.run()
+    return this.get('/voc/alias')
   }
 }

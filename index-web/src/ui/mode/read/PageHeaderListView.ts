@@ -47,15 +47,9 @@ const PageHeaderRenderer = (page: Page) => {
       s.textSelectable = false
       s.fontSize = theme().defMenuFontSize
       s.fontFamily = FontFamily.ARTICLE
-      if (theme().id === 'light') {
-        s.textColor = underCurser ? bgColor : textColor
-        s.bgColor = underCurser ? textColor : bgColor
-      } else {
-        s.textColor = underCurser ? bgColor : textColor
-        s.bgColor = underCurser ? textColor : bgColor
-      }
-
+      s.textColor = underCurser ? theme().accent : theme().menuPage + 'cc'
       s.paddingRight = '5px'
+      s.width = '100%'
       s.paddingLeft = page.headerLevel * 20 + 'px'
       s.paddingVertical = '5px'
       s.wrap = false
@@ -64,6 +58,7 @@ const PageHeaderRenderer = (page: Page) => {
     })
     .whenHovered(s => {
       s.cursor = 'pointer'
+      s.textColor = theme().menuPage
     })
     .onMouseDown(_ => ctx.reader.moveCursorUnder(page))
 }

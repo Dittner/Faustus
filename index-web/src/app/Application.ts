@@ -1,4 +1,5 @@
 import { RXObservableValue } from 'flinker'
+import { log } from './Logger'
 
 export interface Layout {
   isMobile: boolean
@@ -22,8 +23,8 @@ export class Application {
     this.$windowWidth = new RXObservableValue(window.innerWidth)
     this.$layout = new RXObservableValue(this.getLayout())
 
-    console.log('isMobileDevice: ' + this.isMobileDevice)
-    console.log('localStorage, theme: ' + window.localStorage.getItem('theme'))
+    log('isMobileDevice: ' + this.isMobileDevice)
+    log('localStorage, theme: ' + window.localStorage.getItem('theme'))
     window.addEventListener('resize', () => { this.$windowWidth.value = window.innerWidth })
     window.addEventListener('scroll', () => this.$scrollY.value = window.scrollY, false);
     this.watchHistoryEvents()
@@ -45,7 +46,7 @@ export class Application {
   }
 
   navigate(to: string) {
-    //console.log('Application:navigate:', to)
+    //log('Application:navigate:', to)
     window.history.pushState('', '', to);
   }
 
@@ -55,13 +56,13 @@ export class Application {
     window.history.pushState = function(...args) {
       pushState.apply(window.history, args)
       window.dispatchEvent(new Event('pushState'))
-      console.log('!!!! cur location:', document.location.pathname)
+      log('!!!! cur location:', document.location.pathname)
     }
 
     window.history.replaceState = function(...args) {
       replaceState.apply(window.history, args)
       window.dispatchEvent(new Event('replaceState'))
-      console.log('!!!! cur location:', document.location.pathname)
+      log('!!!! cur location:', document.location.pathname)
     }
 
     window.addEventListener('popstate', () => { this.updateLocation() })

@@ -4,7 +4,10 @@ import { Page, TextFile } from "../../../domain/DomainModel"
 import { IndexContext } from "../../IndexContext"
 import { OperatingModeClass } from "../OperatingMode"
 import { Path } from "../../../app/Utils"
+import { INote } from "../../../backend/DerTutorServer"
+import { log } from "../../../app/Logger"
 
+type SEARCH_TRANSLATION_SUPPORTED_LANG = 'en' | 'de'
 export class FileReader extends OperatingModeClass {
   readonly $selectedFile = new RXObservableValue<TextFile | undefined>(undefined)
   readonly $selectedPage = new RXObservableValue<Page | undefined>(undefined)
@@ -15,6 +18,11 @@ export class FileReader extends OperatingModeClass {
 
   readonly $editMode = new RXObservableValue<'file' | 'page' | 'none'>('none')
   readonly $inputBuffer = new RXObservableValue('')
+
+  readonly $translationLanguage = new RXObservableValue<SEARCH_TRANSLATION_SUPPORTED_LANG>('en')
+  readonly $translationSearchInputBuffer = new RXObservableValue('')
+  readonly $translationSearchInputFocused = new RXObservableValue(false)
+  readonly $translationSearchResult = new RXObservableValue<INote | undefined>(undefined)
 
   constructor(ctx: IndexContext) {
     super('read', ctx)
@@ -39,6 +47,15 @@ export class FileReader extends OperatingModeClass {
         if (f && p) {
           window.localStorage.setItem('pageIndexOf:' + f.path, f.pages.findIndex(item => item === p) + '')
         }
+      })
+      .subscribe()
+
+    const storedLang: SEARCH_TRANSLATION_SUPPORTED_LANG = window.localStorage.getItem('searchTranslationOfLang') === 'de' ? 'de' : 'en'
+    this.$translationLanguage.value = storedLang
+    this.$translationLanguage.pipe()
+      .skipFirst()
+      .onReceive(lang => {
+        window.localStorage.setItem('searchTranslationOfLang', lang)
       })
       .subscribe()
   }
@@ -67,10 +84,12 @@ export class FileReader extends OperatingModeClass {
 
     this.actionsList.add('q', 'Quit', () => this.quit(false))
     this.actionsList.add(':q!<CR>', 'Quit without saving', () => this.quit(true))
-    this.actionsList.add(':w<CR>', 'Save changes', () => this.save())
+    this.actionsList.add('<C-S>', 'Save changes', () => this.save())
 
     this.actionsList.add('t', 'Toggle tree', () => this.toggleTree())
-    this.actionsList.add('/', 'Search files', () => this.searchFiles())
+    this.actionsList.add('f', 'Search files', () => this.searchFiles())
+    this.actionsList.add('/', 'Translate word', () => this.focusTranslationSearchInput())
+    this.actionsList.add('<Space>', "Play word's pronunciation", () => this.playTranslation())
     this.actionsList.add('e', 'Edit page', () => this.editPage())
     this.actionsList.add('E', 'Edit file', () => this.editFile())
     this.actionsList.add(':id<CR>', 'Print file path', () => this.ctx.$msg.value = { level: 'info', text: this.$selectedFile.value?.path ?? 'File not found' })
@@ -79,6 +98,24 @@ export class FileReader extends OperatingModeClass {
     this.actionsList.add(':d<CR>', 'Delete page', () => this.deletePage())
     this.actionsList.add(':pj<CR>', 'Move page down', () => this.movePageDown())
     this.actionsList.add(':pk<CR>', 'Move page up', () => this.movePageUp())
+  }
+
+  focusTranslationSearchInput() {
+    const selectedText = window.getSelection()?.toString() ?? ''
+    if (selectedText) this.$translationSearchInputBuffer.value = selectedText
+    this.$translationSearchInputFocused.value = true
+  }
+
+  clearTranslationSearchResults() {
+    this.$translationSearchInputBuffer.value = ''
+    this.$translationSearchInputFocused.value = false
+    this.$translationSearchResult.value = undefined
+  }
+
+  playTranslation() {
+    const url = this.$translationSearchResult.value?.audio_url ?? ''
+    if (url)
+      new Audio(globalContext.derTutorServer.baseUrl + url).play()
   }
 
   private moveCursor(step: number) {
@@ -134,10 +171,10 @@ export class FileReader extends OperatingModeClass {
         const element = document.getElementById('#' + index)
         if (element) {
           const elementPos = Math.round(element.getBoundingClientRect().top + document.documentElement.scrollTop)
-          console.log('scrollToSelectedChapter:  window.scrollTo', index)
+          log('scrollToSelectedChapter:  window.scrollTo', index)
           window.scrollTo(0, elementPos - globalContext.app.$layout.value.navBarHeight)
         } else {
-          console.log('ScrollToSelectedChapter: Selected page html element not found, perhaps it is not mounted yet')
+          log('ScrollToSelectedChapter: Selected page html element not found, perhaps it is not mounted yet')
         }
       } else {
         window.scrollTo(0, 0)
@@ -180,6 +217,7 @@ export class FileReader extends OperatingModeClass {
           this.ctx.$msg.value = { text: file.path + ', written', level: 'info' }
           file.data = data
           file.hasChanges = false
+          log('Recieved data:', data)
         })
         .onError(e => {
           this.ctx.$msg.value = { text: e.message, level: 'error' }
@@ -197,6 +235,32 @@ export class FileReader extends OperatingModeClass {
 
   private searchFiles() {
     this.ctx.searcher.activate()
+  }
+
+  searchTranslation(word: string) {
+    if (word.length < 2) {
+      this.ctx.$msg.value = { text: 'Search text is too short', level: 'warning' }
+      return
+    }
+
+    this.$translationSearchInputBuffer.value = word
+
+    log('NoteListVM.quickSearch by name:', word)
+
+    globalContext.derTutorServer.searchTranslation(word, this.$translationLanguage.value).pipe()
+      .onReceive(notes => {
+        log('NoteListVM.quickSearch result:', notes)
+        if (notes.length > 0) {
+          this.$translationSearchResult.value = notes[0]
+        } else {
+          this.ctx.$msg.value = { text: `"${word}" not found` }
+          this.$translationSearchResult.value = undefined
+        }
+      })
+      .onError(e => {
+        this.ctx.$msg.value = { level: 'error', text: e.message }
+        this.$translationSearchResult.value = undefined
+      })
   }
 
   private editPage() {
@@ -361,17 +425,17 @@ export class FileReader extends OperatingModeClass {
   private parseBrowserLocation() {
     if (!this.isActive) return
 
-    console.log('FileViewMode:parseBrowserLocation, pathname:', document.location.pathname)
+    log('FileViewMode:parseBrowserLocation, pathname:', document.location.pathname)
     // document.location.pathname === directoryId/fileId#hash
     let path = document.location.pathname.split('#')[0]
     //if (path.startsWith('/')) path = path.slice(1)
-    console.log('Reader.parseBrowserLocation, path:', path)
+    log('Reader.parseBrowserLocation, path:', path)
     //const selectedChapter = document.location.hash //#hash
     if (this.cache[path]) {
       this.$selectedFile.value = this.cache[path]
       this.scrollWindowTo(this.$selectedFile.value.scrollPos)
-      console.log('FileViewMode:parseBrowserLocation, file got from cache, scrollPos:', this.$selectedFile.value.scrollPos)
-    } else if(!path.endsWith('/')) {
+      log('FileViewMode:parseBrowserLocation, file got from cache, scrollPos:', this.$selectedFile.value.scrollPos)
+    } else if (!path.endsWith('/')) {
       this.ctx.$msg.value = { text: 'Loading...', level: 'info' }
       globalContext.indexServer.loadFile(path).pipe()
         .onReceive((data: any) => {
@@ -414,12 +478,12 @@ export class FileReader extends OperatingModeClass {
     super.deactivate()
     if (this.$selectedFile.value) {
       this.$selectedFile.value.scrollPos = window.scrollY
-      console.log('Store scroll pos:', window.scrollY)
+      log('Store scroll pos:', window.scrollY)
     }
   }
 
   pageListDidRender(): void {
-    console.log('FileReader:didPageListRender')
+    log('FileReader:didPageListRender')
     RX.delayedComplete(10).pipe()
       .onComplete(() => {
         this.scrollToSelectedChapter()

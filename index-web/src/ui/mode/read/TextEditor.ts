@@ -3,27 +3,28 @@ import { IndexContext } from "../../IndexContext"
 import { theme } from "../../theme/ThemeManager"
 import { FontFamily } from "../../controls/Font"
 import { Page } from "../../../domain/DomainModel"
+import { log, logErr } from "../../../app/Logger"
 
 export const EditorView = () => {
-  console.log('new EditorView')
+  log('new EditorView')
   const reader = IndexContext.self.reader
   let pageInFocus: Page | undefined = undefined
   const formatter = new TextFormatter()
 
-  const onFocus = (e: FocusEvent) => {
-    if (pageInFocus !== reader.$selectedPage.value) {
-      pageInFocus = reader.$selectedPage.value
-      const ta = e.currentTarget as HTMLTextAreaElement
-      //scroll to first line
-      ta.setSelectionRange(0, 0)
-      ta.blur()
-      ta.focus()
-    }
-  }
+  // const onFocus = (e: FocusEvent) => {
+  //   if (pageInFocus !== reader.$selectedPage.value) {
+  //     pageInFocus = reader.$selectedPage.value
+  //     const ta = e.currentTarget as HTMLTextAreaElement
+  //     //scroll to first line
+  //     ta.setSelectionRange(0, 0)
+  //     ta.blur()
+  //     ta.focus()
+  //   }
+  // }
 
   return TextEditor(formatter)
     .bind(reader.$inputBuffer)
-    .onFocus(onFocus)
+    //.onFocus(onFocus)
 }
 
 /*
@@ -33,11 +34,11 @@ export const EditorView = () => {
 * */
 
 const TextEditor = (formatter:TextFormatter) => {
-  console.log('new EditorView.TextArea')
+  log('new EditorView.TextArea')
 
   const keyDownFn = (e: KeyboardEvent) => {
     const ta = e.currentTarget as HTMLTextAreaElement
-    //console.log('e.keyCode = ', e.keyCode)
+    //log('e.keyCode = ', e.keyCode)
 
     // Ctrl+Shift+U
     if (e.ctrlKey && e.shiftKey && e.keyCode === 85) {
@@ -45,8 +46,8 @@ const TextEditor = (formatter:TextFormatter) => {
       e.stopPropagation()
       TextEditorController.uppercase(ta)
     }
-    // Ctrl+Shift+X
-    if (e.ctrlKey && e.shiftKey && e.keyCode === 88) {
+    // Ctrl+Shift+X or Cmd + Backspace
+    if ((e.ctrlKey && e.shiftKey && e.keyCode === 88) || (e.metaKey && e.keyCode === 8)) {
       e.preventDefault()
       e.stopPropagation()
       TextEditorController.removeSentenceUnderCursor(ta)
@@ -134,7 +135,7 @@ const TextEditor = (formatter:TextFormatter) => {
       s.autoCorrect = 'off'
       s.autoFocus = true
       s.spellCheck = false
-      s.paddingHorizontal = '5px'
+      s.paddingHorizontal = '20px'
       s.disableHorizontalScroll = true
     })
     .onKeyDown(keyDownFn)
@@ -156,7 +157,7 @@ class TextEditorController {
     const row = value.slice(beginRowIndex, selectionStart)
     const beginRowSpaces = TextEditorController.calcSpaceBefore(row)
 
-    //console.log('Row:' + 'BEGIN' + row + 'END, beginRowSpaces:', beginRowSpaces)
+    //log('Row:' + 'BEGIN' + row + 'END, beginRowSpaces:', beginRowSpaces)
 
     const spaces = '\n' + ' '.repeat(beginRowSpaces)
     // func setRangeText unfortunately clears browser history
@@ -225,7 +226,7 @@ class TextEditorController {
       let text = ta.value.slice(ta.selectionStart, ta.selectionEnd)
       document.execCommand('insertText', false, text.toUpperCase())
     } catch (e) {
-      console.log('TextEditorController:uppercase: ', e)
+      log('TextEditorController:uppercase: ', e)
     }
   }
 
@@ -237,7 +238,7 @@ class TextEditorController {
       text = text.replace(/\n/g, ' ').replace('  ', ' ')
       document.execCommand('insertText', false, text)
     } catch (e) {
-      console.log('TextEditorController:removeNewLines: ', e)
+      log('TextEditorController:removeNewLines: ', e)
     }
   }
 
@@ -267,7 +268,7 @@ class TextEditorController {
       let text = ta.value.slice(ta.selectionStart, ta.selectionEnd)
       document.execCommand('insertText', false, text.toLowerCase())
     } catch (e) {
-      console.log('TextEditorController:lowercase: ', e)
+      log('TextEditorController:lowercase: ', e)
     }
   }
 
@@ -283,7 +284,7 @@ class TextEditorController {
       document.execCommand('insertText', false, '```\n' + text + '\n```')
       ta.setSelectionRange(selectionStart + 3, selectionStart + 3)
     } catch (e) {
-      console.log('TextEditorController:wrapAsMultilineCode: ', e)
+      log('TextEditorController:wrapAsMultilineCode: ', e)
     }
   }
 }
@@ -305,13 +306,20 @@ class TextFormatter {
         startAt = 0
         stopAt = ta.value.length
       }
-      ta.selectionStart = startAt
-      ta.selectionEnd = stopAt
-      let text = ta.value.slice(startAt, stopAt)
-      document.execCommand('insertText', false, this.startFormating(text))
-      ta.setSelectionRange(cursorPos, cursorPos)
+
+      const text = ta.value.slice(startAt, stopAt)
+      const formattedText = this.startFormating(text)
+      if (formattedText !== text) {
+        ta.selectionStart = startAt
+        ta.selectionEnd = stopAt
+        document.execCommand('insertText', false, formattedText)
+        ta.setSelectionRange(cursorPos, cursorPos)
+        ta.blur()
+        ta.focus()
+      }
+
     } catch (e) {
-      console.log('TextFormatter:format: ', e)
+      logErr('TextFormatter:format: ', e)
     }
   }
 
@@ -395,7 +403,7 @@ class TextFormatter {
   removeHyphenAndSpace(s: string): string {
     return s
       .replace(/^[-–] /gm, '— ')
-      .replace(/[-–]$/gm, '—')
+      .replace(/ [-–]$/gm, '—')
       .replaceAll('\n- ', '\n— ')
       .replace(/([А-я])- \n/g, '$1')
   }

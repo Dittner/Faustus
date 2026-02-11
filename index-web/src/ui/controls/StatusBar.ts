@@ -7,7 +7,7 @@ export const StatusBar = () => {
   return hstack()
     .react(s => {
       s.fontFamily = FontFamily.MONO
-      s.fontSize = theme().defMenuFontSize
+      s.fontSize = theme().fontSizeXS
       s.gap = '10px'
       s.width = '100%'
       s.height = globalContext.app.$layout.value.statusBarHeight + 'px'

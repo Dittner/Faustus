@@ -2,6 +2,7 @@ import { RXObservableValue } from "flinker"
 import { IndexContext } from "../IndexContext"
 import { Action, ActionsList, parseKeyToCode } from "./Action"
 import { themeManager } from "../theme/ThemeManager"
+import { log } from "../../app/Logger"
 
 export type OperatingModeID = 'connect' | 'explore' | 'read' | 'search'
 export interface OperatingMode {
@@ -49,7 +50,7 @@ export class OperatingModeClass implements OperatingMode {
   private defMsg:any = undefined
   onKeyDown(e: KeyboardEvent): void {
     if (!this.isActive || this.actionsList.actions.length === 0 || e.key === 'Shift') return
-    console.log('key:', e.key, ', code:', e.code, ', keycode:', e.keyCode)
+    //log('key:', e.key, ', code:', e.code, ', keycode:', e.keyCode)
     const code = parseKeyToCode(e)
 
     this.cmdBuffer += code

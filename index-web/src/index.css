@@ -96,12 +96,29 @@ blockquote {
 }
 
 ::selection {
-    color: #111111;
-    background: #de93becc;
+    background: #00825540;
 }
 
 table {
     border-collapse: collapse
+}
+
+ol {
+    counter-reset: list;
+}
+
+ol>li {
+    list-style: none;
+}
+
+ol>li:before {
+    content: counter(list) ". ";
+    opacity: 0.6;
+    counter-increment: list;
+}
+
+ul {
+    list-style-type: circle;
 }
 
 /******************************/
@@ -206,34 +223,14 @@ textarea {
 
 button {
     font-family: var(--font-family);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    /* -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale; */
     font-size: 1rem;
     margin: 0;
     padding: 0;
     cursor: pointer;
     font-weight: 400;
     border: none;
-    min-height: 35px;
-    background: none;
-    text-align: center;
-    text-decoration: none;
-    white-space: pre;
-    box-sizing: border-box;
-    flex-shrink: 0;
-}
-
-button {
-    margin: 0;
-    padding: 0;
-    cursor: pointer;
-    font-size: 1rem;
-    font-family: var(--font-family);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    font-weight: 500;
-    border: none;
-    min-height: 35px;
     background: none;
     text-align: center;
     text-decoration: none;

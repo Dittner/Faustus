@@ -1,5 +1,5 @@
 import { RXObservableValue } from "flinker"
-import { btn, ButtonProps, span, TextProps } from "flinker-dom"
+import { btn, ButtonProps, span, StackHAlign, StackVAlign, TextProps } from "flinker-dom"
 import { MaterialIcon } from "../MaterialIcon"
 import { theme } from "../theme/ThemeManager"
 import { FontFamily } from "./Font"
@@ -34,6 +34,9 @@ export const Icon = <P extends IconProps>() => {
 export interface IconBtnProps extends ButtonProps {
   icon?: MaterialIcon
   iconSize?: string
+  revert?: boolean
+  halign?: StackHAlign
+  valign?: StackVAlign
 }
 
 export const IconBtn = () => {
@@ -50,6 +53,11 @@ export const IconBtn = () => {
       s.wrap = false
       s.boxSizing = 'border-box'
     })
+    .map(s => {
+      s.flexDirection = s.revert ? 'row-reverse' : 'row'
+      s.justifyContent = s.halign === 'left' ? 'flex-start' : s.halign === 'right' ? 'flex-end' : 'center'
+      s.alignItems = s.valign === 'top' ? 'flex-start' : s.valign === 'bottom' ? 'flex-end' : 'center'
+    })
     .children(() => {
 
       //icon
@@ -63,17 +71,21 @@ export const IconBtn = () => {
         })
 
       //text
-      $sharedState.value.text && span()
+      span()
         .observe($sharedState)
         .react(s => {
           const ss = $sharedState.value
           s.text = ss.text
           s.textColor = 'inherit'
-          s.fontSize = 'inherit'
+          s.fontSize = ss.fontSize ?? 'inherit'
           s.fontFamily = 'inherit'
+          s.overflow = 'hidden'
+          s.textOverflow = 'ellipsis'
+          s.visible = s.text !== '' && s.text !== undefined
         })
     })
 }
+
 
 /*
 *

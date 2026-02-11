@@ -47,7 +47,7 @@ export const indexOfFirstVisibleElement = (coll: HTMLElement[], scrollY: number,
       const rect = coll[i].getBoundingClientRect()
       if (rect.top >= -50 && rect.top < window.innerHeight / 2) {
         return i
-      } else if(res === -1 && rect.bottom > 0) {
+      } else if (res === -1 && rect.bottom > 0) {
         res = i
       }
     }
@@ -61,6 +61,13 @@ export class Path {
     const res = p.endsWith('/') ? p.slice(0, -1) : p
     const lastSlashIndex = res.lastIndexOf('/')
     return lastSlashIndex === -1 ? '/' : res.slice(0, lastSlashIndex + 1)
+  }
+
+  static querify(obj: any): string {
+    return Object.entries(obj)
+      .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+      .map(([key, value]) => key + '=' + encodeURIComponent(value as string | number | boolean))
+      .join('&')
   }
 
   static readonly stemReg = /([^/]+)\/*$/

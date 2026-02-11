@@ -6,6 +6,7 @@ import { Icon, IconBtn } from "./controls/Button"
 import { FontFamily } from "./controls/Font"
 import { theme } from "./theme/ThemeManager"
 import { TextInput } from "./controls/Input"
+import { log } from "../app/Logger"
 
 export function DemoView() {
   return vstack()
@@ -71,13 +72,13 @@ function Buttons() {
       RedBtn()
         .react(s => s.text = 'Inc')
         .onClick(() => {
-          console.log('Clicked')
+          log('Clicked')
         })
 
       ToggleBtn(new RXObservableValue(false))
         .react(s => s.text = 'Toggle Btn')
         .onClick(() => {
-          console.log('ToggleBtn was clicked')
+          log('ToggleBtn was clicked')
         })
 
       Switcher()
@@ -318,7 +319,7 @@ const Inputs = () => {
       textarea()
         .bind($buffer)
         .react(s => {
-          console.log('teaxtarea updated props')
+          log('teaxtarea updated props')
           s.value = $buffer.value
           s.placeholder = 'TextArea'
           s.fontFamily = FontFamily.APP
@@ -340,13 +341,13 @@ const Inputs = () => {
           s.textColor = '#666666'
         })
         .onInput((e: any) => {
-          console.log(e.target.value)
+          log(e.target.value)
         })
 
       RedBtn()
         .react(s => s.text = 'Clear Inputs')
         .onClick(() => {
-          console.log('Clear inputs, cur buffer value:', $buffer.value)
+          log('Clear inputs, cur buffer value:', $buffer.value)
           $buffer.value = ''
         })
 

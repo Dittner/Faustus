@@ -7,6 +7,7 @@ import { TextFile } from "../../../domain/DomainModel"
 import { InputBufferController } from "../../controls/Input"
 import { FileNode } from "../FileNode"
 import { parseKeyToCode } from "../Action"
+import { log } from "../../../app/Logger"
 
 const FILES_SORT = sortByKeys(['isDir', 'alias'], [false, true])
 const PATH_ALLOWED_SYMBOLS: Set<string> = new Set('_0123456789/abcdefghijklmnopqrstuvwxyz'.split(''))
@@ -29,7 +30,7 @@ export class FileExplorer extends OperatingModeClass {
 
     this.$openedDirPath.pipe()
       .onReceive(openedDirPath => {
-        console.log('openedDirPath has changed:', openedDirPath)
+        log('openedDirPath has changed:', openedDirPath)
         this.$openedDirFiles.value = this.$allFiles.value.filter(f => {
           if (f.isDir) return (openedDirPath + f.id + '/') === f.path
           else return (openedDirPath + f.id) === f.path
@@ -253,7 +254,7 @@ export class FileExplorer extends OperatingModeClass {
   }
 
   private addNewFiles(data: []) {
-    //console.log('parseRawFiles: data=', data)
+    //log('parseRawFiles: data=', data)
     const hash = new Set<string>()
     this.$allFiles.value.forEach(f => hash.add(f.path))
     data.forEach((d: any) => {
@@ -290,12 +291,12 @@ export class FileExplorer extends OperatingModeClass {
 
   private loadAliasVoc() {
     if (!this.isActive) return
-    console.log('FileExplorer:loadAliasVoc')
+    log('FileExplorer:loadAliasVoc')
     this.ctx.$msg.value = { text: 'Loading...', level: 'info' }
     globalContext.indexServer.loadAliasVoc().pipe()
       .onReceive((data: any) => {
         this.ctx.$msg.value = undefined
-        console.log('FileExplorer:loadAliasVoc, complete, data: ', data)
+        log('FileExplorer:loadAliasVoc, complete, data: ', data)
         this.filesAliasVoc = data
         this.loadFilesTree()
       })
@@ -307,7 +308,7 @@ export class FileExplorer extends OperatingModeClass {
 
   private loadFilesTree() {
     if (!this.isActive) return
-    console.log('FileExplorer:loadTree')
+    log('FileExplorer:loadTree')
     // document.location.pathname === directoryId/fileId#hash
     //const path = document.location.pathname.split('#')[0]
     //const selectedChapter = document.location.hash //#hash

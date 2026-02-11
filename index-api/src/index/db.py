@@ -150,13 +150,15 @@ class MarkdownDB:
         self.file_alias_voc['/' + self.trim_suffix(p.relative_to(ROOT_DIR_PATH)).as_posix()] = alias
         return new_files
 
-    def rewrite_file(self, src: str, alias: str, text: str) -> list[MDFile]:
+    def rewrite_file(self, src: str, alias: str, text: str):
         if src == '' or src.find('//') != -1:
             raise InvalidPathOfFileError(path=src, details='Path is empty or has not allowed symbols.')
 
         # dir case
         if src.endswith('/'):
-            raise InvalidFileError(path=src, details='Directory can not be rewritten! Expected a file path without slash at the end.')
+            raise InvalidFileError(
+                path=src, details='Directory can not be rewritten! Expected a file path without slash at the end.'
+            )
 
         # file case
         p = ROOT_DIR_PATH / (src + '.txt')
@@ -168,7 +170,7 @@ class MarkdownDB:
         f.close()
 
         self.file_alias_voc['/' + self.trim_suffix(p.relative_to(ROOT_DIR_PATH)).as_posix()] = alias
-        return []
+        return {'is_dir': False, 'path': '/' + src, 'text': text}
 
     def trim_suffix(self, p: Path):
         return p.with_name(p.stem)
@@ -181,7 +183,9 @@ class MarkdownDB:
             raise InvalidPathOfFileError(path=to_src, details='Path is empty or has not allowed symbols.')
 
         if from_src.endswith('/') != to_src.endswith('/'):
-            raise InvalidPathOfFileError(path=f'{from_src}->{to_src}', details='File can not be renamed to directory and vice versa.')
+            raise InvalidPathOfFileError(
+                path=f'{from_src}->{to_src}', details='File can not be renamed to directory and vice versa.'
+            )
 
         if from_src.endswith('/'):
             fp = ROOT_DIR_PATH / from_src
@@ -269,12 +273,14 @@ class MarkdownDB:
 
         return FileResponse(p.as_posix())
 
+
 class ClientError(Exception):
     def __init__(self):
         super().__init__()
 
+
 class FileAlreadyExistsError(ClientError):
-    def __init__(self, path:str):
+    def __init__(self, path: str):
         super().__init__()
         self.path = path
 
@@ -283,7 +289,7 @@ class FileAlreadyExistsError(ClientError):
 
 
 class InvalidPathOfFileError(ClientError):
-    def __init__(self, path:str, details:str):
+    def __init__(self, path: str, details: str):
         super().__init__()
         self.path = path
         self.details = details
@@ -293,7 +299,7 @@ class InvalidPathOfFileError(ClientError):
 
 
 class InvalidFileError(ClientError):
-    def __init__(self, path:str, details:str):
+    def __init__(self, path: str, details: str):
         super().__init__()
         self.path = path
         self.details = details

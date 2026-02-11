@@ -1,6 +1,5 @@
-import { div, hstack, p, spacer, span, vlist } from "flinker-dom"
+import { div, hstack, spacer, span, vlist } from "flinker-dom"
 import { globalContext } from "../../../App"
-import { indexOfFirstVisibleElement } from "../../../app/Utils"
 import { Page, TextFile } from "../../../domain/DomainModel"
 import { IndexContext } from "../../IndexContext"
 import { FontFamily } from "../../controls/Font"
@@ -9,9 +8,11 @@ import { theme } from "../../theme/ThemeManager"
 import { FileReader } from "./FileReader"
 import { PageHeaderListView } from "./PageHeaderListView"
 import { EditorView } from "./TextEditor"
+import { TranslationPanel } from "./Translation"
+import { log } from "../../../app/Logger"
 
 export const FileView = () => {
-  console.log('new FileView')
+  log('new FileView')
   const ctx = IndexContext.self
 
   return div()
@@ -67,36 +68,49 @@ export const FileView = () => {
               s.left = '0px'
           })
 
+        TranslationPanel()
+          .react(s => {
+            s.position = 'fixed'
+            s.right = '20px'
+            s.top = '50px'
+            s.width = '400px'
+          })
+
         EditorView()
           .observe(globalContext.app.$layout)
           .observe(ctx.reader.$editMode)
           .react(s => {
+            const layout = globalContext.app.$layout.value
             s.visible = ctx.reader.$editMode.value !== 'none'
             s.position = 'fixed'
-            s.top = globalContext.app.$layout.value.navBarHeight + 'px'
-            s.left = '0'
+            s.top = layout.navBarHeight + 'px'
+            s.left = '0px'
             s.width = window.innerWidth / 2 - 20 + 'px'
-            s.height = window.innerHeight - globalContext.app.$layout.value.navBarHeight + 'px'
-            s.borderRight = ['1px', 'solid', theme().text + '20']
-            s.borderColor = theme().transparent
+            s.height = window.innerHeight - layout.navBarHeight + 'px'
+            s.border = '1px solid' + theme().text + '50'
+            s.bgColor = theme().appBg
+            s.caretColor = theme().isLight ? '#000000' : theme().red
+            s.paddingHorizontal = '20px'
+            s.position = 'fixed'
+            s.textColor = theme().text
+          })
+
+        Header(ctx.reader)
+          .observe(globalContext.app.$layout)
+          .react(s => {
+            s.position = 'fixed'
+            s.top = '0'
+            s.left = '0'
+            s.gap = '0'
+            s.width = '100%'
+            s.height = globalContext.app.$layout.value.navBarHeight + 'px'
           })
       }
-
-      Header(ctx.reader)
-        .observe(globalContext.app.$layout)
-        .react(s => {
-          s.position = 'fixed'
-          s.top = '0'
-          s.left = '0'
-          s.gap = '0'
-          s.width = '100%'
-          s.height = globalContext.app.$layout.value.navBarHeight + 'px'
-        })
     })
 }
 
 const PageList = (file: TextFile) => {
-  console.log('new PageList')
+  log('new PageList')
   const ctx = IndexContext.self
 
   const list = vlist<Page>()
@@ -110,55 +124,47 @@ const PageList = (file: TextFile) => {
     .itemRenderer(PageView)
     .itemHash(p => p.uid)
 
-  globalContext.app.$scrollY.pipe()
-    .debounce(1000)
-    .onReceive(scrollY => {
-      console.log('ScrollHeight:', list.dom.clientHeight)
-      if (list.childrenColl) {
-        const index = indexOfFirstVisibleElement(list.childrenColl.map(u => u.dom), scrollY, list.dom.clientHeight)
-        if (index !== -1)
-          ctx.reader.$selectedPage.value = file.pages[index]
-      }
-    })
-    .subscribe()
+  // globalContext.app.$scrollY.pipe()
+  //   .debounce(1000)
+  //   .onReceive(scrollY => {
+  //     log('ScrollHeight:', list.dom.clientHeight)
+  //     if (list.childrenColl) {
+  //       const index = indexOfFirstVisibleElement(list.childrenColl.map(u => u.dom), scrollY, list.dom.clientHeight)
+  //       if (index !== -1)
+  //         ctx.reader.$selectedPage.value = file.pages[index]
+  //     }
+  //   })
+  //   .subscribe()
 
   return list
 }
 
 export const PageView = (page: Page, index: number) => {
-  console.log('new PageView')
+  log('new PageView')
   const reader = IndexContext.self.reader
-  return hstack()
+  return div()
+    .observe(reader.$editingPage)
+    //.observe(reader.$selectedPage)
+    .observe(reader.$showPageHeaderList)
     .react(s => {
+      const isEditing = reader.$editingPage.value === page
+      //const isSelected = reader.$selectedPage.value === page && reader.$showPageHeaderList.value
+
       s.id = '#' + index
       s.gap = '20px'
-      s.valign = 'stretch'
-      s.halign = 'left'
       s.width = '100%'
       s.paddingBottom = '40px'
-      s.paddingHorizontal = '20px'
+      s.paddingLeft = '60px'
+      s.borderLeft = '1px solid ' + (isEditing ? theme().red : theme().transparent)
     })
     .children(() => {
-      p()
-        .observe(reader.$editingPage)
-        .observe(reader.$selectedPage)
-        .observe(reader.$showPageHeaderList)
-        .react(s => {
-          const isEditing = reader.$editingPage.value === page
-          const isSelected = reader.$selectedPage.value === page && reader.$showPageHeaderList.value
-          s.width = '10px'
-          s.maxWidth = '10px'
-          s.top = '0'
-          s.bottom = '0'
-          s.borderColor = isEditing ? theme().red : isSelected ? theme().menuPage + '00' : theme().transparent
-          s.borderRight = theme().red
-        })
 
       Markdown()
         .observe(page)
         .react(s => {
           s.className = theme().id
           s.width = '100%'
+          s.maxWidth = '800px'
           s.minHeight = '30px'
           s.text = page.text
           s.fontSize = theme().defFontSize
@@ -175,7 +181,7 @@ const Header = (reader: FileReader) => {
     .react(s => {
       s.gap = '0'
       s.fontFamily = FontFamily.APP
-      s.fontSize = theme().defMenuFontSize
+      s.fontSize = theme().fontSizeXS
       s.valign = 'center'
       s.paddingHorizontal = '20px'
       const isFileChanged = reader.$isFileChanged.value

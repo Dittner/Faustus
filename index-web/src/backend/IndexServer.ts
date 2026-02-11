@@ -2,6 +2,7 @@ import { type RXObservable } from 'flinker'
 
 import { TextFile } from '../domain/DomainModel'
 import { RestApi, RestApiError } from './RestApi'
+import { log } from '../app/Logger'
 
 
 export class IndexServer extends RestApi {
@@ -12,7 +13,7 @@ export class IndexServer extends RestApi {
     super(baseUrl)
     
     this.assetsUrl = this.baseUrl + '/asset'
-    console.log('IndexServer, baseUrl: ', this.baseUrl)
+    log('IndexServer, baseUrl: ', this.baseUrl)
     this.ping()
   }
 

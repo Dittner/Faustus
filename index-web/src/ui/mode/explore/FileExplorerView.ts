@@ -63,29 +63,29 @@ const FileNodeRenderer = (n: FileNode) => {
   return host
     .react(s => {
       // updated when selected item has changed
-      s.fontSize = theme().defMenuFontSize
+      s.fontSize = theme().fontSizeS
       s.fontFamily = FontFamily.MONO
       s.wrap = false
     })
     .children(() => {
-      span().react(s => {
-        const underCurser = ctx.explorer.$selectedFilePath.value === n.path
-        if (underCurser) {
-          host.dom.scrollIntoView({
-            behavior: 'instant',
-            block: 'center'
-          })
-        }
+      span()
+        .react(s => {
+          const underCurser = ctx.explorer.$selectedFilePath.value === n.path
+          if (underCurser) {
+            host.dom.scrollIntoView({
+              behavior: 'instant',
+              block: 'center'
+            })
+          }
 
-
-        const textColor = n.isDir ? theme().menuDir : theme().menuFile
-        const bgColor = theme().appBg
-        s.padding = '5px'
-        s.paddingLeft = '20px'
-        s.textColor = underCurser ? bgColor : textColor
-        s.bgColor = underCurser ? textColor : theme().transparent
-        s.text = n.isDir ? n.id + '/' : (ctx.explorer.filesAliasVoc[n.path] || n.id)
-      })
+          const textColor = n.isDir ? theme().menuDir : theme().menuFile
+          const bgColor = theme().appBg
+          s.padding = '5px'
+          s.paddingLeft = '20px'
+          s.textColor = underCurser ? bgColor : textColor
+          s.bgColor = underCurser ? textColor : theme().transparent
+          s.text = n.isDir ? n.id + '/' : (ctx.explorer.filesAliasVoc[n.path] || n.id)
+        })
 
       span().react(s => {
         s.padding = '5px'

@@ -5,6 +5,7 @@ import { OperatingModeClass } from "../OperatingMode"
 import { sortByKeys } from "../../../app/Utils"
 import { FileNode } from "../FileNode"
 import { parseKeyToCode } from "../Action"
+import { log } from "../../../app/Logger"
 
 const FILES_SORT = sortByKeys(['isDir', 'alias'], [false, true])
 
@@ -50,7 +51,7 @@ export class FileSearcher extends OperatingModeClass {
     } else if (code === '<Up>') {
       this.selectFile(-1)
     } else if (code === '<Down>') {
-      console.log('Selecting!!!')
+      log('Selecting!!!')
       this.selectFile(1)
     }
     else if (e.key.length === 1) {
@@ -121,12 +122,12 @@ export class FileSearcher extends OperatingModeClass {
 
   private loadAliasVoc() {
     if (!this.isActive) return
-    console.log('FileSearcher:loadAliasVoc')
+    log('FileSearcher:loadAliasVoc')
     this.ctx.$msg.value = { text: 'Loading...', level: 'info' }
     globalContext.indexServer.loadAliasVoc().pipe()
       .onReceive((data: any) => {
         this.ctx.$msg.value = undefined
-        console.log('FileSearcher:loadAliasVoc, complete, data: ', data)
+        log('FileSearcher:loadAliasVoc, complete, data: ', data)
         this.filesAliasVoc.clear()
         this.filesAliasLowerCasedVoc.clear()
         for (const path in data) {
@@ -135,7 +136,7 @@ export class FileSearcher extends OperatingModeClass {
         }
 
         const diary = this.filesAliasLowerCasedVoc.get('index/dittner/diary') ?? ''
-        console.log('TAGEBUCH ', diary, ', includes buch:', diary.includes('buch'))
+        log('TAGEBUCH ', diary, ', includes buch:', diary.includes('buch'))
         this.loadFilesTree()
       })
       .onError(e => {
@@ -146,7 +147,7 @@ export class FileSearcher extends OperatingModeClass {
 
   private loadFilesTree() {
     if (!this.isActive) return
-    console.log('FileExplorer:loadTree')
+    log('FileExplorer:loadTree')
     globalContext.indexServer.loadFilesTree().pipe()
       .onReceive((data: []) => {
         this.parseFilesTree(data)

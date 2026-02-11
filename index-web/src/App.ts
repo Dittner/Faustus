@@ -1,4 +1,4 @@
-import { div } from "flinker-dom"
+import { div, vstack } from "flinker-dom"
 import { p, span, vlist } from "flinker-dom"
 import { ServerConnectionView } from "./ui/mode/connect/ServerConnctionView"
 import { FileExplorerView } from "./ui/mode/explore/FileExplorerView"
@@ -7,7 +7,7 @@ import { FileSearchView } from "./ui/mode/search/FileSearchView"
 import { GlobalContext } from "./app/GlobalContext"
 import { IndexContext } from "./ui/IndexContext"
 import { FontFamily } from "./ui/controls/Font"
-import { theme } from "./ui/theme/ThemeManager"
+import { theme, themeManager } from "./ui/theme/ThemeManager"
 import { Action } from "./ui/mode/Action"
 
 export const globalContext = GlobalContext.init()
@@ -15,6 +15,7 @@ IndexContext.init()
 
 export function App() {
   return div()
+    .observe(themeManager.$theme, 'affectsProps', 'affectsChildrenProps')
     .react(s => {
       s.width = '100vw'
     })
@@ -29,42 +30,87 @@ export function App() {
     })
 }
 
-const ActionsHelpView = () => {
+
+const SHORTKEY_TEXT_WIDTH = '160px'
+export const ActionsHelpView = () => {
   const ctx = IndexContext.self
-  return vlist<Action>()
+
+  return div()
     .observe(ctx.$mode.pipe().skipNullable().flatMap(vm => vm.$showActions).fork())
-    .observe(ctx.$mode, 'recreateChildren')
     .react(s => {
+      const vm = ctx.$mode.value
       const layout = globalContext.app.$layout.value
-      s.visible = ctx.$mode.value.$showActions.value ?? false
+      s.visible = vm && vm.$showActions.value
       s.position = 'fixed'
-      s.right = '0'
-      s.top = '0'
-      s.width = '400px'
-      s.height = window.innerHeight - globalContext.app.$layout.value.statusBarHeight + 'px'
-      s.fontFamily = FontFamily.MONO
-      s.fontSize = theme().defMenuFontSize
-      s.paddingTop = layout.navBarHeight + 'px'
+      s.top = '0px'
+      s.right = '0px'
+      s.width = '500px'
+      s.paddingTop = '20px'
       s.paddingBottom = layout.statusBarHeight + 'px'
-      s.bgColor = theme().appBg
-      s.borderLeft = '1px solid ' + theme().text + '20'
+      s.height = window.innerHeight + 'px'
+      s.paddingHorizontal = '20px'
+      s.gap = '0px'
+      s.bgColor = theme().actionsBg
+      s.layer = '100'
+    }).children(() => {
+
+      p().react(s => {
+        s.textColor = theme().text
+        s.fontWeight = 'bold'
+        s.paddingLeft = SHORTKEY_TEXT_WIDTH
+        s.text = 'Shortkeys'
+      })
+
+      p().react(s => {
+        s.textColor = theme().text
+        s.paddingLeft = SHORTKEY_TEXT_WIDTH
+        s.text = '(Press ESC to hide)'
+        s.paddingBottom = '50px'
+      })
+
+      vlist<Action>()
+        .observe(ctx.$mode, 'recreateChildren')
+        .items(() => ctx.$mode.value?.actionsList.actions ?? [])
+        .itemHash(a => a.cmd)
+        .itemRenderer(ActionInfoView)
+        .react(s => {
+          s.width = '100%'
+          s.gap = '0'
+        })
+
+      vstack()
+        .react(s => {
+          s.width = 'unset'
+          s.textColor = theme().header
+          s.fontSize = theme().fontSizeXS
+          s.fontFamily = FontFamily.MONO
+          s.paddingLeft = SHORTKEY_TEXT_WIDTH
+          s.paddingTop = '50px'
+          s.paddingRight = '20px'
+          s.gap = '2px'
+        })
+        .children(() => {
+          p().react(s => { s.text = '<CR> — Enter' })
+          p().react(s => s.text = '<C-k> — Ctrl+k / Cmd+k')
+        })
     })
-    .items(() => ctx.$mode.value.actionsList.actions)
-    .itemHash(a => a.cmd)
-    .itemRenderer(ActionInfoView)
 }
 
 const ActionInfoView = (a: Action) => {
   return p()
     .react(s => {
       s.width = '100%'
+      s.height = '100%'
+      s.fontFamily = FontFamily.MONO
+      s.fontSize = theme().fontSizeXS
     }).children(() => {
       span().react(s => {
         s.display = 'inline-block'
         s.text = a.cmd
-        s.textColor = theme().accent
+        s.textColor = theme().header
         s.paddingHorizontal = '20px'
-        s.width = '150px'
+        s.paddingVertical = '2px'
+        s.width = SHORTKEY_TEXT_WIDTH
         s.whiteSpace = 'nowrap'
         s.textAlign = 'right'
       })
@@ -72,10 +118,10 @@ const ActionInfoView = (a: Action) => {
       span()
         .react(s => {
           s.text = a.desc
-          s.textColor = theme().header
+          s.textColor = theme().text
           s.width = '100%'
-          //s.whiteSpace = 'pre'
-          s.paddingHorizontal = '20px'
+          //s.whiteSpace = 'nowrap'
+          s.paddingVertical = '5px'
         })
     })
 }
@@ -91,7 +137,7 @@ const MessangerView = () => {
       s.bottom = '0'
       s.width = '100%'
       s.fontFamily = FontFamily.MONO
-      s.fontSize = theme().defMenuFontSize
+      s.fontSize = theme().fontSizeXS
       s.text = msg?.text ?? ''
       s.textAlign = 'right'
       //s.bgColor = theme().appBg
@@ -103,6 +149,6 @@ const MessangerView = () => {
       else if (msg?.level === 'warning')
         s.textColor = theme().warn
       else
-        s.textColor = theme().id === 'light' ? theme().black : theme().white
+        s.textColor = theme().text50
     })
 }

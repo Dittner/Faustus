@@ -1,11 +1,12 @@
-import { p, vlist } from "flinker-dom"
+import { btn, vlist } from "flinker-dom"
 import { Page, TextFile } from "../../../domain/DomainModel"
 import { theme } from "../../theme/ThemeManager"
 import { IndexContext } from "../../IndexContext"
 import { FontFamily } from "../../controls/Font"
+import { log } from "../../../app/Logger"
 
 export const PageHeaderListView = (file: TextFile) => {
-  console.log('new FileHeaderListView')
+  log('new FileHeaderListView')
   const ctx = IndexContext.self
   const list = vlist<Page>()
     .observe(file, 'recreateChildren')
@@ -36,29 +37,31 @@ export const PageHeaderListView = (file: TextFile) => {
 const PageHeaderRenderer = (page: Page) => {
   const ctx = IndexContext.self
 
-  return p()
+  return btn()
     .observe(page)
     .react(s => {
-      // updated when selected item has changed
-      const underCurser = ctx.reader.$selectedPage.value === page
-      const textColor = theme().menuPage
-      const bgColor = theme().appBg
-      //s.width = '100%'
-      s.textSelectable = false
-      s.fontSize = theme().defMenuFontSize
-      s.fontFamily = FontFamily.ARTICLE
-      s.textColor = underCurser ? theme().accent : theme().menuPage + 'cc'
+      s.isSelected = ctx.reader.$selectedPage.value === page
+      s.fontSize = theme().fontSizeXS
+      s.fontFamily = FontFamily.APP
+      s.textColor = theme().menuPage + 'bb'
       s.paddingRight = '5px'
       s.width = '100%'
-      s.paddingLeft = page.headerLevel * 20 + 'px'
-      s.paddingVertical = '5px'
-      s.wrap = false
-      s.text = page.header
+
+      if (page.headerLevel === 0)
+        s.paddingLeft = '0px'
+      else if (page.headerLevel === 1)
+        s.paddingLeft = '20px'
+      else
+        s.paddingLeft = (page.headerLevel - 1) * 20 + 'px'
+
+      s.paddingVertical = '3px'
+      s.wrap = true
+      s.whiteSpace = 'normal'
+      s.textAlign = 'left'
+      s.text = page.header.length > 80 ? page.header.substring(0, 80) + '...' : page.header
       s.lineHeight = '1rem'
     })
-    .whenHovered(s => {
-      s.cursor = 'pointer'
-      s.textColor = theme().menuPage
-    })
+    .whenHovered(s => s.textColor = theme().menuPage)
+    .whenSelected(s => s.textColor = theme().accent)
     .onMouseDown(_ => ctx.reader.moveCursorUnder(page))
 }

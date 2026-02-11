@@ -25,6 +25,8 @@ services:
     restart: unless-stopped
     environment:
       - VITE_INDEX_API_URL=http://localhost:3000/api
+      - VITE_DERTUTOR_API_URL=http://localhost:4444/api
+      - VITE_ECHO=true
     depends_on:
       - index-api
     volumes:

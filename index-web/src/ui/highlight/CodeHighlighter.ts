@@ -239,7 +239,7 @@ class GrammarRule {
           isMatched = false
           break
         }
-        //console.log('May be matched, token:', tt, ',s:', s)
+        //log('May be matched, token:', tt, ',s:', s)
         s = s.next()
         tt = tt.next()
       }

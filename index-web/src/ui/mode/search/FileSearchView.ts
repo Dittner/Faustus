@@ -6,6 +6,7 @@ import { FontFamily } from "../../controls/Font"
 import { LineInput } from "../../controls/Input"
 import { FileNode } from "../FileNode"
 import { globalContext } from "../../../App"
+import { log } from "../../../app/Logger"
 
 export const FileSearchView = () => {
   const ctx = IndexContext.self
@@ -35,7 +36,6 @@ export const FileSearchView = () => {
               s.title = '/'
               s.position = 'fixed'
               s.width = '100%'
-              s.height = globalContext.app.$layout.value.statusBarHeight + 'px'
               s.bottom = '0'
             })
 
@@ -52,10 +52,10 @@ export const FileSearchView = () => {
 
 const SearchResults = (searcher: FileSearcher) => {
   return vstack()
-    .observe(searcher.$buffer, "recreateChildren")
-    .observe(searcher.$availableFiles, "recreateChildren")
+    .observe(searcher.$buffer, 'recreateChildren')
+    .observe(searcher.$availableFiles, 'recreateChildren')
     .children(() => {
-      console.log('Recreating children of search results')
+      log('Recreating children of search results')
       const ss = searcher.$buffer.value
       const files = searcher.$availableFiles.value
       files.forEach(f => {
@@ -72,7 +72,7 @@ const SearchResultItem = (f: FileNode, searchValue: string) => {
   return host
     .observe(searcher.$selectedFilePath, 'affectsChildrenProps')
     .react(s => {
-      s.fontSize = theme().defMenuFontSize
+      s.fontSize = theme().fontSizeS
       s.fontFamily = FontFamily.MONO
       s.width = '100%'
       s.wrap = false
@@ -123,7 +123,7 @@ const FoundTotalBar = (searcher: FileSearcher) => {
       s.lineHeight = globalContext.app.$layout.value.statusBarHeight + 'px'
       s.height = globalContext.app.$layout.value.statusBarHeight + 'px'
       s.fontFamily = FontFamily.MONO
-      s.fontSize = theme().defMenuFontSize
+      s.fontSize = theme().fontSizeXS
       s.textColor = theme().black
     })
 }

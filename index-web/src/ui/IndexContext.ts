@@ -5,9 +5,10 @@ import { OperatingMode } from './mode/OperatingMode'
 import { FileReader } from './mode/read/FileReader'
 import { FileExplorer } from './mode/explore/FileExplorer'
 import { FileSearcher } from './mode/search/FileSearch'
+import { log } from '../app/Logger'
 
 export interface Message {
-  readonly level: 'warning' | 'error' | 'info'
+  readonly level?: 'warning' | 'error' | 'info'
   readonly text: string
 }
 
@@ -31,7 +32,7 @@ export class IndexContext {
   }
 
   private constructor() {
-    console.log('new IndexContext')
+    log('new IndexContext')
 
     this.connection = new ServerConnection(this)
     this.$mode = new RXObservableValue(this.connection)
@@ -43,8 +44,9 @@ export class IndexContext {
     document.addEventListener('keydown', this.onKeyDown.bind(this))
   }
 
-  private onKeyDown(e: KeyboardEvent) {
-    this.$mode.value.onKeyDown(e)
+  private onKeyDown(e: KeyboardEvent): void {
+    if (document.activeElement?.tagName !== 'INPUT')
+      this.$mode.value.onKeyDown(e)
   }
 
   navigate(to: string) {

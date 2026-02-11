@@ -1,5 +1,6 @@
 import { RXObservableEntity } from 'flinker'
 import { generateUID, Path } from '../app/Utils'
+import { log, logWarn } from '../app/Logger'
 
 interface Serializable {
   serialize: () => string
@@ -52,10 +53,10 @@ export class TextFile extends RXObservableEntity<TextFile> {
   deserialize(data: any) {
     try {
       this.data = data
-      console.log('File: ' + data?.path + ', isDir:', data.is_dir)
+      log('File: ' + data?.path + ', isDir:', data.is_dir)
 
       if (data === undefined || data.path == undefined || data.is_dir == undefined) {
-        console.log('File:deserialize, file is damaged, data:', data)
+        log('File:deserialize, file is damaged, data:', data)
         this.isDamaged = true
       }
       else {
@@ -76,7 +77,7 @@ export class TextFile extends RXObservableEntity<TextFile> {
       }
     } catch (e: any) {
       this.isDamaged = true
-      console.log('File:deserialize, err:', e.message, 'data:', data)
+      log('File:deserialize, err:', e.message, 'data:', data)
     }
     this.hasChanges = false
     this.mutated()
@@ -110,8 +111,8 @@ export class TextFile extends RXObservableEntity<TextFile> {
       } else if (key === FILE_SECTION_DEATH_YEAR) {
         this.deathYear = value
       } else {
-        console.warn('TextFile:deserialize:parseHeaders, unknown tag:', key, ', keyValues:')
-        console.warn(keyValues)
+        logWarn('TextFile:deserialize:parseHeaders, unknown tag:', key, ', keyValues:')
+        logWarn(keyValues)
       }
     }
   }
@@ -151,7 +152,7 @@ export class TextFile extends RXObservableEntity<TextFile> {
 
   static createFile(path: string): TextFile {
     if (path.endsWith('/')) {
-      console.log('TextFile:createFile. path=', path)
+      log('TextFile:createFile. path=', path)
       const res = new TextFile()
       res.deserialize({ path, 'is_dir': true })
       return res
@@ -294,15 +295,13 @@ export class Page extends RXObservableEntity<Page> implements Serializable {
   }
 
   private textDidChange() {
-    let level = -1
     const matchRes = this._text.match(PAGE_TILE_REG)
     if (matchRes) {
-      level = matchRes[1].length - 1 //count of #-symbols
-      this._headerLevel = level
+      this._headerLevel = matchRes[1].length //count of #-symbols
       this._header = matchRes[2]
     } else {
       const line = this.readLine(this._text)
-      this._headerLevel = level
+      this._headerLevel = 0
       this._header = line.length > 30 ? line.slice(0, 30) + '...' : line
     }
   }

@@ -7,15 +7,13 @@ import { log } from "../../../app/Logger"
 
 export const PageHeaderListView = (file: TextFile) => {
   log('new FileHeaderListView')
-  const ctx = IndexContext.self
   const list = vlist<Page>()
-    .observe(file, 'recreateChildren')
-    .observe(ctx.reader.$selectedPage, 'affectsChildrenProps')
+    .observe(file.$selectedPage, 'affectsChildrenProps')
     .items(() => file.pages)
     .itemRenderer(PageHeaderRenderer)
-    .itemHash((p: Page) => p.uid + '#' + p.header + ':' + (p === ctx.reader.$selectedPage.value))
+    .itemHash((p: Page) => p.uid + '#' + p.header + ':' + (p === file.$selectedPage.value))
 
-  ctx.reader.$selectedPage.pipe()
+  file.$selectedPage.pipe()
     .onReceive(p => {
       if (list.childrenColl) {
         for (let i = 0; i < file.pages.length; i++) {
@@ -40,7 +38,7 @@ const PageHeaderRenderer = (page: Page) => {
   return btn()
     .observe(page)
     .react(s => {
-      s.isSelected = ctx.reader.$selectedPage.value === page
+      s.isSelected = page.file.$selectedPage.value === page
       s.fontSize = theme().fontSizeXS
       s.fontFamily = FontFamily.APP
       s.textColor = theme().menuPage + 'bb'
@@ -54,7 +52,7 @@ const PageHeaderRenderer = (page: Page) => {
       else
         s.paddingLeft = (page.headerLevel - 1) * 20 + 'px'
 
-      s.paddingVertical = '3px'
+      s.paddingVertical = '1px'
       s.wrap = true
       s.whiteSpace = 'normal'
       s.textAlign = 'left'

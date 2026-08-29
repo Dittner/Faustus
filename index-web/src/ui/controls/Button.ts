@@ -99,7 +99,7 @@ export const RedBtn = () => {
       s.fontFamily = FontFamily.APP
       s.fontSize = '0.8rem'
       s.paddingBottom = '1px'
-      s.paddingHorizontal = '5px'
+      s.paddingHorizontal = '0px'
       s.minHeight = '25px'
       s.gap = '2px'
       s.textColor = theme().red

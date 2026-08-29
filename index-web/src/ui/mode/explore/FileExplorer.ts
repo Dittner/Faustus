@@ -1,18 +1,18 @@
 import { RXObservableValue, RXSubject } from "flinker"
 import { globalContext } from "../../../App"
 import { IndexContext } from "../../IndexContext"
-import { OperatingModeClass } from "../OperatingMode"
 import { generateUID, Path, sortByKeys } from "../../../app/Utils"
 import { TextFile } from "../../../domain/DomainModel"
 import { InputBufferController } from "../../controls/Input"
 import { FileNode } from "../FileNode"
 import { parseKeyToCode } from "../Action"
 import { log } from "../../../app/Logger"
+import { OperatingMode } from "../OperatingMode"
 
 const FILES_SORT = sortByKeys(['isDir', 'alias'], [false, true])
 const PATH_ALLOWED_SYMBOLS: Set<string> = new Set('_0123456789/abcdefghijklmnopqrstuvwxyz'.split(''))
 
-export class FileExplorer extends OperatingModeClass {
+export class FileExplorer extends OperatingMode {
   readonly $openedDirPath = new RXSubject<string, never>('')
   readonly $openedDirFiles = new RXObservableValue<Array<FileNode>>([])
   readonly $selectedFilePath = new RXObservableValue<string>('')
@@ -31,6 +31,7 @@ export class FileExplorer extends OperatingModeClass {
     this.$openedDirPath.pipe()
       .onReceive(openedDirPath => {
         log('openedDirPath has changed:', openedDirPath)
+        if (openedDirPath === '') openedDirPath = '/'
         this.$openedDirFiles.value = this.$allFiles.value.filter(f => {
           if (f.isDir) return (openedDirPath + f.id + '/') === f.path
           else return (openedDirPath + f.id) === f.path
@@ -42,6 +43,8 @@ export class FileExplorer extends OperatingModeClass {
   }
 
   private addKeybindings() {
+    this.actionsList.add('o', 'Show recent opened files', () => this.showRecentOpenedFiles())
+
     this.actionsList.add('g', 'Select first file', () => this.moveCursorToTheFirst())
     this.actionsList.add('G', 'Select last file', () => this.moveCursorToTheLast())
 
@@ -60,6 +63,10 @@ export class FileExplorer extends OperatingModeClass {
     this.actionsList.add(':d<CR>', 'Delete file', () => this.deleteFile())
     this.actionsList.add('r', 'Rename file', () => this.renameFile())
     this.actionsList.add('/', 'Search file', () => this.searchFile())
+  }
+
+  showRecentOpenedFiles() {
+    this.ctx.recentOpenedFilesManager.showFilesList()
   }
 
   private moveCursor(step: number) {

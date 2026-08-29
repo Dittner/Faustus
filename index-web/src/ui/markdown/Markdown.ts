@@ -1,8 +1,8 @@
-import { div, TextProps } from "flinker-dom"
-import { UniversalCodeHighlighter } from "../highlight/UniversalCodeHighlighter"
-import { BashCodeHighlighter } from "../highlight/BashHighlighter"
-import { theme } from "../theme/ThemeManager"
-import { md, MDGrammar, MDLineGrammarRule, MDMultilineGrammarRule, MDParser } from "flinker-markdown"
+import { div, TextProps } from "flinker-dom";
+import { UniversalCodeHighlighter } from "../highlight/UniversalCodeHighlighter";
+import { BashCodeHighlighter } from "../highlight/BashHighlighter";
+import { theme } from "../theme/ThemeManager";
+import { md, MDGrammar, MDLineGrammarRule, MDMultilineGrammarRule, MDParser } from "flinker-markdown";
 
 export const universalCodeHighlighter = new UniversalCodeHighlighter()
 export const bashCodeHighlighter = new BashCodeHighlighter()

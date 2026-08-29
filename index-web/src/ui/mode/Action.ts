@@ -1,3 +1,7 @@
+import { RXObservableValue } from "flinker"
+import { IndexContext } from "../IndexContext"
+import { themeManager } from "../theme/ThemeManager"
+
 export class Action {
   readonly desc: string
   readonly cmd: string
@@ -48,4 +52,50 @@ const keyMap = (key: string) => {
 export const parseKeyToCode = (e: KeyboardEvent) => {
   const key = keyMap(e.key)
   return e.ctrlKey || e.metaKey ? '<C-' + key + '>' : key
+}
+
+export class ActionController {
+  readonly ctx: IndexContext
+  readonly $showActions = new RXObservableValue(false)
+  readonly actionsList = new ActionsList()
+  lastExecutedAction: Action | undefined = undefined
+
+  constructor(ctx: IndexContext) {
+    this.ctx = ctx
+    this.actionsList.add('?', 'Show list of actions', () => this.$showActions.value = true)
+    this.actionsList.add('<ESC>', 'Hide windows', () => this.escPressed())
+    this.actionsList.add('t', 'Switch theme', () => themeManager.switchTheme())
+    this.actionsList.add('.', 'Repeat last action', () => this.lastExecutedAction?.handler())
+  }
+
+  private cmdBuffer = ''
+  private defMsg: any = undefined
+  onKeyDown(e: KeyboardEvent): void {
+    if (this.actionsList.actions.length === 0 || e.key === 'Shift') return
+    //log('key:', e.key, ', code:', e.code, ', keycode:', e.keyCode)
+    const code = parseKeyToCode(e)
+
+    this.cmdBuffer += code
+
+    const a = this.actionsList.find(this.cmdBuffer)
+    if (a) {
+      if (this.cmdBuffer !== '.')
+        this.lastExecutedAction = a
+      this.cmdBuffer = ''
+      this.defMsg = { text: this.lastExecutedAction?.cmd ?? '', level: 'info' }
+      this.ctx.$msg.value = this.defMsg
+      a.handler()
+      e.preventDefault()
+    } else if (this.actionsList.some(this.cmdBuffer)) {
+      e.preventDefault()
+      this.ctx.$msg.value = { text: this.cmdBuffer, level: 'info' }
+    } else {
+      this.cmdBuffer = ''
+      this.ctx.$msg.value = this.defMsg
+    }
+  }
+
+  escPressed() {
+    this.$showActions.value = false
+  }
 }

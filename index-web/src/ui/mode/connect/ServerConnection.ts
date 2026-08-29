@@ -1,9 +1,9 @@
 import { RXObservableValue } from "flinker";
 import { globalContext } from "../../../App";
 import { IndexContext } from "../../IndexContext";
-import { OperatingModeClass } from "../OperatingMode";
+import { OperatingMode } from "../OperatingMode";
 
-export class ServerConnection extends OperatingModeClass {
+export class ServerConnection extends OperatingMode {
   readonly $logs = new RXObservableValue('')
   constructor(ctx: IndexContext) {
     super('connect', ctx)
@@ -19,8 +19,12 @@ export class ServerConnection extends OperatingModeClass {
       .onReceive(_ => {
         this.$logs.value += 'Success\n'
         const path = document.location.pathname.split('#')[0]
-        if (path.endsWith('/')) this.ctx.explorer.activate()
-        else this.ctx.reader.activate()
+        if (path.endsWith('/')) {
+          this.ctx.explorer.activate()
+        }
+        else {
+          this.ctx.reader.activate()
+        }
       })
       .onError(e => {
         this.$logs.value += 'Error: ' + e.message + '\n'

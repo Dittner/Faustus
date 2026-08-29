@@ -24,6 +24,7 @@ export interface GlobalTheme {
   red: string
   gray: string
   green: string
+  action: string
   code: string
   codeBg: string
   em: string
@@ -124,8 +125,8 @@ export class ThemeManager {
       fontSizeM: '1.1rem',
       fontSize: '1rem',
       defFontSize: 'inherit',
-      fontSizeS: '0.85rem',
-      fontSizeXS: '0.65rem',
+      fontSizeS: '0.8rem',
+      fontSizeXS: '0.7rem',
 
       defFontWeight: 'normal',
 
@@ -137,7 +138,7 @@ export class ThemeManager {
       editorText: text,
       red,
       gray: '#79848d',
-      green: '#546f7cff',
+      green: '#546f7c',
       header,
       em: '#7c8393',
       accent: '#b0c8b3',
@@ -157,7 +158,8 @@ export class ThemeManager {
       orange: '#463d16',
       statusFg: accent,
       statusBg: '#181f23',
-      actionsBg: '#212125',
+      action: '#a7f0f0',
+      actionsBg: '#2a3535',
       menuDir: '#8d74a6',
       menuFile: '#5ea570',
       menuPath: '#4e6c70',
@@ -195,11 +197,11 @@ export class ThemeManager {
       editorText: text,
       red,
       gray: '#79848d',
-      green: '#546f7cff',
+      green: '#546f7c',
       header,
       em: '#7c8393',
       accent: '#b0c8b3',
-      code: '#adb4c1',
+      code: white,
       codeBg: t.transparent,
       blue,
       violet: '#aeadde',
@@ -214,7 +216,8 @@ export class ThemeManager {
       orange: '#463d16',
       statusFg: accent,
       statusBg: '#181f23',
-      actionsBg: '#212125',
+      actionsBg: '#1c2020',
+      action: '#89c1c4',
       menuDir: '#8d74a6',
       menuFile: '#74a7aa',
       menuPath: '#4e6c70',
@@ -233,8 +236,8 @@ export class ThemeManager {
   * */
 
   createSearchTranslationTheme(t: GlobalTheme): GlobalTheme {
-    const text = '#888888' //707f8b 
-    const accent = '#a5a5a5'  //9fa786
+    const text = '#858b8f' //707f8b 
+    const accent = '#9fa8ad'  //9fa786
     return Object.assign({}, t, {
       id: t.id + '-st',
       text: text,
@@ -242,12 +245,12 @@ export class ThemeManager {
       text50: text + 'aa',
       strong: accent,
       header: accent,
-      fontSizeXL: t.fontSize,
-      fontSizeL: t.fontSizeS,
-      fontSizeM: t.fontSizeS,
-      defFontSize: t.fontSizeS,
-      fontSizeS: t.fontSizeXS,
-      fontSizeXS: t.fontSizeXS,
+      fontSizeXL: '0.9rem',
+      fontSizeL: '0.8rem',
+      fontSizeM: '0.8rem',
+      defFontSize: '0.8rem',
+      fontSizeS: '0.7rem',
+      fontSizeXS: '0.7rem',
       note: '#779685',
     })
   }
@@ -498,6 +501,7 @@ export class ThemeManager {
 
     const imgProps: UIComponentProps = {
       maxWidth: Math.min(1000, window.innerWidth - 40) + 'px',
+      display: 'inline'
       //paddingTop: '50px'
     }
     buildRule(imgProps, parentSelector, 'img')

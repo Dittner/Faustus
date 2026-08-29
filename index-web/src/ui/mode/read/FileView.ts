@@ -10,6 +10,7 @@ import { PageHeaderListView } from "./PageHeaderListView"
 import { EditorView } from "./TextEditor"
 import { TranslationPanel } from "./Translation"
 import { log } from "../../../app/Logger"
+import { TextReplacerView } from "./TextReplacer"
 
 export const FileView = () => {
   log('new FileView')
@@ -49,6 +50,7 @@ export const FileView = () => {
           .react(s => {
             const showPageHeaderList = ctx.reader.$showPageHeaderList.value
             const isEditing = ctx.reader.$editMode.value !== 'none'
+            s.visible = ctx.reader.$editMode.value !== 'file'
             s.position = 'absolute'
             s.fontFamily = FontFamily.ARTICLE
             s.textColor = theme().text
@@ -57,15 +59,17 @@ export const FileView = () => {
             s.halign = 'left'
             s.top = '0'
             s.paddingTop = globalContext.app.$layout.value.navBarHeight + 'px'
-            s.width = globalContext.app.$layout.value.contentWidth + 'px'
+            //s.width = globalContext.app.$layout.value.contentWidth + 'px'
+            s.width = '100%'
             s.gap = '20px'
 
             if (isEditing)
               s.left = window.innerWidth / 2 - 20 + 'px'
             else if (showPageHeaderList)
               s.left = globalContext.app.$layout.value.menuWidth + 'px'
-            else
-              s.left = '0px'
+            else {
+              s.left = globalContext.app.$layout.value.menuWidth + 'px'
+            }
           })
 
         TranslationPanel()
@@ -73,7 +77,10 @@ export const FileView = () => {
             s.position = 'fixed'
             s.right = '20px'
             s.top = '50px'
+            s.padding = '20px'
             s.width = '400px'
+            s.bgColor = theme().appBg
+            s.border = '10px solid ' + theme().searchTranslationTheme.text + '44'
           })
 
         EditorView()
@@ -91,8 +98,20 @@ export const FileView = () => {
             s.bgColor = theme().appBg
             s.caretColor = theme().isLight ? '#000000' : theme().red
             s.paddingHorizontal = '20px'
+            s.paddingBottom = layout.statusBarHeight + 'px'
             s.position = 'fixed'
             s.textColor = theme().text
+          })
+
+        TextReplacerView(file)
+          .observe(ctx.reader.$editMode)
+          .react(s => {
+            s.visible = ctx.reader.$editMode.value === 'file'
+            s.position = 'absolute'
+            s.top = '0'
+            s.paddingTop = globalContext.app.$layout.value.navBarHeight + 'px'
+            s.width = window.innerWidth / 2 - 100 + 'px'
+            s.left = window.innerWidth / 2 + 20 + 'px'
           })
 
         Header(ctx.reader)
@@ -118,7 +137,6 @@ const PageList = (file: TextFile) => {
     .react(s => {
       s.className = 'article'
       s.textColor = theme().text
-      s.width = '100%'
     })
     .items(() => file.pages)
     .itemRenderer(PageView)
@@ -152,26 +170,70 @@ export const PageView = (page: Page, index: number) => {
 
       s.id = '#' + index
       s.gap = '20px'
-      s.width = '100%'
-      s.paddingBottom = '40px'
+      //s.paddingBottom = '40px'
       s.paddingLeft = '60px'
       s.borderLeft = '1px solid ' + (isEditing ? theme().red : theme().transparent)
     })
     .children(() => {
 
-      Markdown()
-        .observe(page)
-        .react(s => {
-          s.className = theme().id
-          s.width = '100%'
-          s.maxWidth = '800px'
-          s.minHeight = '30px'
-          s.text = page.text
-          s.fontSize = theme().defFontSize
-          s.absolutePathPrefix = globalContext.indexServer.assetsUrl
-          //s.showRawText = page.file.showRawText
-          //s.fontFamily = isCode ? 'var(--font-family)' : 'var(--font-family-article)'
+      hstack().react(s => {
+        s.gap = '20px'
+        s.valign = 'top'
+      })
+        .children(() => {
+
+          Markdown()
+            .observe(page)
+            .react(s => {
+              const hasTranslation = page.text.indexOf('~~') !== -1
+              s.className = theme().id
+              s.width = '100%'
+              s.maxWidth = hasTranslation ? '600px' : '850px'
+              s.minHeight = '30px'
+              if (hasTranslation) {
+                const text = page.text.split('~~').map((text: string, index: number) => index % 2 === 0 ? text : '')
+                s.text = text.join('').trim()
+              } else {
+                s.text = page.text
+              }
+
+              s.fontSize = theme().defFontSize
+              s.absolutePathPrefix = globalContext.indexServer.assetsUrl
+              //s.showRawText = page.file.showRawText
+              //s.fontFamily = isCode ? 'var(--font-family)' : 'var(--font-family-article)'
+            })
+
+          Markdown()
+            .observe(page)
+            .react(s => {
+              const hasTranslation = page.text.indexOf('~~') !== -1
+              s.visible = hasTranslation
+              s.className = theme().id
+              s.width = '100%'
+              s.maxWidth = hasTranslation ? '600px' : '850px'
+              s.minHeight = '30px'
+              if (hasTranslation) {
+                const text = page.text.split('~~').map((text: string, index: number) => index % 2 !== 0 ? text : '')
+                s.text = text.join('').trim()
+              }
+
+              s.textColor = theme().text + 'dd'
+              s.fontSize = theme().defFontSize
+              s.absolutePathPrefix = globalContext.indexServer.assetsUrl
+              //s.showRawText = page.file.showRawText
+              //s.fontFamily = isCode ? 'var(--font-family)' : 'var(--font-family-article)'
+            })
         })
+
+      spacer().react(s => {
+        s.width = '400px'
+        s.bgColor = theme().text + '40'
+        s.height = '10px'
+        //s.bottom = '0'
+        //s.marginLeft = '350px'
+        s.marginVertical = '80px'
+      })
+
     })
 }
 

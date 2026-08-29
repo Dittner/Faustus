@@ -34,7 +34,7 @@ export class Application {
   private getLayout(): Layout {
     const windowWidth = window.innerWidth - 20
     const contentWidth = this.isMobileDevice ? windowWidth : Math.min(950, windowWidth)
-    const menuWidth = this.isMobileDevice ? 0 : Math.min(450, windowWidth - contentWidth)
+    const menuWidth = this.isMobileDevice ? 0 : Math.min(400, windowWidth - contentWidth)
 
     return {
       isMobile: this.isMobileDevice,

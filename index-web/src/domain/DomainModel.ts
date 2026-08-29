@@ -1,4 +1,4 @@
-import { RXObservableEntity } from 'flinker'
+import { RXObservableEntity, RXObservableValue } from 'flinker'
 import { generateUID, Path } from '../app/Utils'
 import { log, logWarn } from '../app/Logger'
 
@@ -23,6 +23,7 @@ export const FILE_SECTION_BIRTH_YEAR = '[BIRTH_YEAR]'
 export const FILE_SECTION_DEATH_YEAR = '[DEATH_YEAR]'
 
 export class TextFile extends RXObservableEntity<TextFile> {
+  readonly $selectedPage = new RXObservableValue<Page | undefined>(undefined)
   readonly uid = generateUID()
   isDamaged = false
   isDirectory = false
@@ -70,8 +71,8 @@ export class TextFile extends RXObservableEntity<TextFile> {
           const body = sepIndex === -1 ? '' : data.text.substring(sepIndex + FILE_SECTION_BODY.length + 1)
 
           this.parseHeaders(headers)
-
           this._pages = body ? body.split('\n\n\n').map((text: string) => new Page(this, text)) : []
+          this.$selectedPage.value = this._pages.length > 0 ? this._pages[0] : undefined
           this.isDamaged = false
         }
       }
@@ -158,6 +159,7 @@ export class TextFile extends RXObservableEntity<TextFile> {
       return res
     } else {
       let text = ''
+      text += FILE_SECTION_ALIAS + '\nNoname' + '\n\n'
       text += FILE_SECTION_BIRTH_YEAR + '\n1900' + '\n\n'
       text += FILE_SECTION_DEATH_YEAR + '\n1999' + '\n\n'
       text += FILE_SECTION_AUTHOR + '\n' + 'Author A.' + '\n\n'

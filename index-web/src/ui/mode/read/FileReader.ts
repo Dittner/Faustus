@@ -2,15 +2,17 @@ import { RX, RXObservableValue } from "flinker"
 import { globalContext } from "../../../App"
 import { Page, TextFile } from "../../../domain/DomainModel"
 import { IndexContext } from "../../IndexContext"
-import { OperatingModeClass } from "../OperatingMode"
+import { OperatingMode } from "../OperatingMode"
 import { Path } from "../../../app/Utils"
 import { INote } from "../../../backend/DerTutorServer"
 import { log } from "../../../app/Logger"
+import { TextReplacer } from "./TextReplacer"
+
 
 type SEARCH_TRANSLATION_SUPPORTED_LANG = 'en' | 'de'
-export class FileReader extends OperatingModeClass {
+export class FileReader extends OperatingMode {
   readonly $selectedFile = new RXObservableValue<TextFile | undefined>(undefined)
-  readonly $selectedPage = new RXObservableValue<Page | undefined>(undefined)
+
   readonly $editingPage = new RXObservableValue<Page | undefined>(undefined)
 
   readonly $isFileChanged = new RXObservableValue(false)
@@ -23,11 +25,13 @@ export class FileReader extends OperatingModeClass {
   readonly $translationSearchInputBuffer = new RXObservableValue('')
   readonly $translationSearchInputFocused = new RXObservableValue(false)
   readonly $translationSearchResult = new RXObservableValue<INote | undefined>(undefined)
+  readonly textReplacer: TextReplacer
 
   constructor(ctx: IndexContext) {
     super('read', ctx)
+    this.textReplacer = new TextReplacer(this.$inputBuffer)
     this.addKeybindings()
-    this.subscribeToBrowserLocation()
+    //this.subscribeToBrowserLocation()
 
     this.$selectedFile.pipe()
       .skipNullable()
@@ -41,11 +45,13 @@ export class FileReader extends OperatingModeClass {
       .onReceive(_ => this.applyTextChanges())
       .subscribe()
 
-    this.$selectedPage.pipe()
+    this.$selectedFile.pipe()
+      .skipNullable()
+      .flatMap(f => f.$selectedPage)
       .onReceive(p => {
-        const f = this.$selectedFile.value
-        if (f && p) {
-          window.localStorage.setItem('pageIndexOf:' + f.path, f.pages.findIndex(item => item === p) + '')
+        if (p && p.file) {
+          const pageIndex = p.file.pages.findIndex(item => item === p)
+          this.ctx.recentOpenedFilesManager.add(p.file.alias || p.file.name, p.file.path, pageIndex === -1 ? 0 : pageIndex)
         }
       })
       .subscribe()
@@ -64,6 +70,10 @@ export class FileReader extends OperatingModeClass {
     if (this.$editMode.value === 'page') {
       if (this.$editingPage.value)
         this.$editingPage.value.text = this.$inputBuffer.value
+    } else if (this.$editMode.value === 'file') {
+      const f = this.$selectedFile.value
+      if (f && !f.hasChanges)
+        f.hasChanges = f.data.text !== this.$inputBuffer.value
     }
   }
 
@@ -74,6 +84,8 @@ export class FileReader extends OperatingModeClass {
   */
 
   private addKeybindings() {
+    this.actionsList.add('o', 'Show recent opened files', () => this.showRecentOpenedFiles())
+    
     this.actionsList.add('g', 'Select first chapter', () => this.moveCursorToTheFirst())
     this.actionsList.add('G', 'Select last chapter', () => this.moveCursorToTheLast())
 
@@ -82,11 +94,12 @@ export class FileReader extends OperatingModeClass {
     this.actionsList.add('k', 'Select prev chapter', () => this.moveCursor(-1))
     this.actionsList.add('<Left>', 'Select prev chapter', () => this.moveCursor(-1))
 
+
     this.actionsList.add('q', 'Quit', () => this.quit(false))
     this.actionsList.add(':q!<CR>', 'Quit without saving', () => this.quit(true))
     this.actionsList.add('<C-S>', 'Save changes', () => this.save())
 
-    this.actionsList.add('t', 'Toggle tree', () => this.toggleTree())
+    this.actionsList.add('m', 'Toggle menu', () => this.toggleTree())
     this.actionsList.add('f', 'Search files', () => this.searchFiles())
     this.actionsList.add('/', 'Translate word', () => this.focusTranslationSearchInput())
     this.actionsList.add('<Space>', "Play word's pronunciation", () => this.playTranslation())
@@ -98,6 +111,15 @@ export class FileReader extends OperatingModeClass {
     this.actionsList.add(':d<CR>', 'Delete page', () => this.deletePage())
     this.actionsList.add(':pj<CR>', 'Move page down', () => this.movePageDown())
     this.actionsList.add(':pk<CR>', 'Move page up', () => this.movePageUp())
+  }
+
+  override escPressed() {
+    super.escPressed()
+    this.clearTranslationSearchResults()
+  }
+
+  showRecentOpenedFiles() {
+    this.ctx.recentOpenedFilesManager.showFilesList()
   }
 
   focusTranslationSearchInput() {
@@ -120,27 +142,30 @@ export class FileReader extends OperatingModeClass {
 
   private moveCursor(step: number) {
     const f = this.$selectedFile.value
-    if (!f) return
-    const selectedPage = this.$selectedPage.value ?? (f.pages.length > 0 ? f.pages[0] : undefined)
+    if (!f || f.pages.length === 0) return
+
+    const selectedPage = f.$selectedPage.value ?? (f.pages.length > 0 ? f.pages[0] : undefined)
     for (let i = 0; i < f.pages.length; i++) {
       if (selectedPage === f.pages[i]) {
         if ((i + step) >= 0 && (i + step) < f.pages.length) {
-          this.$selectedPage.value = f.pages[i + step]
+          f.$selectedPage.value = f.pages[i + step]
           this.scrollToSelectedChapter()
         }
         return
       }
     }
-    this.$selectedPage.value = f.pages.length > 0 ? f.pages[0] : undefined
+
+    f.$selectedPage.value = f.pages.length > 0 ? f.pages[0] : undefined
     this.scrollToSelectedChapter()
   }
 
   moveCursorUnder(p: Page) {
     const f = this.$selectedFile.value
     if (!f || f.pages.length === 0) return
+
     for (let i = 0; i < f.pages.length; i++) {
       if (f.pages[i] === p) {
-        this.$selectedPage.value = p
+        f.$selectedPage.value = p
         this.scrollToSelectedChapter()
         break
       }
@@ -150,7 +175,7 @@ export class FileReader extends OperatingModeClass {
   private moveCursorToTheFirst() {
     const f = this.$selectedFile.value
     if (f && f.pages.length > 0) {
-      this.$selectedPage.value = f.pages[0]
+      f.$selectedPage.value = f.pages[0]
       this.scrollToSelectedChapter()
     }
   }
@@ -158,26 +183,32 @@ export class FileReader extends OperatingModeClass {
   private moveCursorToTheLast() {
     const f = this.$selectedFile.value
     if (f && f.pages.length > 0) {
-      this.$selectedPage.value = f.pages[f.pages.length - 1]
+      f.$selectedPage.value = f.pages[f.pages.length - 1]
       this.scrollToSelectedChapter()
     }
   }
 
   private scrollToSelectedChapter() {
-    const p = this.$selectedPage.value
-    if (p) {
-      const index = p.file.pages.findIndex(item => item === p)
-      if (index !== -1) {
-        const element = document.getElementById('#' + index)
-        if (element) {
-          const elementPos = Math.round(element.getBoundingClientRect().top + document.documentElement.scrollTop)
-          log('scrollToSelectedChapter:  window.scrollTo', index)
-          window.scrollTo(0, elementPos - globalContext.app.$layout.value.navBarHeight)
-        } else {
-          log('ScrollToSelectedChapter: Selected page html element not found, perhaps it is not mounted yet')
-        }
-      } else {
-        window.scrollTo(0, 0)
+    const f = this.$selectedFile.value
+    if (f) {
+      const p = f.$selectedPage.value
+
+      if (p) {
+        RX.delayedComplete(50).pipe().onComplete(() => {
+          const index = p.file.pages.findIndex(item => item === p)
+          if (index !== -1) {
+            const element = document.getElementById('#' + index)
+            if (element) {
+              const elementPos = Math.round(element.getBoundingClientRect().top + document.documentElement.scrollTop)
+              log('scrollToSelectedChapter:  window.scrollTo', index)
+              window.scrollTo(0, elementPos - globalContext.app.$layout.value.navBarHeight)
+            } else {
+              log('ScrollToSelectedChapter: Selected page html element not found, perhaps it is not mounted yet')
+            }
+          } else {
+            window.scrollTo(0, 0)
+          }
+        }).subscribe()
       }
     }
   }
@@ -269,10 +300,11 @@ export class FileReader extends OperatingModeClass {
       return
     }
 
-    const page = this.$selectedPage.value
-    if (page) {
-      this.$inputBuffer.value = page.text
-      this.$editingPage.value = page
+    const selectedFile = this.$selectedFile.value
+    const selectedPage = selectedFile && selectedFile.$selectedPage.value
+    if (selectedPage) {
+      this.$inputBuffer.value = selectedPage.text
+      this.$editingPage.value = selectedPage
       this.$editMode.value = 'page'
     } else {
       this.ctx.$msg.value = { level: 'warning', text: 'Page not selected' }
@@ -282,7 +314,7 @@ export class FileReader extends OperatingModeClass {
   private editFile() {
     const file = this.$selectedFile.value
     if (file && file.data.text) {
-      this.$inputBuffer.value = file.data.text
+      this.$inputBuffer.value = file.serialize().text
       this.$editMode.value = 'file'
     }
   }
@@ -311,8 +343,10 @@ export class FileReader extends OperatingModeClass {
       if (p && this.$editMode.value === 'page')
         p.text = this.$inputBuffer.value
       else if (f && this.$editMode.value === 'file' && f.data.text !== this.$inputBuffer.value) {
+        const textBefore = f.data.text
         f.deserialize({ path: f.path, is_dir: f.isDirectory, text: this.$inputBuffer.value })
         f.hasChanges = true
+        f.data.text = textBefore
         this.moveCursorToTheFirst()
       }
       this.$editingPage.value = undefined
@@ -326,14 +360,14 @@ export class FileReader extends OperatingModeClass {
       return
     }
 
-    const f = this.$selectedFile.value
-    if (f) {
-      const selectedPage = this.$selectedPage.value
+    const selectedFile = this.$selectedFile.value
+    if (selectedFile) {
+      const selectedPage = selectedFile.$selectedPage.value
       if (selectedPage) {
-        const curPageIndex = f.pages.findIndex(p => p.uid === selectedPage.uid)
-        this.$selectedPage.value = (f.createPage(curPageIndex + 1))
+        const curPageIndex = selectedFile.pages.findIndex(p => p.uid === selectedPage.uid)
+        selectedFile.$selectedPage.value = (selectedFile.createPage(curPageIndex + 1))
       } else {
-        this.$selectedPage.value = f.createPage(f.pages.length)
+        selectedFile.$selectedPage.value = selectedFile.createPage(selectedFile.pages.length)
         window.scroll(0, document.documentElement.scrollHeight)
       }
     } else {
@@ -347,13 +381,13 @@ export class FileReader extends OperatingModeClass {
       return
     }
 
-    const f = this.$selectedFile.value
-    if (f) {
-      const selectedPage = this.$selectedPage.value
+    const selectedFile = this.$selectedFile.value
+    if (selectedFile) {
+      const selectedPage = selectedFile.$selectedPage.value
       if (selectedPage) {
-        const index = f.remove(selectedPage)
+        const index = selectedFile.remove(selectedPage)
         if (index !== -1) {
-          this.$selectedPage.value = index < f.pages.length ? f.pages[index] : f.pages.length > 0 ? f.pages[f.pages.length - 1] : undefined
+          selectedFile.$selectedPage.value = index < selectedFile.pages.length ? selectedFile.pages[index] : selectedFile.pages.length > 0 ? selectedFile.pages[selectedFile.pages.length - 1] : undefined
         }
       } else {
         this.ctx.$msg.value = { level: 'warning', text: 'Page not selected' }
@@ -369,11 +403,11 @@ export class FileReader extends OperatingModeClass {
       return
     }
 
-    const f = this.$selectedFile.value
-    if (f) {
-      const selectedPage = this.$selectedPage.value
+    const selectedFile = this.$selectedFile.value
+    if (selectedFile) {
+      const selectedPage = selectedFile.$selectedPage.value
       if (selectedPage) {
-        f.movePageDown(selectedPage)
+        selectedFile.movePageDown(selectedPage)
       } else {
         this.ctx.$msg.value = { level: 'warning', text: 'Page not selected' }
       }
@@ -388,11 +422,11 @@ export class FileReader extends OperatingModeClass {
       return
     }
 
-    const f = this.$selectedFile.value
-    if (f) {
-      const selectedPage = this.$selectedPage.value
+    const selectedFile = this.$selectedFile.value
+    if (selectedFile) {
+      const selectedPage = selectedFile.$selectedPage.value
       if (selectedPage) {
-        f.movePageUp(selectedPage)
+        selectedFile.movePageUp(selectedPage)
       } else {
         this.ctx.$msg.value = { level: 'warning', text: 'Page not selected' }
       }
@@ -407,18 +441,18 @@ export class FileReader extends OperatingModeClass {
   *
   */
 
-  private subscribeToBrowserLocation() {
-    globalContext.app.$location.pipe()
-      .onReceive(_ => {
-        this.parseBrowserLocation()
-      })
-      .subscribe()
-  }
+  // private subscribeToBrowserLocation() {
+  //   globalContext.app.$location.pipe()
+  //     .onReceive(_ => {
+  //       this.parseBrowserLocation()
+  //     })
+  //     .subscribe()
+  // }
 
   private scrollWindowTo(pos: number) {
     setTimeout(function () {
       window.scrollTo(0, pos)
-    }, 10);
+    }, 50);
   }
 
   private cache: Record<string, TextFile> = {}
@@ -435,8 +469,10 @@ export class FileReader extends OperatingModeClass {
       this.$selectedFile.value = this.cache[path]
       this.scrollWindowTo(this.$selectedFile.value.scrollPos)
       log('FileViewMode:parseBrowserLocation, file got from cache, scrollPos:', this.$selectedFile.value.scrollPos)
+      //this.scrollToSelectedChapter()
     } else if (!path.endsWith('/')) {
       this.ctx.$msg.value = { text: 'Loading...', level: 'info' }
+      log('Loading file...:', path)
       globalContext.indexServer.loadFile(path).pipe()
         .onReceive((data: any) => {
           this.ctx.$msg.value = undefined
@@ -445,16 +481,13 @@ export class FileReader extends OperatingModeClass {
           if (f.isDamaged) {
             this.ctx.$msg.value = { text: 'Files is damaged', level: 'error' }
           } else {
+            const recentFile = this.ctx.recentOpenedFilesManager.$files.value.find(recentFile => recentFile.path === f.path)
             this.$selectedFile.value = f
             this.cache[path] = f
-            const lastOpenedPageIndex = window.localStorage.getItem('pageIndexOf:' + path)
-            if (lastOpenedPageIndex) {
-              const filePageIndex = parseInt(lastOpenedPageIndex)
+            if (recentFile) {
+              const filePageIndex = recentFile.pageIndex
+              this.moveCursor(filePageIndex)
 
-              RX.delayedComplete(10).pipe()
-                .onComplete(() => {
-                  this.moveCursor(filePageIndex)
-                }).subscribe()
             } else {
               this.moveCursorToTheFirst()
             }
@@ -482,11 +515,11 @@ export class FileReader extends OperatingModeClass {
     }
   }
 
-  pageListDidRender(): void {
-    log('FileReader:didPageListRender')
-    RX.delayedComplete(10).pipe()
-      .onComplete(() => {
-        this.scrollToSelectedChapter()
-      }).subscribe()
-  }
+  // pageListDidRender(): void {
+  //   log('FileReader:didPageListRender')
+  //   RX.delayedComplete(10).pipe()
+  //     .onComplete(() => {
+  //       this.scrollToSelectedChapter()
+  //     }).subscribe()
+  // }
 }

@@ -395,9 +395,9 @@ class TextFormatter {
   replaceHyphenWithDash(s: string): string {
     return s
       .replace(/ -- /g, ' — ')
+      .replace(/ [-–]/g, ' —')
       .replace(/\n-- /g, '\n— ')
-      .replace(/([,.])- /g, '$1 — ')
-      .replace(/ [-–] /g, ' — ')
+      .replace(/([,.])[-–] /g, '$1 — ')
   }
 
   removeHyphenAndSpace(s: string): string {
@@ -419,15 +419,4 @@ class TextFormatter {
       .replace(/\n\s+\n/g, '\n\n')
       .replace(new RegExp(`\n{${this.MAX_EMPTY_LINES},}`, 'g'), '\n'.repeat(this.MAX_EMPTY_LINES))
   }
-
-  // replaceWith() {
-  //   const substr = this.$replaceSubstring.value
-  //   const replaceValue = this.$replaceWith.value
-
-  //   const f = this.ctx.$selectedFile.value
-  //   if (f?.isEditing && substr) {
-  //     f.replaceWith(substr, replaceValue)
-  //     this.$inputBuffer.value = this.selectedPage?.text ?? ''
-  //   }
-  // }
 }

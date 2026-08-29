@@ -1,7 +1,7 @@
 import { RX, RXObservableValue } from "flinker"
 import { globalContext } from "../../../App"
 import { IndexContext } from "../../IndexContext"
-import { OperatingModeClass } from "../OperatingMode"
+import { OperatingMode } from "../OperatingMode"
 import { sortByKeys } from "../../../app/Utils"
 import { FileNode } from "../FileNode"
 import { parseKeyToCode } from "../Action"
@@ -9,7 +9,7 @@ import { log } from "../../../app/Logger"
 
 const FILES_SORT = sortByKeys(['isDir', 'alias'], [false, true])
 
-export class FileSearcher extends OperatingModeClass {
+export class FileSearcher extends OperatingMode {
   readonly $selectedFilePath = new RXObservableValue('')
   readonly $availableFiles = new RXObservableValue<Array<FileNode>>([])
   readonly $buffer = new RXObservableValue('')
@@ -135,8 +135,8 @@ export class FileSearcher extends OperatingModeClass {
           this.filesAliasLowerCasedVoc.set(path, data[path].toLowerCase())
         }
 
-        const diary = this.filesAliasLowerCasedVoc.get('index/dittner/diary') ?? ''
-        log('TAGEBUCH ', diary, ', includes buch:', diary.includes('buch'))
+        //const diary = this.filesAliasLowerCasedVoc.get('index/dittner/diary') ?? ''
+        //log('TAGEBUCH ', diary, ', includes buch:', diary.includes('buch'))
         this.loadFilesTree()
       })
       .onError(e => {

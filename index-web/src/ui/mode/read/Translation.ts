@@ -23,7 +23,6 @@ export const TranslationPanel = () => {
       hstack().react(s => {
         s.valign = 'center'
         s.width = '100%'
-        s.maxWidth = '300px'
         s.gap = '10px'
         s.fontSize = theme().fontSizeXS
         s.paddingVertical = '2px'
@@ -100,7 +99,7 @@ export const TranslationPanel = () => {
         .observe(ctx.reader.$translationSearchResult)
         .react(s => {
           s.visible = ctx.reader.$translationSearchInputBuffer.value.length > 0
-          s.className = theme().searchTranslationTheme.id
+          s.className = 'listScrollbar ' + theme().searchTranslationTheme.id
           s.lineHeight = '1.4'
           s.fontFamily = FontFamily.ARTICLE
           s.fontSize = '0.8rem'
@@ -108,6 +107,10 @@ export const TranslationPanel = () => {
           s.width = '100%'
           s.text = ctx.reader.$translationSearchResult.value?.text ?? ''
           s.absolutePathPrefix = globalContext.derTutorServer.baseUrl
+
+          const layout = globalContext.app.$layout.value
+          s.maxHeight = window.innerHeight - layout.navBarHeight - layout.statusBarHeight - 100 + 'px'
+          s.enableOwnScroller = true
         })
     })
 }
@@ -122,7 +125,6 @@ const QuickSearchInput = () => {
       s.halign = 'stretch'
       s.width = '100%'
       s.gap = '5px'
-      s.maxWidth = '300px'
       s.height = '35px'
       s.border = '1px solid ' + (ctx.reader.$translationSearchInputFocused.value ? theme().accent : theme().text50)
       s.cornerRadius = '4px'

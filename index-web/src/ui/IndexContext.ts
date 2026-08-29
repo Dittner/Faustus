@@ -6,6 +6,10 @@ import { FileReader } from './mode/read/FileReader'
 import { FileExplorer } from './mode/explore/FileExplorer'
 import { FileSearcher } from './mode/search/FileSearch'
 import { log } from '../app/Logger'
+import { KeyValueStore } from '../app/KeyValueStore'
+import { RXStack } from '../app/Utils'
+import { RecentOpenedFilesManager } from './mode/RecentOpenedFilesManager'
+import { ActionController } from './mode/Action'
 
 export interface Message {
   readonly level?: 'warning' | 'error' | 'info'
@@ -14,14 +18,16 @@ export interface Message {
 
 export class IndexContext {
   readonly $mode: RXObservableValue<OperatingMode>
-
-  //readonly $selectedFileChapter = new RXObservableValue('')
+  readonly $actionControllerStack = new RXStack<ActionController>()
+  readonly $activeActionController = new RXObservableValue<ActionController | undefined>(undefined)
   readonly $msg = new RXObservableValue<Message | undefined>(undefined)
 
+  readonly localStore: KeyValueStore
   readonly connection: ServerConnection
   readonly explorer: FileExplorer
   readonly reader: FileReader
   readonly searcher: FileSearcher
+  readonly recentOpenedFilesManager: RecentOpenedFilesManager
   static self: IndexContext
 
   static init() {
@@ -34,6 +40,8 @@ export class IndexContext {
   private constructor() {
     log('new IndexContext')
 
+    this.localStore = new KeyValueStore('IndexLocalStore')
+    this.recentOpenedFilesManager = new RecentOpenedFilesManager(this)
     this.connection = new ServerConnection(this)
     this.$mode = new RXObservableValue(this.connection)
     this.explorer = new FileExplorer(this)
@@ -41,16 +49,21 @@ export class IndexContext {
     this.searcher = new FileSearcher(this)
     this.connection.activate()
 
+    this.$actionControllerStack.pipe()
+      .onReceive(stack => {
+        this.$activeActionController.value = stack.readLast()
+      })
+      .subscribe()
+
     document.addEventListener('keydown', this.onKeyDown.bind(this))
   }
 
   private onKeyDown(e: KeyboardEvent): void {
-    if (document.activeElement?.tagName !== 'INPUT')
-      this.$mode.value.onKeyDown(e)
+    if (document.activeElement?.tagName === 'INPUT') return
+    this.$actionControllerStack.readLast()?.onKeyDown(e)
   }
 
   navigate(to: string) {
     globalContext.app.navigate(to)
   }
 }
-

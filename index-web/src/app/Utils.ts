@@ -1,3 +1,5 @@
+import { RXAnyPipeline, RXObservableEntity, RXPublisher } from "flinker"
+
 const uidPrefix = 'u' + (Date.now() - (new Date(2020, 1, 1)).getTime()).toString(10) + 'x'
 let uidNum = 0
 export type UID = string
@@ -74,5 +76,70 @@ export class Path {
   static stem(p: string) {
     const res = p.match(Path.stemReg)
     return res && res.length > 1 ? res[1] : p
+  }
+}
+
+export class RXStack<T> extends RXObservableEntity<RXStack<T>> {
+  private readonly items: T[] = []
+
+  push(item: T) {
+    this.items.push(item)
+    this.mutated()
+  }
+
+  pop() {
+    if (this.items.length > 0) {
+      const value = this.items.pop()
+      this.mutated()
+      return value
+    }
+    return undefined
+  }
+
+  popAll() {
+    if (this.items.length > 0) {
+      this.items.length = 0
+      this.mutated()
+    }
+  }
+
+  get length() {
+    return this.items.length
+  }
+
+  isEmpty() {
+    return this.items.length === 0
+  }
+
+  readLast() {
+    return this.isEmpty() ? undefined : this.items[this.items.length - 1]
+  }
+}
+
+export class RXObservableArray<Item> extends RXPublisher<Item[], any> {
+  private readonly _values: Item[]
+
+  constructor(items: Item[] | undefined) {
+    super()
+    this._values = items ?? []
+  }
+
+  push(item: Item) {
+    this._values.push(item)
+    super.send(this._values)
+  }
+
+  pop() {
+    this._values.pop()
+    super.send(this._values)
+  }
+
+  get length() {
+    return this._values.length
+  }
+
+  didSubscribe(p: RXAnyPipeline) {
+    p.send(this._values, false)
+    this.isComplete && p.sendComplete(false)
   }
 }

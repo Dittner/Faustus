@@ -1,7 +1,6 @@
 import { RX, RXObservableValue } from "flinker"
 import { globalContext } from "../../../App"
 import { Page, TextFile } from "../../../domain/DomainModel"
-import { IndexContext } from "../../IndexContext"
 import { OperatingMode } from "../OperatingMode"
 import { Path } from "../../../app/Utils"
 import { INote } from "../../../backend/DerTutorServer"
@@ -27,8 +26,8 @@ export class FileReader extends OperatingMode {
   readonly $translationSearchResult = new RXObservableValue<INote | undefined>(undefined)
   readonly textReplacer: TextReplacer
 
-  constructor(ctx: IndexContext) {
-    super('read', ctx)
+  constructor() {
+    super('read')
     this.textReplacer = new TextReplacer(this.$inputBuffer)
     this.addKeybindings()
     //this.subscribeToBrowserLocation()

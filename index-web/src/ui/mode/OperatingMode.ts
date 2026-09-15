@@ -1,4 +1,3 @@
-import { IndexContext } from "../IndexContext"
 import { ActionController } from "./Action"
 
 export type OperatingModeID = 'connect' | 'explore' | 'read' | 'search'
@@ -6,8 +5,8 @@ export type OperatingModeID = 'connect' | 'explore' | 'read' | 'search'
 export class OperatingMode extends ActionController {
   readonly id: OperatingModeID
 
-  constructor(id: OperatingModeID, ctx: IndexContext) {
-    super(ctx)
+  constructor(id: OperatingModeID) {
+    super()
     this.id = id
   }
 
@@ -16,10 +15,12 @@ export class OperatingMode extends ActionController {
   }
 
   activate(): void {
-    this.ctx.$mode.value.deactivate()
-    this.ctx.$actionControllerStack.popAll()
-    this.ctx.$actionControllerStack.push(this)
-    this.ctx.$mode.value = this
+    if (this.ctx.$mode.value !== this) {
+      this.ctx.$mode.value.deactivate()
+      this.ctx.$actionControllerStack.popAll()
+      this.ctx.$actionControllerStack.push(this)
+      this.ctx.$mode.value = this
+    }
   }
 
   deactivate(): void {

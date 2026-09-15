@@ -5,14 +5,14 @@ import { FileExplorerView } from "./ui/mode/explore/FileExplorerView"
 import { FileView } from "./ui/mode/read/FileView"
 import { FileSearchView } from "./ui/mode/search/FileSearchView"
 import { GlobalContext } from "./app/GlobalContext"
-import { IndexContext } from "./ui/IndexContext"
 import { FontFamily } from "./ui/controls/Font"
-import { theme, themeManager } from "./ui/theme/ThemeManager"
+import { theme, themeManager } from "./ui/ThemeManager"
 import { Action } from "./ui/mode/Action"
 import { RecentOpenedFile } from "./ui/mode/RecentOpenedFilesManager"
+import { log } from "./app/Logger"
 
 export const globalContext = GlobalContext.init()
-IndexContext.init()
+globalContext.connection.activate()
 
 export function App() {
   return div()
@@ -35,14 +35,13 @@ export function App() {
 
 const SHORTKEY_TEXT_WIDTH = '160px'
 export const ActionsHelpView = () => {
-  const ctx = IndexContext.self
-
   return div()
-    .observe(ctx.$activeActionController.pipe().skipNullable().flatMap(ac => ac.$showActions).fork())
+    .observe(globalContext.$activeActionController.pipe().skipNullable().flatMap(ac => ac.$showActions).fork())
     .react(s => {
-      const ac = ctx.$activeActionController.value
+      const ac = globalContext.$activeActionController.value
       const layout = globalContext.app.$layout.value
-      s.visible = ac && ac.$showActions.value
+      s.visible = ac && ac.$showActions.value ? true : false
+      log('ActionsHelpView, ac.$showActions.value:', ac?.$showActions.value)
       s.position = 'fixed'
       s.top = layout.navBarHeight + 'px'
       s.right = '20px'
@@ -54,7 +53,7 @@ export const ActionsHelpView = () => {
       s.gap = '0px'
       s.bgColor = theme().actionsBg
       //s.borderColor = theme().action + '44'
-      s.border = '10px solid ' + theme().action + '88'
+      s.border = '10px solid ' + theme().action + '44'
       s.layer = '100'
       s.className = 'listScrollbar'
       s.enableOwnScroller = true
@@ -75,8 +74,8 @@ export const ActionsHelpView = () => {
       })
 
       vlist<Action>()
-        .observe(ctx.$activeActionController, 'recreateChildren')
-        .items(() => ctx.$activeActionController.value?.actionsList.actions ?? [])
+        .observe(globalContext.$activeActionController, 'recreateChildren')
+        .items(() => globalContext.$activeActionController.value?.actionsList.actions ?? [])
         .itemHash(a => a.cmd)
         .itemRenderer(ActionInfoView)
         .react(s => {
@@ -140,11 +139,10 @@ const ActionInfoView = (a: Action) => {
 }
 
 const MessangerView = () => {
-  const ctx = IndexContext.self
   return p()
-    .observe(ctx.$msg)
+    .observe(globalContext.$msg)
     .react(s => {
-      const msg = ctx.$msg.value
+      const msg = globalContext.$msg.value
       s.visible = msg !== undefined
       s.position = 'fixed'
       s.bottom = '0'
@@ -168,8 +166,7 @@ const MessangerView = () => {
 
 
 export const RecentOpenedFilesView = () => {
-  const ctx = IndexContext.self
-  const filesManager = ctx.recentOpenedFilesManager
+  const filesManager = globalContext.recentOpenedFilesManager
 
   return vstack()
     .observe(filesManager.$files)
@@ -196,15 +193,14 @@ export const RecentOpenedFilesView = () => {
           s.minHeight = '200px'
           s.padding = '20px'
           s.bgColor = theme().actionsBg
-          s.border = '10px solid ' + theme().action + '88'
+          s.border = '10px solid ' + theme().action + '44'
           s.gap = '10px'
         })
     })
 }
 
 const RecentOpenedFileRenderer = (f: RecentOpenedFile) => {
-  const ctx = IndexContext.self
-  const filesManager = ctx.recentOpenedFilesManager
+  const filesManager = globalContext.recentOpenedFilesManager
 
   return div()
     .react(s => {
@@ -223,7 +219,7 @@ const RecentOpenedFileRenderer = (f: RecentOpenedFile) => {
           const underCurser = filesManager.$selectedFile.value?.path === f.path
           s.width = '100%'
           s.textColor = underCurser ? theme().appBg : theme().menuFile
-          s.text = (ctx.explorer.filesAliasVoc[f.path] || f.name)
+          s.text = (globalContext.explorer.filesAliasVoc[f.path] || f.name)
         })
 
       p().react(s => {

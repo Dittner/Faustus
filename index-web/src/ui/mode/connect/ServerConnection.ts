@@ -1,12 +1,11 @@
 import { RXObservableValue } from "flinker";
 import { globalContext } from "../../../App";
-import { IndexContext } from "../../IndexContext";
 import { OperatingMode } from "../OperatingMode";
 
 export class ServerConnection extends OperatingMode {
   readonly $logs = new RXObservableValue('')
-  constructor(ctx: IndexContext) {
-    super('connect', ctx)
+  constructor() {
+    super('connect')
   }
 
   override activate(): void {

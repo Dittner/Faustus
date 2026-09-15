@@ -1,8 +1,8 @@
 import { RXObservableValue, RXSubject } from "flinker"
-import { IndexContext } from "../IndexContext"
 import { log } from "../../app/Logger"
 import { globalContext } from "../../App"
 import { ActionController } from "./Action"
+import { KeyValueStore } from "../../app/KeyValueStore"
 
 export interface RecentOpenedFile {
   name: string
@@ -16,11 +16,13 @@ export class RecentOpenedFilesManager extends ActionController {
   readonly storeKey = 'recentOpenedFiles'
   readonly $files = new RXSubject<RecentOpenedFile[], never>([])
   readonly $selectedFile = new RXObservableValue<RecentOpenedFile | undefined>(undefined)
+  private readonly localStore:KeyValueStore
 
-  constructor(ctx: IndexContext) {
-    super(ctx)
+  constructor(localStore:KeyValueStore) {
+    super()
     log('new RecentOpenedFilesManager')
-    this.$files.send(ctx.localStore.has(this.storeKey) ? ctx.localStore.read(this.storeKey) : [])
+    this.localStore = localStore
+    this.$files.send(localStore.has(this.storeKey) ? localStore.read(this.storeKey) : [])
     if (this.$files.value.length > 0)
       this.$selectedFile.value = this.$files.value[0]
 
@@ -35,11 +37,11 @@ export class RecentOpenedFilesManager extends ActionController {
     const newFile = { name: fileName, path: filePath, pageIndex: pageIndex }
     this.$files.value.unshift(newFile)
     this.$selectedFile.value = newFile
-    if (this.$files.value.length > 5)
-      this.$files.send(this.$files.value.slice(0, 5))
+    if (this.$files.value.length > 8)
+      this.$files.send(this.$files.value.slice(0, 8))
     else
       this.$files.resend()
-    this.ctx.localStore.write(this.storeKey, this.$files.value, true)
+    this.localStore.write(this.storeKey, this.$files.value, true)
   }
 
   /*

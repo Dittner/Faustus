@@ -1,15 +1,15 @@
 import { observer, p, span, vlist, vstack } from "flinker-dom"
-import { theme } from "../../theme/ThemeManager"
+import { theme } from "../../ThemeManager"
 import { FileExplorer } from "./FileExplorer"
-import { IndexContext } from "../../IndexContext"
 import { FontFamily } from "../../controls/Font"
 import { StatusBar, StatusBarModeName } from "../../controls/StatusBar"
 import { LineInput } from "../../controls/Input"
 import { FileNode } from "../FileNode"
 import { globalContext } from "../../../App"
+import { GlobalContext } from "../../../app/GlobalContext"
 
 export const FileExplorerView = () => {
-  const ctx = IndexContext.self
+  const ctx = GlobalContext.self
 
   return observer(ctx.$mode)
     .onReceive(mode => {
@@ -58,7 +58,6 @@ export const FileExplorerView = () => {
 }
 
 const FileNodeRenderer = (n: FileNode) => {
-  const ctx = IndexContext.self
   const host = p()
   return host
     .react(s => {
@@ -70,7 +69,7 @@ const FileNodeRenderer = (n: FileNode) => {
     .children(() => {
       span()
         .react(s => {
-          const underCurser = ctx.explorer.$selectedFilePath.value === n.path
+          const underCurser = globalContext.explorer.$selectedFilePath.value === n.path
           if (underCurser) {
             host.dom.scrollIntoView({
               behavior: 'instant',
@@ -84,7 +83,7 @@ const FileNodeRenderer = (n: FileNode) => {
           s.paddingLeft = '20px'
           s.textColor = underCurser ? bgColor : textColor
           s.bgColor = underCurser ? textColor : theme().transparent
-          s.text = n.isDir ? n.id + '/' : (ctx.explorer.filesAliasVoc[n.path] || n.id)
+          s.text = n.isDir ? n.id + '/' : (globalContext.explorer.filesAliasVoc[n.path] || n.id)
         })
 
       span().react(s => {

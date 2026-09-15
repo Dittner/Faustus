@@ -1,14 +1,14 @@
 import { btn, hstack, input, p, spacer, vstack } from "flinker-dom"
-import { IndexContext } from "../../IndexContext"
 import { FontFamily } from "../../controls/Font"
 import { Icon, IconBtn } from "../../controls/Button"
 import { MaterialIcon } from "../../MaterialIcon"
-import { Markdown } from "../../markdown/Markdown"
-import { theme } from "../../theme/ThemeManager"
+import { theme } from "../../ThemeManager"
 import { globalContext } from "../../../App"
+import { Markdown } from "../../markdown/Markdown"
+import { GlobalContext } from "../../../app/GlobalContext"
 
 export const TranslationPanel = () => {
-  const ctx = IndexContext.self
+  const ctx = GlobalContext.self
   return vstack()
     .observe(ctx.reader.$translationSearchInputBuffer)
     .observe(ctx.reader.$translationSearchInputFocused)
@@ -116,9 +116,9 @@ export const TranslationPanel = () => {
 }
 
 const QuickSearchInput = () => {
-  const ctx = IndexContext.self
+  const reader = globalContext.reader
   return hstack()
-    .observe(ctx.reader.$translationSearchInputFocused)
+    .observe(reader.$translationSearchInputFocused)
     .react(s => {
       s.fontFamily = FontFamily.APP
       s.valign = 'center'
@@ -126,7 +126,7 @@ const QuickSearchInput = () => {
       s.width = '100%'
       s.gap = '5px'
       s.height = '35px'
-      s.border = '1px solid ' + (ctx.reader.$translationSearchInputFocused.value ? theme().accent : theme().text50)
+      s.border = '1px solid ' + (reader.$translationSearchInputFocused.value ? theme().accent : theme().text50)
       s.cornerRadius = '4px'
       s.paddingHorizontal = '5px'
     })
@@ -142,14 +142,14 @@ const QuickSearchInput = () => {
         })
 
       input()
-        .bind(ctx.reader.$translationSearchInputBuffer)
-        .observe(ctx.reader.$translationSearchInputFocused)
+        .bind(reader.$translationSearchInputBuffer)
+        .observe(reader.$translationSearchInputFocused)
         .react(s => {
           s.type = 'text'
           s.fontFamily = FontFamily.APP
           s.width = '100%'
           //s.maxWidth = '300px'
-          s.autoFocus = ctx.reader.$translationSearchInputFocused.value
+          s.autoFocus = reader.$translationSearchInputFocused.value
           s.fontSize = theme().fontSizeXS
           s.placeholder = 'Enter a word to search'
           s.border = 'unset'
@@ -162,27 +162,27 @@ const QuickSearchInput = () => {
         .whenFocused(s => {
           s.textColor = theme().accent
         })
-        .onBlur(() => { ctx.reader.$translationSearchInputFocused.value = false })
+        .onBlur(() => { reader.$translationSearchInputFocused.value = false })
         .onFocus(() => {
-          ctx.reader.$translationSearchInputFocused.value = true
+          reader.$translationSearchInputFocused.value = true
           document.activeElement instanceof HTMLInputElement && document.activeElement.select()
         })
         .onKeyDown(e => {
           if (e.key === 'Enter') {
             e.stopImmediatePropagation()
-            ctx.reader.searchTranslation(ctx.reader.$translationSearchInputBuffer.value)
+            reader.searchTranslation(reader.$translationSearchInputBuffer.value)
             document.activeElement instanceof HTMLInputElement && document.activeElement.blur()
           }
           else if (e.key === 'Escape') {
             document.activeElement instanceof HTMLInputElement && document.activeElement.blur()
-            ctx.reader.clearTranslationSearchResults()
+            reader.clearTranslationSearchResults()
           }
         })
 
       IconBtn()
-        .observe(ctx.reader.$translationSearchInputBuffer.pipe().map(v => v.length > 0).removeDuplicates().fork())
+        .observe(reader.$translationSearchInputBuffer.pipe().map(v => v.length > 0).removeDuplicates().fork())
         .react(s => {
-          s.visible = ctx.reader.$translationSearchInputBuffer.value.length > 0
+          s.visible = reader.$translationSearchInputBuffer.value.length > 0
           s.icon = MaterialIcon.close
           s.iconSize = '0.75rem'
           s.textColor = theme().appBg
@@ -193,7 +193,7 @@ const QuickSearchInput = () => {
         })
         .whenHovered(s => s.bgColor = theme().text)
         .onClick(() => {
-          ctx.reader.clearTranslationSearchResults()
+          reader.clearTranslationSearchResults()
         })
     })
 }

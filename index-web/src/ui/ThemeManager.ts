@@ -1,5 +1,6 @@
 import { RXObservableValue } from 'flinker'
 import { buildRule, FontWeight, UIComponentProps } from 'flinker-dom'
+import { FontFamily } from './controls/Font'
 
 type THEME_ID = 'night' | 'night-st' | 'dark' | 'dark-st'
 
@@ -42,6 +43,7 @@ export interface GlobalTheme {
   actionsBg: string
   comment: string
   quote: string
+  userRemark: string
   transparent: string
   header: string
   menuDir: string
@@ -121,8 +123,8 @@ export class ThemeManager {
       isLight: false,
 
       fontSizeXL: '2.0rem',
-      fontSizeL: '1.2rem',
-      fontSizeM: '1.1rem',
+      fontSizeL: '1.5rem',
+      fontSizeM: '1.2rem',
       fontSize: '1rem',
       defFontSize: 'inherit',
       fontSizeS: '0.8rem',
@@ -153,6 +155,7 @@ export class ThemeManager {
       purple: '#b2aee5',
       comment: '#74a7aa',
       quote: '#adadad',
+      userRemark: '#adadad',
       link: '#aa8657',
       pink: '#c293cc',
       orange: '#463d16',
@@ -211,7 +214,8 @@ export class ThemeManager {
       purple: '#b2aee5',
       comment: '#649193',
       quote: '#959595',
-      link: '#aa8657',
+      userRemark: '#976f7f',
+      link: '#4c4c97',
       pink: '#c293cc',
       orange: '#463d16',
       statusFg: accent,
@@ -270,6 +274,7 @@ export class ThemeManager {
 
     const h1Props: UIComponentProps = {
       //textTransform: 'uppercase',
+      fontFamily: FontFamily.APP,
       fontSize: t.fontSizeXL,
       fontWeight: 'normal',
       textColor: t.header,
@@ -278,14 +283,17 @@ export class ThemeManager {
     buildRule(h1Props, parentSelector, 'h1')
 
     const h2Props: UIComponentProps = {
+      fontFamily: FontFamily.APP,
       fontSize: t.fontSizeL,
       fontWeight: 'bold',
+      letterSpacing: '-0.5px',
       textColor: t.header,
       paddingTop: headerPadingTop
     }
     buildRule(h2Props, parentSelector, 'h2')
 
     const h3Props: UIComponentProps = {
+      fontFamily: FontFamily.APP,
       fontSize: t.fontSizeM,
       fontWeight: 'bold',
       textAlign: 'left',
@@ -295,6 +303,7 @@ export class ThemeManager {
     buildRule(h3Props, parentSelector, 'h3')
 
     const h4Props: UIComponentProps = {
+      fontFamily: FontFamily.APP,
       fontSize: t.fontSizeM,
       fontWeight: 'bold',
       textAlign: 'left',
@@ -310,6 +319,7 @@ export class ThemeManager {
     buildRule(h5Props, parentSelector, 'h5')
 
     const h6Props: UIComponentProps = {
+      fontFamily: FontFamily.APP,
       fontSize: t.defFontSize,
       fontWeight: t.defFontWeight,
       textColor: t.header
@@ -500,7 +510,7 @@ export class ThemeManager {
     /******************************/
 
     const imgProps: UIComponentProps = {
-      maxWidth: Math.min(1000, window.innerWidth - 40) + 'px',
+      maxWidth: Math.min(1200, window.innerWidth - 40) + 'px',
       display: 'inline'
       //paddingTop: '50px'
     }
@@ -561,16 +571,16 @@ export class ThemeManager {
     buildRule(rightAlginmentProps, parentSelector, '.md-right')
 
     /******************************/
-    // ru translation
+    // translation
     /******************************/
 
-    const ruParagraphProps: UIComponentProps = {
+    const transParagraphProps: UIComponentProps = {
       fontWeight: 'inherit',
       fontSize: t.defFontSize,
       textColor: t.isLight ? 'inherit' : t.text50,
       fontStyle: t.isLight ? 'italic' : 'inherit'
     }
-    buildRule(ruParagraphProps, parentSelector, '.md-ru')
+    buildRule(transParagraphProps, parentSelector, '.md-trans')
 
     // custom rule
     const centerAllProps: any = {
@@ -632,6 +642,22 @@ export class ThemeManager {
       borderLeft: '1px solid ' + t.comment
     }
     buildRule(noteProps, parentSelector, '.md-note')
+
+    /******************************/
+    // user's remark
+    /******************************/
+
+    const userRemarkProps: UIComponentProps = {
+      width: '100%',
+      fontSize: t.fontSizeS,
+      fontWeight: t.defFontWeight,
+      textColor: t.userRemark,
+      paddingTop: '5px',
+      paddingHorizontal: '20px',
+      //bgColor: '#e5f0df',
+      borderLeft: '1px solid ' + t.userRemark
+    }
+    buildRule(userRemarkProps, parentSelector, '.md-user-remark')
 
     /******************************/
     // epigraph

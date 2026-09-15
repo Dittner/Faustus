@@ -1,20 +1,20 @@
 import { div, hstack, spacer, span, vlist } from "flinker-dom"
 import { globalContext } from "../../../App"
 import { Page, TextFile } from "../../../domain/DomainModel"
-import { IndexContext } from "../../IndexContext"
 import { FontFamily } from "../../controls/Font"
-import { Markdown } from "../../markdown/Markdown"
-import { theme } from "../../theme/ThemeManager"
+import { theme } from "../../ThemeManager"
 import { FileReader } from "./FileReader"
 import { PageHeaderListView } from "./PageHeaderListView"
 import { EditorView } from "./TextEditor"
 import { TranslationPanel } from "./Translation"
 import { log } from "../../../app/Logger"
 import { TextReplacerView } from "./TextReplacer"
+import { GlobalContext } from "../../../app/GlobalContext"
+import { Markdown } from "../../markdown/Markdown"
 
 export const FileView = () => {
   log('new FileView')
-  const ctx = IndexContext.self
+  const ctx = GlobalContext.self
 
   return div()
     .observe(ctx.$mode)
@@ -32,15 +32,17 @@ export const FileView = () => {
           .observe(globalContext.app.$layout)
           .observe(ctx.reader.$showPageHeaderList)
           .react(s => {
+            const layout = globalContext.app.$layout.value
             s.visible = ctx.reader.$showPageHeaderList.value
             s.position = 'fixed'
-            s.width = globalContext.app.$layout.value.menuWidth + 'px'
+            s.paddingTop = layout.navBarHeight + 'px'
+            s.paddingBottom = layout.statusBarHeight + 'px'
+            s.width = layout.menuWidth + 'px'
             s.height = '100%'
             s.gap = '0'
             s.className = 'invisibleScrollbar'
             s.enableOwnScroller = true
             s.paddingRight = '20px'
-            s.paddingTop = globalContext.app.$layout.value.navBarHeight + 'px'
           })
 
         PageList(file)
@@ -74,11 +76,13 @@ export const FileView = () => {
 
         TranslationPanel()
           .react(s => {
+            const layout = globalContext.app.$layout.value
             s.position = 'fixed'
             s.right = '20px'
-            s.top = '50px'
+            s.top = layout.navBarHeight + 'px'
+            s.maxHeight = window.innerHeight - layout.navBarHeight - layout.statusBarHeight + 'px'
             s.padding = '20px'
-            s.width = '400px'
+            s.width = '450px'
             s.bgColor = theme().appBg
             s.border = '10px solid ' + theme().searchTranslationTheme.text + '44'
           })
@@ -130,8 +134,6 @@ export const FileView = () => {
 
 const PageList = (file: TextFile) => {
   log('new PageList')
-  const ctx = IndexContext.self
-
   const list = vlist<Page>()
     .observe(file, 'recreateChildren')
     .react(s => {
@@ -159,7 +161,7 @@ const PageList = (file: TextFile) => {
 
 export const PageView = (page: Page, index: number) => {
   log('new PageView')
-  const reader = IndexContext.self.reader
+  const reader = globalContext.reader
   return div()
     .observe(reader.$editingPage)
     //.observe(reader.$selectedPage)
@@ -217,7 +219,7 @@ export const PageView = (page: Page, index: number) => {
                 s.text = text.join('').trim()
               }
 
-              s.textColor = theme().text + 'dd'
+              s.textColor = theme().text
               s.fontSize = theme().defFontSize
               s.absolutePathPrefix = globalContext.indexServer.assetsUrl
               //s.showRawText = page.file.showRawText

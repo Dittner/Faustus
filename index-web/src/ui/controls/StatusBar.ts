@@ -1,6 +1,6 @@
 import { hstack, span } from "flinker-dom"
 import { FontFamily } from "./Font"
-import { theme } from "../theme/ThemeManager"
+import { theme } from "../ThemeManager"
 import { globalContext } from "../../App"
 
 export const StatusBar = () => {

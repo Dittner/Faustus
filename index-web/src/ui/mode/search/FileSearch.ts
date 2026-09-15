@@ -1,6 +1,5 @@
 import { RX, RXObservableValue } from "flinker"
 import { globalContext } from "../../../App"
-import { IndexContext } from "../../IndexContext"
 import { OperatingMode } from "../OperatingMode"
 import { sortByKeys } from "../../../app/Utils"
 import { FileNode } from "../FileNode"
@@ -20,8 +19,8 @@ export class FileSearcher extends OperatingMode {
   filesAliasVoc = new Map<string, string>()
   filesAliasLowerCasedVoc = new Map<string, string>()
 
-  constructor(ctx: IndexContext) {
-    super('search', ctx)
+  constructor() {
+    super('search')
     this.allowedSymbols = new Set('_0123456789/abcdefghijklmnopqrstuvwxyz'.split(''))
     this.actionsList.clear()
 

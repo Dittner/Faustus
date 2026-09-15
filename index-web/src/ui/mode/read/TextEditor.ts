@@ -1,13 +1,13 @@
 import { textarea } from "flinker-dom"
-import { IndexContext } from "../../IndexContext"
-import { theme } from "../../theme/ThemeManager"
+import { theme } from "../../ThemeManager"
 import { FontFamily } from "../../controls/Font"
 import { Page } from "../../../domain/DomainModel"
 import { log, logErr } from "../../../app/Logger"
+import { globalContext } from "../../../App"
 
 export const EditorView = () => {
   log('new EditorView')
-  const reader = IndexContext.self.reader
+  const reader = globalContext.reader
   let pageInFocus: Page | undefined = undefined
   const formatter = new TextFormatter()
 

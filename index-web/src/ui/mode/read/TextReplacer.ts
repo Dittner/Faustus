@@ -1,12 +1,12 @@
 import { div, hstack, p, spacer, vstack } from "flinker-dom"
-import { IndexContext } from "../../IndexContext"
-import { theme } from "../../theme/ThemeManager"
+import { theme } from "../../ThemeManager"
 import { log } from "../../../app/Logger"
 import { TextInput } from "../../controls/Input"
 import { RedBtn } from "../../controls/Button"
 import { RXObservableValue } from "flinker"
 import { FontFamily } from "../../controls/Font"
 import { TextFile } from "../../../domain/DomainModel"
+import { globalContext } from "../../../App"
 
 export class TextReplacer {
   private $buffer: RXObservableValue<string>
@@ -36,7 +36,7 @@ export class TextReplacer {
 
 export const TextReplacerView = (file: TextFile) => {
   log('new TextReplacerView')
-  const reader = IndexContext.self.reader
+  const reader = globalContext.reader
 
   return vstack()
     .react(s => {

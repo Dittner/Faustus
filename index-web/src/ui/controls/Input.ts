@@ -1,5 +1,5 @@
 import { hstack, input, p, span, StackProps, vstack } from "flinker-dom"
-import { theme } from "../theme/ThemeManager"
+import { theme } from "../ThemeManager"
 import { FontFamily } from "./Font"
 import { RXObservableValue } from "flinker"
 import { globalContext } from "../../App"

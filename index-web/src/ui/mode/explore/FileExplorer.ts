@@ -1,6 +1,5 @@
 import { RXObservableValue, RXSubject } from "flinker"
 import { globalContext } from "../../../App"
-import { IndexContext } from "../../IndexContext"
 import { generateUID, Path, sortByKeys } from "../../../app/Utils"
 import { TextFile } from "../../../domain/DomainModel"
 import { InputBufferController } from "../../controls/Input"
@@ -24,8 +23,8 @@ export class FileExplorer extends OperatingMode {
   private isFilesTreeLoaded = false
   filesAliasVoc: Record<string, string> = {}
 
-  constructor(ctx: IndexContext) {
-    super('explore', ctx)
+  constructor() {
+    super('explore')
     this.addKeybindings()
 
     this.$openedDirPath.pipe()

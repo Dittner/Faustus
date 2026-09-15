@@ -1,7 +1,7 @@
 import { RXObservableValue } from "flinker"
 import { btn, ButtonProps, span, StackHAlign, StackVAlign, TextProps } from "flinker-dom"
 import { MaterialIcon } from "../MaterialIcon"
-import { theme } from "../theme/ThemeManager"
+import { theme } from "../ThemeManager"
 import { FontFamily } from "./Font"
 
 /*

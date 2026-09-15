@@ -1,6 +1,6 @@
 import { RXObservableValue } from "flinker"
-import { IndexContext } from "../IndexContext"
-import { themeManager } from "../theme/ThemeManager"
+import { themeManager } from "../ThemeManager"
+import { GlobalContext } from "../../app/GlobalContext"
 
 export class Action {
   readonly desc: string
@@ -55,17 +55,19 @@ export const parseKeyToCode = (e: KeyboardEvent) => {
 }
 
 export class ActionController {
-  readonly ctx: IndexContext
   readonly $showActions = new RXObservableValue(false)
   readonly actionsList = new ActionsList()
   lastExecutedAction: Action | undefined = undefined
 
-  constructor(ctx: IndexContext) {
-    this.ctx = ctx
+  constructor() {
     this.actionsList.add('?', 'Show list of actions', () => this.$showActions.value = true)
     this.actionsList.add('<ESC>', 'Hide windows', () => this.escPressed())
     this.actionsList.add('t', 'Switch theme', () => themeManager.switchTheme())
     this.actionsList.add('.', 'Repeat last action', () => this.lastExecutedAction?.handler())
+  }
+
+  get ctx() {
+    return GlobalContext.self
   }
 
   private cmdBuffer = ''

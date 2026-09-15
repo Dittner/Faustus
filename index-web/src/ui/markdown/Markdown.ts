@@ -1,8 +1,9 @@
 import { div, TextProps } from "flinker-dom";
-import { UniversalCodeHighlighter } from "../highlight/UniversalCodeHighlighter";
-import { BashCodeHighlighter } from "../highlight/BashHighlighter";
-import { theme } from "../theme/ThemeManager";
+
 import { md, MDGrammar, MDLineGrammarRule, MDMultilineGrammarRule, MDParser } from "flinker-markdown";
+import { BashCodeHighlighter } from "./BashHighlighter";
+import { UniversalCodeHighlighter } from "./UniversalCodeHighlighter";
+import { theme } from "../ThemeManager";
 
 export const universalCodeHighlighter = new UniversalCodeHighlighter()
 export const bashCodeHighlighter = new BashCodeHighlighter()
@@ -46,11 +47,18 @@ noteParagraph.matcher = [/^\* (.*)$/, '<p class="md-note">$1</p>']
 noteParagraph.childrenInlineRules = grammar.globalRule.childrenInlineRules
 noteParagraph.preProccessing = grammar.defLinePreproccessing
 
-grammar.globalRule.childrenLineRules.unshift(noteParagraph)
-grammar.quoteMultiline.childrenLineRules.unshift(noteParagraph)
-grammar.ol.childrenLineRules.unshift(noteParagraph)
-grammar.ul.childrenLineRules.unshift(noteParagraph)
-grammar.div.childrenLineRules.unshift(noteParagraph)
+// remark of user
+const userRemark = new MDLineGrammarRule()
+userRemark.matcher = [/^!!! (.*)$/, '<p class="md-user-remark">$1</p>']
+grammar.globalRule.childrenInlineRules.push(userRemark)
+noteParagraph.childrenInlineRules = grammar.globalRule.childrenInlineRules
+noteParagraph.preProccessing = grammar.defLinePreproccessing
+
+grammar.globalRule.childrenLineRules.unshift(noteParagraph, userRemark)
+grammar.quoteMultiline.childrenLineRules.unshift(noteParagraph, userRemark)
+grammar.ol.childrenLineRules.unshift(noteParagraph, userRemark)
+grammar.ul.childrenLineRules.unshift(noteParagraph, userRemark)
+grammar.div.childrenLineRules.unshift(noteParagraph, userRemark)
 
 // noteMultiline
 const noteMultiline = new MDMultilineGrammarRule()
@@ -61,26 +69,26 @@ noteMultiline.childrenLineRules = grammar.div.childrenLineRules
 noteMultiline.childrenMultilineRules = grammar.div.childrenMultilineRules
 grammar.globalRule.childrenMultilineRules.unshift(noteMultiline)
 
-// ruParagraph
-const ruParagraph = new MDLineGrammarRule()
-ruParagraph.matcher = [/^~ (.*)$/, '<p class="md-ru">$1</p>']
-ruParagraph.childrenInlineRules = grammar.globalRule.childrenInlineRules
-ruParagraph.preProccessing = grammar.defLinePreproccessing
+// transParagraph
+const transParagraph = new MDLineGrammarRule()
+transParagraph.matcher = [/^~ (.*)$/, '<p class="md-trans">$1</p>']
+transParagraph.childrenInlineRules = grammar.globalRule.childrenInlineRules
+transParagraph.preProccessing = grammar.defLinePreproccessing
 
-grammar.globalRule.childrenLineRules.unshift(ruParagraph)
-grammar.quoteMultiline.childrenLineRules.unshift(ruParagraph)
-grammar.ol.childrenLineRules.unshift(ruParagraph)
-grammar.ul.childrenLineRules.unshift(ruParagraph)
-grammar.div.childrenLineRules.unshift(ruParagraph)
+grammar.globalRule.childrenLineRules.unshift(transParagraph)
+grammar.quoteMultiline.childrenLineRules.unshift(transParagraph)
+grammar.ol.childrenLineRules.unshift(transParagraph)
+grammar.ul.childrenLineRules.unshift(transParagraph)
+grammar.div.childrenLineRules.unshift(transParagraph)
 
-// ruMultiline
-const ruMultiline = new MDMultilineGrammarRule()
-ruMultiline.startMatcher = [/^~~ *$/, '<div class="md-ru">']
-ruMultiline.endMatcher = [/^~~ *$/, '</div>']
-ruMultiline.childrenInlineRules = grammar.globalRule.childrenInlineRules
-ruMultiline.childrenLineRules = grammar.div.childrenLineRules
-ruMultiline.childrenMultilineRules = grammar.div.childrenMultilineRules
-grammar.globalRule.childrenMultilineRules.unshift(ruMultiline)
+// transMultiline
+const transMultiline = new MDMultilineGrammarRule()
+transMultiline.startMatcher = [/^~~ *$/, '<div class="md-trans">']
+transMultiline.endMatcher = [/^~~ *$/, '</div>']
+transMultiline.childrenInlineRules = grammar.globalRule.childrenInlineRules
+transMultiline.childrenLineRules = grammar.div.childrenLineRules
+transMultiline.childrenMultilineRules = grammar.div.childrenMultilineRules
+grammar.globalRule.childrenMultilineRules.unshift(transMultiline)
 
 
 interface MarkdownProps extends TextProps {

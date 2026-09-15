@@ -1,14 +1,12 @@
 import { observer, p, vstack } from "flinker-dom"
-import { IndexContext } from "../../IndexContext"
-import { theme } from "../../theme/ThemeManager"
+import { theme } from "../../ThemeManager"
 import { FontFamily } from "../../controls/Font"
+import { globalContext } from "../../../App"
 
 export const ServerConnectionView = () => {
-  const ctx = IndexContext.self
-
-  return observer(ctx.$mode)
+  return observer(globalContext.$mode)
     .onReceive(mode => {
-      return mode === ctx.connection && vstack()
+      return mode === globalContext.connection && vstack()
         .react(s => {
           s.position = 'fixed'
           s.width = '100vw'
@@ -16,10 +14,10 @@ export const ServerConnectionView = () => {
           s.mouseEnabled = false
         }).children(() => {
           p()
-            .observe(ctx.connection.$logs)
+            .observe(globalContext.connection.$logs)
             .react(s => {
               s.fontFamily = FontFamily.MONO
-              s.text = ctx.connection.$logs.value
+              s.text = globalContext.connection.$logs.value
               s.textColor = theme().white
               s.fontSize = '16px'
               s.padding = '20px'

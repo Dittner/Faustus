@@ -1,7 +1,6 @@
 import { observer, p, span, vstack } from "flinker-dom"
-import { theme } from "../../theme/ThemeManager"
+import { theme } from "../../ThemeManager"
 import { FileSearcher } from "./FileSearch"
-import { IndexContext } from "../../IndexContext"
 import { FontFamily } from "../../controls/Font"
 import { LineInput } from "../../controls/Input"
 import { FileNode } from "../FileNode"
@@ -9,11 +8,11 @@ import { globalContext } from "../../../App"
 import { log } from "../../../app/Logger"
 
 export const FileSearchView = () => {
-  const ctx = IndexContext.self
+  const searcher = globalContext.searcher
 
-  return observer(ctx.$mode)
+  return observer(globalContext.$mode)
     .onReceive(mode => {
-      return mode === ctx.searcher && vstack()
+      return mode === searcher && vstack()
         .react(s => {
           s.position = 'fixed'
           s.width = '100%'
@@ -21,7 +20,7 @@ export const FileSearchView = () => {
           s.paddingBottom = globalContext.app.$layout.value.statusBarHeight + 'px'
         }).children(() => {
 
-          SearchResults(ctx.searcher)
+          SearchResults(searcher)
             .react(s => {
               s.width = '100%'
               s.height = '100%'
@@ -30,8 +29,8 @@ export const FileSearchView = () => {
               s.enableOwnScroller = true
             })
 
-          LineInput(ctx.searcher.$buffer, ctx.searcher.$cursorPos)
-            .observe(ctx.explorer.$mode)
+          LineInput(searcher.$buffer, searcher.$cursorPos)
+            .observe(globalContext.explorer.$mode)
             .react(s => {
               s.title = '/'
               s.position = 'fixed'
@@ -39,7 +38,7 @@ export const FileSearchView = () => {
               s.bottom = '0'
             })
 
-          FoundTotalBar(ctx.searcher)
+          FoundTotalBar(searcher)
             .react(s => {
               s.position = 'fixed'
               s.bottom = '0'
@@ -67,7 +66,7 @@ const SearchResults = (searcher: FileSearcher) => {
 
 const SearchResultItem = (f: FileNode, searchValue: string) => {
   const textColor = f.isDir ? theme().menuDir : theme().menuFile
-  const searcher = IndexContext.self.searcher
+  const searcher = globalContext.searcher
   const host = p()
   return host
     .observe(searcher.$selectedFilePath, 'affectsChildrenProps')

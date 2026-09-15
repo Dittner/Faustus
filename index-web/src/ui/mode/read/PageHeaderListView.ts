@@ -1,13 +1,14 @@
 import { btn, vlist } from "flinker-dom"
 import { Page, TextFile } from "../../../domain/DomainModel"
-import { theme } from "../../theme/ThemeManager"
-import { IndexContext } from "../../IndexContext"
+import { theme } from "../../ThemeManager"
 import { FontFamily } from "../../controls/Font"
 import { log } from "../../../app/Logger"
+import { globalContext } from "../../../App"
 
 export const PageHeaderListView = (file: TextFile) => {
   log('new FileHeaderListView')
   const list = vlist<Page>()
+    .observe(file, 'recreateChildren')
     .observe(file.$selectedPage, 'affectsChildrenProps')
     .items(() => file.pages)
     .itemRenderer(PageHeaderRenderer)
@@ -33,7 +34,6 @@ export const PageHeaderListView = (file: TextFile) => {
 }
 
 const PageHeaderRenderer = (page: Page) => {
-  const ctx = IndexContext.self
 
   return btn()
     .observe(page)
@@ -61,5 +61,5 @@ const PageHeaderRenderer = (page: Page) => {
     })
     .whenHovered(s => s.textColor = theme().menuPage)
     .whenSelected(s => s.textColor = theme().accent)
-    .onMouseDown(_ => ctx.reader.moveCursorUnder(page))
+    .onMouseDown(_ => globalContext.reader.moveCursorUnder(page))
 }

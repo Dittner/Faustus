@@ -11,7 +11,7 @@
   "dependencies": {
     "flinker": "^2.0.6",
     "flinker-dom": "^1.1.24",
-    "flinker-markdown": "^1.1.32"
+    "flinker-markdown": "^1.1.33"
   },
   "devDependencies": {
     "typescript": "~5.7.2",

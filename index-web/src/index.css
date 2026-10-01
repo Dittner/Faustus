@@ -100,7 +100,11 @@ blockquote {
 }
 
 table {
-    border-collapse: collapse
+    border-collapse: collapse;
+}
+
+td {
+    vertical-align: top;
 }
 
 ol {
@@ -127,65 +131,65 @@ ul {
 
 
 .listScrollbar {
-  display: block;
-  overflow: auto;
-  scrollbar-gutter: stable;
-  overscroll-behavior: none;
+    display: block;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    overscroll-behavior: none;
 }
 
 .listScrollbar::-webkit-scrollbar {
-  width: 14px;
+    width: 14px;
 }
 
 .listScrollbar::-webkit-scrollbar-track {
-  background: transparent;
+    background: transparent;
 }
 
 .listScrollbar::-webkit-scrollbar-thumb {
-  background: #40475650;
-  border-radius: 5px;
-  border-right: 4px solid transparent;
-  border-left: 4px solid transparent;
-  background-clip: content-box;
+    background: #40475650;
+    border-radius: 5px;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
+    background-clip: content-box;
 }
 
 .listScrollbar::-webkit-scrollbar-thumb:hover {
-  background: #404756;
-  border-radius: 5px;
-  border-right: 4px solid transparent;
-  border-left: 4px solid transparent;
-  background-clip: content-box;
+    background: #404756;
+    border-radius: 5px;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
+    background-clip: content-box;
 }
 
 .light.listScrollbar::-webkit-scrollbar-thumb {
-  background: #40475650;
-  border-radius: 5px;
-  border-right: 4px solid transparent;
-  border-left: 4px solid transparent;
-  background-clip: content-box;
+    background: #40475650;
+    border-radius: 5px;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
+    background-clip: content-box;
 }
 
 .light.listScrollbar::-webkit-scrollbar-thumb:hover {
-  background: #404756;
-  border-radius: 5px;
-  border-right: 4px solid transparent;
-  border-left: 4px solid transparent;
-  background-clip: content-box;
+    background: #404756;
+    border-radius: 5px;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
+    background-clip: content-box;
 }
 
 .invisibleScrollbar {
-  /* For Firefox */
-  scrollbar-width: none;
-  /* For Internet Explorer and Edge */
-  -ms-overflow-style: none;
-  overflow: auto;
-  scrollbar-gutter: stable;
-  overscroll-behavior: none;
+    /* For Firefox */
+    scrollbar-width: none;
+    /* For Internet Explorer and Edge */
+    -ms-overflow-style: none;
+    overflow: auto;
+    scrollbar-gutter: stable;
+    overscroll-behavior: none;
 }
 
 /* For Chrome, Safari, and Opera */
 .invisibleScrollbar::-webkit-scrollbar {
-  display: none;
+    display: none;
 }
 
 /******************************/

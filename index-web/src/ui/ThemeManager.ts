@@ -192,7 +192,6 @@ export class ThemeManager {
     const res = Object.assign({}, t, {
       id: 'night',
       isLight: false,
-      appBg: black,
       black,
       white,
       text,
@@ -218,10 +217,13 @@ export class ThemeManager {
       link: '#4c4c97',
       pink: '#c293cc',
       orange: '#463d16',
+
+      appBg: black,
       statusFg: accent,
       statusBg: '#181f23',
-      actionsBg: '#1c2020',
+      actionsBg: black, //'#1c2020',
       action: '#89c1c4',
+
       menuDir: '#8d74a6',
       menuFile: '#74a7aa',
       menuPath: '#4e6c70',
@@ -425,6 +427,38 @@ export class ThemeManager {
     buildRule(tdProps, parentSelector, 'td')
 
     /******************************/
+    // two column layout (table)
+    /******************************/
+
+    const twoColumnLayoutTableProps: UIComponentProps = {
+      width: '100%',
+      minWidth: '1100px',
+      fontSize: 'inherit',
+      textColor: 'inherit',
+      fontWeight: t.defFontWeight,
+      padding: '0',
+      textAlign: 'left',
+    }
+    buildRule(twoColumnLayoutTableProps, parentSelector, 'table.twoColumnLayout')
+
+    const twoColumnLayoutRowProps: UIComponentProps = {
+      width: '50%',
+      fontSize: 'inherit',
+      textColor: 'inherit',
+      fontWeight: 'inherit',
+      //border: '1px solid ' + t.text + 40,
+      borderColor: t.transparent,
+      paddingLeft: '0',
+      paddingRight: '20px',
+      paddingBottom: '40px',
+      paddingTop: '0',
+      
+    }
+
+    buildRule(twoColumnLayoutRowProps, parentSelector, 'table.twoColumnLayout th')
+    buildRule(twoColumnLayoutRowProps, parentSelector, 'table.twoColumnLayout td')
+
+    /******************************/
     // em `
     /******************************/
 
@@ -625,7 +659,7 @@ export class ThemeManager {
       fontSize: t.fontSizeS
     }
     buildRule(poemProps, parentSelector, 'div.poem')
-    buildRule({ fontSize: 'inherit', textColor: 'inherit' }, parentSelector, 'div.poem div')
+    //buildRule({ fontSize: 'inherit', textColor: 'inherit' }, parentSelector, 'div.poem div')
 
     /******************************/
     // note
@@ -674,7 +708,7 @@ export class ThemeManager {
       textColor: t.header
     }
     buildRule(epigraphProps, parentSelector, 'div.epi')
-    buildRule({ fontSize: 'inherit', textColor: 'inherit' }, parentSelector, 'div.epi div')
+    //buildRule({ fontSize: 'inherit', textColor: 'inherit' }, parentSelector, 'div.epi div')
 
     /******************************/
     // warning
@@ -691,7 +725,7 @@ export class ThemeManager {
       fontWeight: 'inherit'
     }
     buildRule(warnProps, parentSelector, 'div.warn')
-    buildRule({ fontSize: 'inherit', textColor: 'inherit' }, parentSelector, 'div.warn div')
+    //buildRule({ fontSize: 'inherit', textColor: 'inherit' }, parentSelector, 'div.warn div')
 
     /******************************/
     // info
@@ -708,7 +742,7 @@ export class ThemeManager {
       fontWeight: 'inherit'
     }
     buildRule(infoProps, parentSelector, 'div.info')
-    buildRule({ fontSize: 'inherit', textColor: 'inherit' }, parentSelector, 'div.info div')
+    //buildRule({ fontSize: 'inherit', textColor: 'inherit' }, parentSelector, 'div.info div')
 
     /******************************/
     // note
@@ -723,7 +757,7 @@ export class ThemeManager {
       textColor: t.red
     }
     buildRule(notePropsErr, parentSelector, 'div.note')
-    buildRule({ fontSize: 'inherit', textColor: 'inherit' }, parentSelector, 'div.note div')
+    //buildRule({ fontSize: 'inherit', textColor: 'inherit' }, parentSelector, 'div.note div')
   }
 }
 

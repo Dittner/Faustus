@@ -178,7 +178,7 @@ export const RecentOpenedFilesView = () => {
       s.valign = 'center'
       s.width = '100%'
       s.height = '100%'
-      s.bgColor = theme().appBg + '44'
+      s.bgColor = '#00000088'
       s.layer = '100'
     }).children(() => {
 

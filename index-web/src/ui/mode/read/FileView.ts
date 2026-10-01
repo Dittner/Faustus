@@ -187,39 +187,13 @@ export const PageView = (page: Page, index: number) => {
           Markdown()
             .observe(page)
             .react(s => {
-              const hasTranslation = page.text.indexOf('~~') !== -1
               s.className = theme().id
               s.width = '100%'
-              s.maxWidth = hasTranslation ? '600px' : '850px'
+              s.maxWidth = '800px'
               s.minHeight = '30px'
-              if (hasTranslation) {
-                const text = page.text.split('~~').map((text: string, index: number) => index % 2 === 0 ? text : '')
-                s.text = text.join('').trim()
-              } else {
-                s.text = page.text
-              }
 
-              s.fontSize = theme().defFontSize
-              s.absolutePathPrefix = globalContext.indexServer.assetsUrl
-              //s.showRawText = page.file.showRawText
-              //s.fontFamily = isCode ? 'var(--font-family)' : 'var(--font-family-article)'
-            })
+              s.text = page.text
 
-          Markdown()
-            .observe(page)
-            .react(s => {
-              const hasTranslation = page.text.indexOf('~~') !== -1
-              s.visible = hasTranslation
-              s.className = theme().id
-              s.width = '100%'
-              s.maxWidth = hasTranslation ? '600px' : '850px'
-              s.minHeight = '30px'
-              if (hasTranslation) {
-                const text = page.text.split('~~').map((text: string, index: number) => index % 2 !== 0 ? text : '')
-                s.text = text.join('').trim()
-              }
-
-              s.textColor = theme().text
               s.fontSize = theme().defFontSize
               s.absolutePathPrefix = globalContext.indexServer.assetsUrl
               //s.showRawText = page.file.showRawText

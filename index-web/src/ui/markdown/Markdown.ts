@@ -47,9 +47,10 @@ noteParagraph.matcher = [/^\* (.*)$/, '<p class="md-note">$1</p>']
 noteParagraph.childrenInlineRules = grammar.globalRule.childrenInlineRules
 noteParagraph.preProccessing = grammar.defLinePreproccessing
 
+
 // remark of user
 const userRemark = new MDLineGrammarRule()
-userRemark.matcher = [/^!!! (.*)$/, '<p class="md-user-remark">$1</p>']
+userRemark.matcher = [/^! (.*)$/, '<p class="md-user-remark">$1</p>']
 grammar.globalRule.childrenInlineRules.push(userRemark)
 noteParagraph.childrenInlineRules = grammar.globalRule.childrenInlineRules
 noteParagraph.preProccessing = grammar.defLinePreproccessing
@@ -90,6 +91,30 @@ transMultiline.childrenLineRules = grammar.div.childrenLineRules
 transMultiline.childrenMultilineRules = grammar.div.childrenMultilineRules
 grammar.globalRule.childrenMultilineRules.unshift(transMultiline)
 
+// twoColumLayoutParagraph
+const leftColumnParagraph = new MDMultilineGrammarRule()
+leftColumnParagraph.startMatcher = [/^\[1\] *$/, '<div class="md-left">']
+leftColumnParagraph.endMatcher = [/^\[\] *$/, '</div>']
+leftColumnParagraph.childrenInlineRules = grammar.globalRule.childrenInlineRules
+leftColumnParagraph.childrenLineRules = grammar.div.childrenLineRules
+leftColumnParagraph.childrenMultilineRules = grammar.div.childrenMultilineRules
+grammar.globalRule.childrenMultilineRules.unshift(leftColumnParagraph)
+
+const twoColumnLayout = new MDMultilineGrammarRule()
+const columnDivider = new MDLineGrammarRule()
+columnDivider.matcher = [/^~~ *$/, '</td><td>']
+columnDivider.childrenInlineRules = grammar.globalRule.childrenInlineRules
+columnDivider.preProccessing = grammar.defLinePreproccessing
+
+const tblRowRule = new MDLineGrammarRule()
+tblRowRule.matcher = [/^\n$/, '</td></tr><tr><td>']
+
+twoColumnLayout.startMatcher = [/^```two *$/, '<table class="twoColumnLayout"><tr><td>']
+twoColumnLayout.endMatcher = [/^``` *$/, '</td></tr></table>']
+twoColumnLayout.childrenInlineRules = grammar.globalRule.childrenInlineRules
+twoColumnLayout.childrenLineRules = [columnDivider, tblRowRule, ...grammar.globalRule.childrenLineRules]
+twoColumnLayout.childrenMultilineRules = grammar.div.childrenMultilineRules
+grammar.globalRule.childrenMultilineRules.unshift(twoColumnLayout)
 
 interface MarkdownProps extends TextProps {
   absolutePathPrefix?: string
